@@ -141,7 +141,8 @@ export async function POST(request) {
 
     // 8. Socket.io — notify restaurant dashboard instantly via external server
     try {
-      const SOCKET_SERVER_URL = process.env.SOCKET_SERVER_URL || "http://localhost:3001";
+      const SOCKET_SERVER_URL =
+        process.env.SOCKET_SERVER_URL || "http://localhost:3001";
       const payload = { ...orderDoc, _id: inserted.insertedId.toString() };
 
       // Send order created notification
@@ -172,8 +173,9 @@ export async function POST(request) {
       console.log(
         `[POST /api/orders/checkout] 📡 Notifications sent to socket server`,
       );
-      }
-    } catch {}
+    } catch (e) {
+      console.warn("[socket] Error notifying socket server:", e.message);
+    }
 
     return NextResponse.json(
       {
