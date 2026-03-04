@@ -1,5 +1,7 @@
 // src/app/api/admin/tables/config/route.js
 import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { getCollection } from "@/lib/db";
 import { ObjectId } from "mongodb";
 
@@ -9,6 +11,18 @@ import { ObjectId } from "mongodb";
 // ─────────────────────────────────────────────────────────────
 export async function GET(request) {
   try {
+    // Check authorization - middleware already validated JWT role
+    const session = await getServerSession(authOptions);
+    const userRole = session?.user?.role || session?.user?.userRole;
+
+    if (!session || !userRole || !["owner", "admin"].includes(userRole)) {
+      console.log("❌ Auth failed: missing session or invalid role", userRole);
+      return NextResponse.json(
+        { error: "Forbidden - Admin role required" },
+        { status: 403 },
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     const restaurantId = searchParams.get("restaurantId");
     if (!restaurantId)
