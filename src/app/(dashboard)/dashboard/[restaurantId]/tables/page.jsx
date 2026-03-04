@@ -44,6 +44,55 @@ export default function TableManagementPage() {
     }
   }, [restaurant]);
 
+  // Auto-release tables after 45 minutes
+  useEffect(() => {
+    if (!restaurant?._id) return;
+
+    const autoReleaseInterval = setInterval(async () => {
+      try {
+        const now = new Date();
+        const FORTY_FIVE_MINUTES = 45 * 60 * 1000; // 45 minutes in milliseconds
+
+        for (const table of tables) {
+          if (table.isOccupied && table.occupiedAt) {
+            const occupiedTime = new Date(table.occupiedAt);
+            const elapsedTime = now - occupiedTime;
+
+            if (elapsedTime >= FORTY_FIVE_MINUTES) {
+              try {
+                const response = await fetch("/api/tables/release", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    tableId: table._id,
+                    restaurantId: restaurant._id,
+                  }),
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                  console.log(
+                    `Auto-released table ${table.tableNumber} after 45 minutes`,
+                  );
+                  loadData(); // Refresh the data to reflect the change
+                }
+              } catch (error) {
+                console.error(
+                  `Error auto-releasing table ${table.tableNumber}:`,
+                  error,
+                );
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Error in auto-release check:", error);
+      }
+    }, 60000); // Check every minute
+
+    return () => clearInterval(autoReleaseInterval);
+  }, [restaurant, tables]);
+
   async function loadRestaurant() {
     try {
       const res = await fetch("/api/me/restaurant");

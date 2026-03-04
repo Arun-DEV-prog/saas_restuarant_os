@@ -23,6 +23,8 @@ import OrderSuccessModal from "@/components/Ordersuccessmodal";
 import CheckoutModal from "@/components/Menuitemmodal";
 import HotActions from "@/components/HotActions";
 import { io } from "socket.io-client";
+import { toast } from "sonner";
+import { playNotificationSound } from "@/lib/notificationSounds";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // ACTIVE ORDERS PANEL
@@ -204,6 +206,9 @@ function OrdersPanel({ onClose, restaurantId }) {
     socket.on("order-updated", (data) => {
       console.log("[Socket] 📨 Received order-updated event:", data);
       const id = data.orderId || data._id;
+      const orderNumber =
+        data.orderNumber || `Order #${String(id).slice(-6).toUpperCase()}`;
+
       if (id) {
         try {
           const all = JSON.parse(localStorage.getItem("mi_orders") || "[]");
@@ -222,6 +227,28 @@ function OrdersPanel({ onClose, restaurantId }) {
               console.log(
                 `[Socket] ✅ MATCH FOUND! Updating order ${orderId} to status: ${data.status}`,
               );
+
+              // Show notification based on status
+              if (data.status === "confirmed") {
+                playNotificationSound("confirmed");
+                toast.success("Order Confirmed! 🎉", {
+                  description: `${orderNumber} has been confirmed by the restaurant.`,
+                  duration: 4000,
+                });
+              } else if (data.status === "ready") {
+                playNotificationSound("ready");
+                toast.success("Order Ready! 🚀", {
+                  description: `${orderNumber} is ready for pickup!`,
+                  duration: 5000,
+                });
+              } else if (data.status === "preparing") {
+                playNotificationSound("preparing");
+                toast.info("Order Preparing 👨‍🍳", {
+                  description: `${orderNumber} is being prepared.`,
+                  duration: 3000,
+                });
+              }
+
               return { ...o, status: data.status, updatedAt: data.updatedAt };
             }
             return o;

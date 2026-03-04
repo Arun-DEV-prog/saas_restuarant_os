@@ -4,8 +4,10 @@ import { useState, useEffect } from "react";
 
 import StatCard from "@/components/Dashboard/stat-card";
 import { toast } from "sonner";
-import { Copy, QrCode } from "lucide-react";
+import { Copy, QrCode, ShoppingBag, Zap } from "lucide-react";
 import DashboardHeader from "@/components/Dashboard/DashboardHeader";
+import { useSocket } from "@/hooks/useSocket";
+import { playOrderSound, playHotActionSound } from "@/hooks/useNotifications";
 
 export default function DashboardClient({ restaurant, user }) {
   const [showQR, setShowQR] = useState(false);
@@ -22,6 +24,9 @@ export default function DashboardClient({ restaurant, user }) {
   const [endDate, setEndDate] = useState("");
   const [selectedDate, setSelectedDate] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
+
+  // Socket connection for real-time order notifications
+  const { socket, isConnected } = useSocket(restaurant?._id);
 
   const getDateRange = (range) => {
     const end = new Date();
@@ -98,6 +103,126 @@ export default function DashboardClient({ restaurant, user }) {
       fetchDashboardData(start, end);
     }
   }, [timeRange, startDate, endDate]);
+
+  // Listen for new orders via socket
+  useEffect(() => {
+    if (!socket || !isConnected) return;
+
+    const handleNewOrder = (orderData) => {
+      console.log("📦 New order received:", orderData);
+
+      // Play notification sound
+      try {
+        playOrderSound();
+      } catch (error) {
+        console.error("Error playing order sound:", error);
+      }
+
+      // Show floating toast notification
+      const itemCount = orderData.items?.length || 0;
+      const amount = orderData.totalAmount || orderData.total || 0;
+
+      toast.success(
+        (t) => (
+          <div className="flex items-center gap-3 w-full">
+            <div className="w-10 h-10 rounded-lg bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center flex-shrink-0">
+              <ShoppingBag
+                size={20}
+                className="text-emerald-600 dark:text-emerald-400"
+              />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-gray-900 dark:text-white">
+                New Order!
+              </p>
+              <p className="text-sm text-gray-600 dark:text-gray-300">
+                {itemCount} item{itemCount !== 1 ? "s" : ""} · $
+                {Number(amount).toFixed(2)}
+              </p>
+            </div>
+          </div>
+        ),
+        {
+          duration: 5000,
+          position: "top-right",
+        },
+      );
+
+      // Refresh dashboard data to update stats
+      const { start, end } = getDateRange(timeRange);
+      fetchDashboardData(start, end);
+    };
+
+    socket.on("new-order", handleNewOrder);
+
+    return () => {
+      socket.off("new-order", handleNewOrder);
+    };
+  }, [socket, isConnected, timeRange, startDate, endDate]);
+
+  // Listen for hot actions (table requests) via socket
+  useEffect(() => {
+    if (!socket || !isConnected) return;
+
+    const handleHotAction = (actionData) => {
+      console.log("⚡ Hot action received:", actionData);
+
+      // Play urgent notification sound
+      try {
+        playHotActionSound();
+      } catch (error) {
+        console.error("Error playing hot action sound:", error);
+      }
+
+      // Determine hot action type
+      const actionType = actionData.subType || actionData.type || "Alert";
+      let message = "Table Alert!";
+      let emoji = "📣";
+
+      if (actionType.includes("bill") || actionType === "bill_request") {
+        message = "Bill Request";
+        emoji = "🧾";
+      } else if (
+        actionType.includes("waiter") ||
+        actionType === "waiter_request"
+      ) {
+        message = "Waiter Needed";
+        emoji = "🙋";
+      }
+
+      const tableNumber =
+        actionData.tableNumber || actionData.table || "Unknown";
+
+      // Show floating toast notification with urgent styling
+      toast(
+        (t) => (
+          <div className="flex items-center gap-3 w-full">
+            <div className="w-10 h-10 rounded-lg bg-orange-100 dark:bg-orange-900/40 flex items-center justify-center flex-shrink-0 animate-pulse">
+              <Zap size={20} className="text-orange-600 dark:text-orange-400" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-bold text-gray-900 dark:text-white">
+                {emoji} {message}
+              </p>
+              <p className="text-sm text-gray-600 dark:text-gray-300">
+                Table {tableNumber}
+              </p>
+            </div>
+          </div>
+        ),
+        {
+          duration: 6000,
+          position: "top-right",
+        },
+      );
+    };
+
+    socket.on("hot-action", handleHotAction);
+
+    return () => {
+      socket.off("hot-action", handleHotAction);
+    };
+  }, [socket, isConnected]);
 
   const handleTimeRangeChange = (range) => {
     setTimeRange(range);

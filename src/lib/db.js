@@ -1,7 +1,10 @@
 import mongoose from "mongoose";
 import { MongoClient } from "mongodb";
 import dotenv from "dotenv";
-dotenv.config();
+
+// Load .env.local explicitly
+dotenv.config({ path: ".env.local" });
+dotenv.config(); // Fallback to .env
 
 const uri = process.env.NEXT_PUBLIC_DATABASE_URI;
 
@@ -41,8 +44,14 @@ if (process.env.NODE_ENV === "development") {
 }
 
 export async function getDb() {
-  const client = await mongoClientPromise;
-  return client.db();
+  try {
+    const client = await mongoClientPromise;
+    console.log("✅ [getDb] Connected to database");
+    return client.db();
+  } catch (error) {
+    console.error("❌ [getDb] Connection error:", error.message);
+    throw error;
+  }
 }
 
 export async function getCollection(name) {

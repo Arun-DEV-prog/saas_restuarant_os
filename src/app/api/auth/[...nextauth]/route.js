@@ -3,6 +3,8 @@ import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcrypt";
 import { getDb } from "@/lib/db";
 
+console.log("📋 [NextAuth Route] Loading auth configuration...");
+
 export const authOptions = {
   session: { strategy: "jwt" },
   providers: [
@@ -10,27 +12,48 @@ export const authOptions = {
       name: "Credentials",
       credentials: { email: {}, password: {} },
       async authorize(credentials) {
-        const db = await getDb();
+        try {
+          console.log("🔍 [NextAuth] Auth attempt:", {
+            email: credentials.email,
+          });
 
-        const user = await db.collection("users").findOne({
-          email: credentials.email,
-        });
+          const db = await getDb();
+          console.log("✅ [NextAuth] Database connected");
 
-        if (!user) throw new Error("No user found");
+          const user = await db.collection("users").findOne({
+            email: credentials.email.toLowerCase(),
+          });
 
-        const isValid = await bcrypt.compare(
-          credentials.password,
-          user.password,
-        );
-        if (!isValid) throw new Error("Invalid password");
+          console.log("👤 [NextAuth] User found:", user ? "YES" : "NO");
+          if (!user) {
+            console.log("❌ [NextAuth] No user with email:", credentials.email);
+            throw new Error("No user found");
+          }
 
-        return {
-          id: user._id.toString(),
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          restaurantId: user.restaurantId?.toString() || null, // ✅ FIX
-        };
+          console.log("🔐 [NextAuth] Checking password...");
+          const isValid = await bcrypt.compare(
+            credentials.password,
+            user.password,
+          );
+          console.log("🔐 [NextAuth] Password valid:", isValid);
+
+          if (!isValid) {
+            console.log("❌ [NextAuth] Invalid password");
+            throw new Error("Invalid password");
+          }
+
+          console.log("✅ [NextAuth] Auth success!");
+          return {
+            id: user._id.toString(),
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            restaurantId: user.restaurantId?.toString() || null,
+          };
+        } catch (error) {
+          console.error("🚨 [NextAuth] Error:", error.message);
+          throw error;
+        }
       },
     }),
   ],

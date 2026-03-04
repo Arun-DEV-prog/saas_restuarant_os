@@ -361,7 +361,20 @@ export default function LoginPage() {
     }
 
     toast.success("Welcome back!");
-    router.push("/dashboard");
+
+    // Get the session to check user role
+    const sessionResponse = await fetch("/api/auth/session");
+    const currentSession = await sessionResponse.json();
+
+    // Redirect based on role
+    if (
+      currentSession?.user?.role === "owner" ||
+      currentSession?.user?.role === "admin"
+    ) {
+      router.push("/dashboard/admin");
+    } else {
+      router.push("/dashboard");
+    }
   }
 
   return (
