@@ -33,6 +33,7 @@ import {
   Clock,
 } from "lucide-react";
 import Link from "next/link";
+import { usePlatformSettings } from "@/hooks/usePlatformSettings";
 
 /* ── Styles ──────────────────────────────────────────────── */
 const css = `
@@ -736,6 +737,7 @@ export default function RegisterPage() {
   const [showPass, setShowPass] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const router = useRouter();
+  const { settings } = usePlatformSettings();
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -782,10 +784,18 @@ export default function RegisterPage() {
         <nav className="rp-nav">
           <Link href="/" className="rp-logo">
             <div className="rp-logo-icon">
-              <ChefHat size={18} color="white" />
+              {settings?.platformLogo ? (
+                <img
+                  src={settings.platformLogo}
+                  alt="Logo"
+                  className="w-full h-full rounded-lg object-cover"
+                />
+              ) : (
+                <ChefHat size={18} color="white" />
+              )}
             </div>
             <span className="rp-logo-text">
-              Restaurant<span>OS</span>
+              {settings?.platformName || "RestaurantOS"}
             </span>
           </Link>
           <span className="rp-nav-hint">

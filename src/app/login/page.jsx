@@ -8,10 +8,12 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Mail, Lock, ArrowRight, Loader2 } from "lucide-react";
 import Link from "next/link";
+import { usePlatformSettings } from "@/hooks/usePlatformSettings";
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { settings } = usePlatformSettings();
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -58,10 +60,22 @@ export default function LoginPage() {
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3 group">
             <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition">
-              <span className="text-white font-black text-sm">MI</span>
+              {settings?.platformLogo ? (
+                <img
+                  src={settings.platformLogo}
+                  alt="Logo"
+                  className="w-full h-full rounded-xl object-cover"
+                />
+              ) : (
+                <span className="text-white font-black text-sm">
+                  {(settings?.platformName || "MI")
+                    .substring(0, 2)
+                    .toUpperCase()}
+                </span>
+              )}
             </div>
             <span className="font-bold text-gray-900 text-lg">
-              Restaurant SaaS
+              {settings?.platformName || "Restaurant SaaS"}
             </span>
           </Link>
           <span className="text-sm text-gray-700">
