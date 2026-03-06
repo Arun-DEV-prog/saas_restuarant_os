@@ -24,7 +24,7 @@ export default function Navbar() {
             </div>
           ) : (
             <div className="w-9 h-9 bg-gradient-to-tr from-indigo-500 to-violet-500 rounded-xl flex items-center justify-center text-white font-bold shadow-md">
-              {settings.platformName?.charAt(0) || "R"}
+              {settings.platformName?.charAt(0) || "M"}
             </div>
           )}
           <span className="font-semibold text-lg tracking-tight text-zinc-800 dark:text-zinc-100">
