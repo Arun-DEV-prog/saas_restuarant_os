@@ -33,11 +33,12 @@ export async function middleware(request) {
       return NextResponse.redirect(new URL("/login", request.url));
     }
 
-    // Check if user has owner/admin role
+    // Check if user has admin role (owner, admin, or restaurant_admin)
     const userRole = token.role || token.userRole;
     const isOwner = userRole === "owner";
     const isAdmin = userRole === "admin";
-    const isAuthorized = isOwner || isAdmin;
+    const isRestaurantAdmin = userRole === "restaurant_admin";
+    const isAuthorized = isOwner || isAdmin || isRestaurantAdmin;
 
     console.log(
       `[Middleware Auth] Path: ${pathname}, Role: ${userRole}, Authorized: ${isAuthorized}`,
@@ -53,9 +54,9 @@ export async function middleware(request) {
         return NextResponse.json(
           {
             error: "Forbidden - Insufficient permissions",
-            requiredRole: "owner or admin",
+            requiredRole: "owner, admin, or restaurant_admin",
             userRole: userRole || "unknown",
-            message: `User role '${userRole}' is not authorized for admin routes. Required: 'admin' or 'owner'`,
+            message: `User role '${userRole}' is not authorized for admin routes. Required: 'admin', 'owner', or 'restaurant_admin'`,
           },
           { status: 403 },
         );
