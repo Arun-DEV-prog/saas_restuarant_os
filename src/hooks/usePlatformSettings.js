@@ -18,7 +18,7 @@ export function usePlatformSettings() {
     const fetchSettings = async () => {
       try {
         setLoading(true);
-        const res = await fetch("/api/admin/settings", {
+        const res = await fetch("/api/public/settings", {
           method: "GET",
           headers: { "Content-Type": "application/json" },
           cache: "no-store",
