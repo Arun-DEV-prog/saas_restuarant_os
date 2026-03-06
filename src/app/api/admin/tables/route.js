@@ -11,9 +11,15 @@ import { ObjectId } from "mongodb";
 // ─────────────────────────────────────────────────────────────
 export async function GET(request) {
   try {
-    // Check authorization - middleware already validated JWT role
+    // Check authorization from session
     const session = await getServerSession(authOptions);
     const userRole = session?.user?.role || session?.user?.userRole;
+
+    console.log("[Admin Tables GET]", {
+      hasSession: !!session,
+      userRole,
+      userId: session?.user?.id,
+    });
 
     if (!session || !userRole || !["owner", "admin"].includes(userRole)) {
       console.log("❌ Auth failed: missing session or invalid role", userRole);

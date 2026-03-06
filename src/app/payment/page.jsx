@@ -12,7 +12,9 @@ function PaymentLoading() {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
       <div className="text-center">
         <div className="inline-flex h-12 w-12 animate-spin rounded-full border-4 border-gray-300 border-r-orange-600 mb-4" />
-        <p className="text-gray-600 dark:text-gray-300">Processing payment...</p>
+        <p className="text-gray-600 dark:text-gray-300">
+          Processing payment...
+        </p>
       </div>
     </div>
   );
@@ -73,18 +75,26 @@ function PaymentContent() {
               </p>
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600 dark:text-gray-400">Order #</span>
+                  <span className="text-gray-600 dark:text-gray-400">
+                    Order #
+                  </span>
                   <span className="font-semibold">{order.orderNumber}</span>
                 </div>
                 {order.tableNumber && (
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-600 dark:text-gray-400">Table</span>
+                    <span className="text-gray-600 dark:text-gray-400">
+                      Table
+                    </span>
                     <span className="font-semibold">{order.tableNumber}</span>
                   </div>
                 )}
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600 dark:text-gray-400">Total</span>
-                  <span className="font-semibold">${Number(order.total).toFixed(2)}</span>
+                  <span className="text-gray-600 dark:text-gray-400">
+                    Total
+                  </span>
+                  <span className="font-semibold">
+                    ${Number(order.total).toFixed(2)}
+                  </span>
                 </div>
               </div>
             </div>

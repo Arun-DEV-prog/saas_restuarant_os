@@ -39,6 +39,10 @@ export async function middleware(request) {
     const isAdmin = userRole === "admin";
     const isAuthorized = isOwner || isAdmin;
 
+    console.log(
+      `[Middleware Auth] Path: ${pathname}, Role: ${userRole}, Authorized: ${isAuthorized}`,
+    );
+
     if (!isAuthorized) {
       console.warn(
         `❌ Access denied to ${pathname} for user with role: ${userRole}`,
@@ -51,6 +55,7 @@ export async function middleware(request) {
             error: "Forbidden - Insufficient permissions",
             requiredRole: "owner or admin",
             userRole: userRole || "unknown",
+            message: `User role '${userRole}' is not authorized for admin routes. Required: 'admin' or 'owner'`,
           },
           { status: 403 },
         );

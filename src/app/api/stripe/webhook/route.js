@@ -58,7 +58,9 @@ export async function POST(req) {
               },
             },
           );
-          console.log(`[Webhook] Order ${orderId} payment completed and confirmed`);
+          console.log(
+            `[Webhook] Order ${orderId} payment completed and confirmed`,
+          );
         }
         break;
 
