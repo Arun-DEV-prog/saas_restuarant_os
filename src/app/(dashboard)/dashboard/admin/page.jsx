@@ -2,6 +2,7 @@
 
 import ProtectedAdminRoute from "@/components/ProtectedAdminRoute";
 import DashboardHeader from "@/components/Dashboard/DashboardHeader";
+import PlanStatsWidget from "@/components/Dashboard/PlanStatsWidget";
 import Link from "next/link";
 import {
   BarChart3,
@@ -28,6 +29,9 @@ export default function AdminDashboardPage() {
               Manage your SaaS platform, restaurants, and users
             </p>
           </div>
+
+          {/* Plan Stats */}
+          <PlanStatsWidget />
 
           {/* Admin Menu Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

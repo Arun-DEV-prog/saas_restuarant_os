@@ -37,6 +37,11 @@ export default function Sidebar() {
                 icon: "🏢",
               },
               {
+                name: "Restaurant Plans",
+                href: `/dashboard/admin/restaurants-plans`,
+                icon: "💳",
+              },
+              {
                 name: "Platform Analytics",
                 href: `/dashboard/admin/analytics`,
                 icon: "📈",
@@ -67,6 +72,11 @@ export default function Sidebar() {
                 name: "Restaurants",
                 href: `/dashboard/admin/restaurants`,
                 icon: "🏢",
+              },
+              {
+                name: "Restaurant Plans",
+                href: `/dashboard/admin/restaurants-plans`,
+                icon: "💳",
               },
               {
                 name: "Analytics",
@@ -148,6 +158,26 @@ export default function Sidebar() {
                 name: "Reports",
                 href: `/dashboard/${restaurantId}/reports`,
                 icon: "📈",
+              },
+            ],
+          },
+          {
+            section: "Integrations",
+            items: [
+              {
+                name: "Integrations",
+                href: `/dashboard/${restaurantId}/integrations`,
+                icon: "🔌",
+              },
+            ],
+          },
+          {
+            section: "Billing",
+            items: [
+              {
+                name: "Pricing Plans",
+                href: `/dashboard/${restaurantId}/pricing`,
+                icon: "💳",
               },
             ],
           },

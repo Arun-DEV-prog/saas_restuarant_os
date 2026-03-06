@@ -3,10 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
@@ -16,363 +14,727 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Store, User } from "lucide-react";
+import {
+  Store,
+  User,
+  ArrowRight,
+  Loader2,
+  ChefHat,
+  MapPin,
+  Phone,
+  Mail,
+  Hash,
+  Lock,
+  Eye,
+  EyeOff,
+  CheckCircle2,
+  Shield,
+  Gift,
+  Clock,
+} from "lucide-react";
+import Link from "next/link";
 
-/* ─── MATCHING LANDING PAGE STYLES ─────────────────────────────────────────── */
-const styles = `
-  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,300;0,400;0,700;1,300;1,400&family=Outfit:wght@200;300;400;500;600&family=DM+Mono:wght@300&display=swap');
+/* ── Styles ──────────────────────────────────────────────── */
+const css = `
+  @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap');
+
+  .rp-root *, .rp-root *::before, .rp-root *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   .rp-root {
-    --bg:       #05050a;
-    --surface:  #0c0c14;
-    --card:     #111118;
-    --border:   rgba(255,255,255,0.08);
-    --gold:     #d4a853;
-    --gold-dim: rgba(212,168,83,0.1);
-    --gold-glow:rgba(212,168,83,0.3);
-    --cream:    #f0e6d0;
-    --muted:    rgba(240,230,208,0.42);
-    --accent:   #c0392b;
-    --green:    #27ae60;
-
     min-height: 100vh;
-    background: var(--bg);
-    color: var(--cream);
-    font-family: 'Outfit', sans-serif;
-    font-weight: 300;
+    background: #f7f5f0;
+    font-family: 'DM Sans', sans-serif;
+    color: #1a1a1a;
     position: relative;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
+    overflow-x: hidden;
   }
 
-  /* ── NOISE OVERLAY ── */
-  .rp-noise {
-    position: fixed; inset: 0; z-index: 0; pointer-events: none;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
-    opacity: .45;
-  }
-
-  /* ── RADIAL GLOW BEHIND FORM ── */
-  .rp-glow {
-    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  /* Warm background texture */
+  .rp-root::before {
+    content: '';
+    position: fixed;
+    inset: 0;
     background:
-      radial-gradient(ellipse 60% 50% at 50% -10%, rgba(212,168,83,0.14) 0%, transparent 70%),
-      radial-gradient(ellipse 40% 30% at 10% 80%, rgba(192,57,43,0.07) 0%, transparent 60%);
+      radial-gradient(ellipse 80% 60% at 10% 0%, rgba(255,159,67,0.12) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 50% at 90% 100%, rgba(52,168,83,0.10) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 40% at 50% 50%, rgba(255,255,255,0.4) 0%, transparent 100%);
+    pointer-events: none;
+    z-index: 0;
   }
 
-  /* ── DECORATIVE GRID LINES ── */
-  .rp-grid {
-    position: fixed; inset: 0; z-index: 0; pointer-events: none;
-    background-image:
-      linear-gradient(rgba(212,168,83,0.04) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(212,168,83,0.04) 1px, transparent 1px);
-    background-size: 60px 60px;
+  /* Subtle dot grid */
+  .rp-root::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: radial-gradient(circle, rgba(0,0,0,0.06) 1px, transparent 1px);
+    background-size: 28px 28px;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.5;
   }
 
   /* ── NAV ── */
   .rp-nav {
-    position: relative; z-index: 10;
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 20px 60px;
-    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(247,245,240,0.85);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+    padding: 14px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
   }
+
   .rp-logo {
-    font-family: 'Playfair Display', serif;
-    font-size: 22px; font-weight: 700; letter-spacing: 0.04em;
-    color: var(--gold); text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: inherit;
   }
-  .rp-logo span { color: var(--cream); }
-  .rp-nav-right {
-    font-size: 13px; color: var(--muted);
+
+  .rp-logo-icon {
+    width: 38px;
+    height: 38px;
+    background: linear-gradient(135deg, #ff6b35, #f7c59f);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(255,107,53,0.3);
   }
-  .rp-nav-right a {
-    color: var(--gold); text-decoration: none; font-weight: 500;
-    transition: opacity .2s;
+
+  .rp-logo-text {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-weight: 800;
+    font-size: 18px;
+    letter-spacing: -0.5px;
+    color: #1a1a1a;
   }
-  .rp-nav-right a:hover { opacity: .7; }
+
+  .rp-logo-text span { color: #ff6b35; }
+
+  .rp-nav-hint {
+    font-size: 13px;
+    color: #666;
+  }
+
+  .rp-nav-hint a {
+    color: #ff6b35;
+    font-weight: 600;
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .rp-nav-hint a:hover { color: #e55a20; }
 
   /* ── MAIN LAYOUT ── */
   .rp-main {
-    position: relative; z-index: 10;
-    flex: 1;
-    display: flex; align-items: flex-start; justify-content: center;
-    padding: 60px 24px 80px;
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: 1fr 580px 1fr;
+    gap: 0;
+    min-height: calc(100vh - 68px);
+    padding: 48px 24px 64px;
+  }
+
+  .rp-col-left {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    padding-right: 48px;
+    padding-top: 40px;
+    gap: 28px;
+  }
+
+  .rp-col-center { /* The form card */ }
+
+  .rp-col-right {
+    display: flex;
+    flex-direction: column;
+    padding-left: 48px;
+    padding-top: 40px;
+    gap: 20px;
+  }
+
+  /* ── SIDE CARDS ── */
+  .rp-side-card {
+    background: white;
+    border-radius: 16px;
+    padding: 20px;
+    border: 1px solid rgba(0,0,0,0.06);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+    max-width: 220px;
+    animation: fadeSlideIn 0.6s ease both;
+  }
+
+  .rp-side-card:nth-child(2) { animation-delay: 0.1s; }
+  .rp-side-card:nth-child(3) { animation-delay: 0.2s; }
+
+  @keyframes fadeSlideIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .rp-side-stat {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 32px;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .rp-side-label {
+    font-size: 12px;
+    color: #888;
+    font-weight: 500;
+  }
+
+  .rp-side-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 12px;
+  }
+
+  .rp-step-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 16px;
+    background: white;
+    border-radius: 12px;
+    border: 1px solid rgba(0,0,0,0.06);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    max-width: 220px;
+    animation: fadeSlideIn 0.6s ease both;
+    cursor: default;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+
+  .rp-step-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+  }
+
+  .rp-step-num {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: #fff3ed;
+    color: #ff6b35;
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-weight: 800;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .rp-step-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 2px;
+  }
+
+  .rp-step-desc {
+    font-size: 11px;
+    color: #888;
+    line-height: 1.5;
   }
 
   /* ── FORM CARD ── */
   .rp-card {
-    width: 100%; max-width: 780px;
-    background: rgba(11,11,18,0.85);
-    backdrop-filter: blur(32px) saturate(1.4);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    overflow: hidden;
+    background: white;
+    border-radius: 24px;
+    border: 1px solid rgba(0,0,0,0.07);
     box-shadow:
-      0 0 0 1px rgba(212,168,83,0.08),
-      0 40px 80px rgba(0,0,0,0.6),
-      0 0 60px rgba(212,168,83,0.06);
-    animation: cardIn .7s cubic-bezier(.22,1,.36,1) both;
+      0 4px 6px rgba(0,0,0,0.04),
+      0 20px 60px rgba(0,0,0,0.08),
+      0 0 0 1px rgba(255,255,255,0.8) inset;
+    overflow: hidden;
+    animation: cardIn 0.7s cubic-bezier(0.34,1.2,0.64,1) both;
   }
+
   @keyframes cardIn {
-    from { opacity:0; transform: translateY(32px); }
-    to   { opacity:1; transform: translateY(0); }
+    from { opacity: 0; transform: translateY(32px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
   }
 
   /* ── CARD HEADER ── */
   .rp-header {
-    padding: 52px 56px 36px;
-    border-bottom: 1px solid var(--border);
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+    padding: 36px 36px 32px;
     position: relative;
+    overflow: hidden;
   }
-  .rp-header-top {
-    display: flex; align-items: center; gap: 20px; margin-bottom: 20px;
+
+  .rp-header::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 200px; height: 200px;
+    background: radial-gradient(circle, rgba(255,107,53,0.25) 0%, transparent 70%);
+    border-radius: 50%;
   }
-  .rp-icon-wrap {
-    width: 52px; height: 52px; border-radius: 2px; flex-shrink: 0;
-    background: linear-gradient(135deg, rgba(212,168,83,0.2) 0%, rgba(212,168,83,0.05) 100%);
-    border: 1px solid rgba(212,168,83,0.3);
-    display: flex; align-items: center; justify-content: center;
-    color: var(--gold);
-  }
-  .rp-eyebrow {
-    font-family: 'DM Mono', monospace;
-    font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase;
-    color: var(--gold); margin-bottom: 6px; display: block;
-  }
-  .rp-title {
-    font-family: 'Playfair Display', serif;
-    font-size: clamp(24px, 3vw, 36px); font-weight: 300;
-    line-height: 1.1; letter-spacing: -0.01em;
-    color: var(--cream);
-  }
-  .rp-title em { font-style: italic; color: var(--gold); }
-  .rp-subtitle {
-    color: var(--muted); font-size: 13px; line-height: 1.7;
-    margin-top: 12px; max-width: 420px;
-  }
-  /* Corner ornament */
+
   .rp-header::after {
     content: '';
-    position: absolute; top: 0; right: 0;
-    width: 120px; height: 120px;
-    background: radial-gradient(circle at top right, rgba(212,168,83,0.1) 0%, transparent 70%);
-    pointer-events: none;
+    position: absolute;
+    bottom: -40px; left: -40px;
+    width: 160px; height: 160px;
+    background: radial-gradient(circle, rgba(52,168,83,0.15) 0%, transparent 70%);
+    border-radius: 50%;
   }
 
-  /* ── PROGRESS DOTS ── */
+  .rp-header-inner { position: relative; z-index: 1; }
+
+  .rp-header-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .rp-header-icon {
+    width: 52px;
+    height: 52px;
+    background: rgba(255,107,53,0.15);
+    border: 1px solid rgba(255,107,53,0.3);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ff6b35;
+    flex-shrink: 0;
+  }
+
+  .rp-eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(255,107,53,0.8);
+    display: block;
+    margin-bottom: 6px;
+  }
+
+  .rp-title {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    color: white;
+    line-height: 1.15;
+    letter-spacing: -0.5px;
+  }
+
+  .rp-title em {
+    font-style: normal;
+    background: linear-gradient(135deg, #ff6b35, #ffa500);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .rp-subtitle {
+    font-size: 13.5px;
+    color: rgba(255,255,255,0.55);
+    line-height: 1.7;
+    max-width: 400px;
+  }
+
+  /* Progress dots */
   .rp-progress {
-    display: flex; gap: 6px; align-items: center; margin-top: 28px;
-  }
-  .rp-dot {
-    width: 20px; height: 2px; border-radius: 1px;
-    background: var(--gold); transition: all .3s;
-  }
-  .rp-dot.inactive {
-    width: 8px; height: 2px; background: var(--border);
+    display: flex;
+    gap: 6px;
+    margin-top: 20px;
   }
 
-  /* ── CARD CONTENT ── */
-  .rp-content { padding: 0 56px 52px; }
+  .rp-progress-dot {
+    height: 3px;
+    border-radius: 2px;
+    transition: all 0.3s ease;
+  }
 
-  /* ── SECTION SEPARATOR ── */
+  .rp-progress-dot.active {
+    width: 28px;
+    background: #ff6b35;
+  }
+
+  .rp-progress-dot.inactive {
+    width: 12px;
+    background: rgba(255,255,255,0.2);
+  }
+
+  /* ── FORM BODY ── */
+  .rp-body {
+    padding: 36px;
+  }
+
+  /* ── SECTION ── */
   .rp-section {
-    padding-top: 40px;
+    margin-bottom: 32px;
   }
-  .rp-section-label {
-    display: flex; align-items: center; gap: 12px;
-    margin-bottom: 28px;
+
+  .rp-section-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1.5px dashed rgba(0,0,0,0.08);
   }
-  .rp-section-label-icon {
-    width: 32px; height: 32px; border-radius: 2px; flex-shrink: 0;
-    background: var(--gold-dim);
-    border: 1px solid rgba(212,168,83,0.2);
-    display: flex; align-items: center; justify-content: center;
-    color: var(--gold);
+
+  .rp-section-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
   }
-  .rp-section-label-text {
-    font-family: 'Playfair Display', serif;
-    font-size: 16px; font-weight: 400; color: var(--cream);
+
+  .rp-section-text { flex: 1; }
+
+  .rp-section-title {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: #1a1a1a;
+    display: block;
   }
-  .rp-section-label-num {
-    font-family: 'DM Mono', monospace;
-    font-size: 10px; letter-spacing: 0.15em;
-    color: rgba(212,168,83,0.4); margin-top: 2px; display: block;
+
+  .rp-section-num {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: #bbb;
+    text-transform: uppercase;
+    display: block;
+  }
+
+  /* ── GRID ── */
+  .rp-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .rp-field { display: flex; flex-direction: column; gap: 5px; }
+  .rp-field.full { grid-column: 1 / -1; }
+
+  /* ── LABEL ── */
+  .rp-label {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #444;
+    letter-spacing: 0.2px;
+  }
+
+  /* ── INPUTS ── */
+  .rp-input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .rp-input-icon {
+    position: absolute;
+    left: 12px;
+    color: #bbb;
+    pointer-events: none;
+    z-index: 1;
+    transition: color 0.2s;
+  }
+
+  .rp-input {
+    width: 100%;
+    height: 42px;
+    padding: 0 12px 0 36px;
+    border: 1.5px solid #e8e8e8;
+    border-radius: 10px;
+    font-size: 13.5px;
+    font-family: 'DM Sans', sans-serif;
+    background: #fafaf9;
+    color: #1a1a1a;
+    transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+    outline: none;
+  }
+
+  .rp-input:focus {
+    border-color: #ff6b35;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(255,107,53,0.1);
+  }
+
+  .rp-input:focus ~ .rp-input-icon,
+  .rp-input-wrap:focus-within .rp-input-icon { color: #ff6b35; }
+
+  .rp-input::placeholder { color: #c0c0c0; }
+
+  .rp-textarea {
+    width: 100%;
+    min-height: 90px;
+    padding: 12px 14px 12px 36px;
+    border: 1.5px solid #e8e8e8;
+    border-radius: 10px;
+    font-size: 13.5px;
+    font-family: 'DM Sans', sans-serif;
+    background: #fafaf9;
+    color: #1a1a1a;
+    resize: vertical;
+    transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+    outline: none;
+    line-height: 1.6;
+  }
+
+  .rp-textarea:focus {
+    border-color: #ff6b35;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(255,107,53,0.1);
+  }
+
+  .rp-textarea::placeholder { color: #c0c0c0; }
+
+  /* Select override */
+  .rp-select [data-radix-select-trigger] {
+    height: 42px;
+    border: 1.5px solid #e8e8e8 !important;
+    border-radius: 10px !important;
+    background: #fafaf9 !important;
+    font-size: 13.5px;
+    font-family: 'DM Sans', sans-serif;
+    padding-left: 36px !important;
+  }
+
+  .rp-hint {
+    font-size: 11px;
+    color: #aaa;
+    margin-top: 2px;
   }
 
   /* ── DIVIDER ── */
   .rp-divider {
-    height: 1px;
-    background: linear-gradient(90deg, transparent 0%, var(--border) 20%, var(--border) 80%, transparent 100%);
-    margin: 36px 0 0;
-    position: relative;
-  }
-  .rp-divider::after {
-    content: '◆';
-    position: absolute; left: 50%; top: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 8px; color: rgba(212,168,83,0.3);
-    background: rgba(11,11,18,0.95); padding: 0 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 24px 0;
   }
 
-  /* ── GRID ── */
-  .rp-grid-2 {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
-  }
-  .rp-full { grid-column: 1 / -1; }
-
-  /* ── FIELD ── */
-  .rp-field { display: flex; flex-direction: column; gap: 8px; }
-
-  /* ── LABEL ── */
-  .rp-label {
-    font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
-    color: var(--muted); font-family: 'DM Mono', monospace;
+  .rp-divider-line {
+    flex: 1;
+    height: 1.5px;
+    background: linear-gradient(90deg, transparent, rgba(0,0,0,0.08), transparent);
   }
 
-  /* ── INPUT ── */
-  .rp-input {
-    width: 100%;
-    background: rgba(255,255,255,0.04);
-    border: 1px solid var(--border);
-    border-radius: 2px;
-    color: var(--cream);
-    padding: 12px 16px;
-    font-family: 'Outfit'; font-size: 14px; font-weight: 300;
-    outline: none;
-    transition: border-color .25s, background .25s, box-shadow .25s;
-    -webkit-appearance: none;
-  }
-  .rp-input::placeholder { color: rgba(240,230,208,0.2); }
-  .rp-input:focus {
-    border-color: var(--gold);
-    background: rgba(212,168,83,0.05);
-    box-shadow: 0 0 0 3px rgba(212,168,83,0.08);
-  }
-  .rp-input:hover:not(:focus) { border-color: rgba(212,168,83,0.25); }
-
-  /* ── TEXTAREA ── */
-  .rp-textarea {
-    width: 100%; min-height: 90px; resize: vertical;
-    background: rgba(255,255,255,0.04);
-    border: 1px solid var(--border);
-    border-radius: 2px;
-    color: var(--cream);
-    padding: 12px 16px;
-    font-family: 'Outfit'; font-size: 14px; font-weight: 300;
-    outline: none;
-    transition: border-color .25s, background .25s, box-shadow .25s;
-  }
-  .rp-textarea::placeholder { color: rgba(240,230,208,0.2); }
-  .rp-textarea:focus {
-    border-color: var(--gold);
-    background: rgba(212,168,83,0.05);
-    box-shadow: 0 0 0 3px rgba(212,168,83,0.08);
+  .rp-divider-text {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #ccc;
+    white-space: nowrap;
   }
 
-  /* ── SELECT TRIGGER OVERRIDE ── */
-  .rp-select-trigger {
-    width: 100% !important;
-    background: rgba(255,255,255,0.04) !important;
-    border: 1px solid var(--border) !important;
-    border-radius: 2px !important;
-    color: var(--cream) !important;
-    padding: 12px 16px !important;
-    font-family: 'Outfit' !important; font-size: 14px !important; font-weight: 300 !important;
-    height: auto !important;
-    transition: border-color .25s, background .25s !important;
-  }
-  .rp-select-trigger:focus,
-  .rp-select-trigger[data-state="open"] {
-    border-color: var(--gold) !important;
-    background: rgba(212,168,83,0.05) !important;
-    box-shadow: 0 0 0 3px rgba(212,168,83,0.08) !important;
-    outline: none !important;
-  }
-
-  /* ── SUBMIT BUTTON ── */
+  /* ── SUBMIT ── */
   .rp-submit {
     width: 100%;
-    background: var(--gold);
-    color: #05050a;
-    border: none; border-radius: 2px;
-    padding: 16px 32px;
-    font-family: 'Outfit'; font-size: 13px; font-weight: 600;
-    letter-spacing: 0.12em; text-transform: uppercase;
+    height: 50px;
+    background: linear-gradient(135deg, #ff6b35 0%, #ff8c42 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: -0.2px;
     cursor: pointer;
-    transition: all .3s;
-    position: relative; overflow: hidden;
-    margin-top: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
+    box-shadow: 0 4px 20px rgba(255,107,53,0.35);
+    margin-bottom: 20px;
   }
-  .rp-submit::before {
-    content: '';
-    position: absolute; inset: 0;
-    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.18) 50%, transparent 100%);
-    transform: translateX(-100%);
-    transition: transform .5s;
-  }
-  .rp-submit:hover::before { transform: translateX(100%); }
-  .rp-submit:hover {
-    background: var(--cream);
-    box-shadow: 0 16px 40px var(--gold-glow);
-    transform: translateY(-1px);
-  }
-  .rp-submit:disabled { opacity: .5; cursor: not-allowed; transform: none; box-shadow: none; }
 
-  /* ── LOGIN LINK ── */
+  .rp-submit:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 28px rgba(255,107,53,0.45);
+  }
+
+  .rp-submit:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  .rp-submit:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+
+  /* ── TRUST BAR ── */
+  .rp-trust {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    padding: 14px 20px;
+    background: #fafaf9;
+    border-radius: 10px;
+    border: 1px solid #f0f0ee;
+    margin-top: 16px;
+  }
+
+  .rp-trust-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: #666;
+    font-weight: 500;
+  }
+
+  .rp-trust-icon { color: #ff6b35; }
+
   .rp-login-hint {
-    text-align: center; margin-top: 20px;
-    font-size: 13px; color: var(--muted);
+    text-align: center;
+    font-size: 13px;
+    color: #888;
   }
+
   .rp-login-hint a {
-    color: var(--gold); font-weight: 500; text-decoration: none;
-    border-bottom: 1px solid rgba(212,168,83,0.3);
-    padding-bottom: 1px; transition: border-color .2s;
+    color: #ff6b35;
+    font-weight: 600;
+    text-decoration: none;
   }
-  .rp-login-hint a:hover { border-color: var(--gold); }
+
+  .rp-login-hint a:hover { text-decoration: underline; }
 
   /* ── FOOTER ── */
   .rp-footer {
-    position: relative; z-index: 10;
-    border-top: 1px solid var(--border);
-    padding: 16px 60px;
-    display: flex; align-items: center; justify-content: space-between;
-  }
-  .rp-footer p {
-    font-size: 11px; color: rgba(240,230,208,0.2);
-    font-family: 'DM Mono', monospace; letter-spacing: 0.06em;
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    padding: 24px;
+    font-size: 12px;
+    color: #bbb;
+    display: flex;
+    justify-content: center;
+    gap: 24px;
   }
 
-  /* ── TRUST BADGES ── */
-  .rp-trust {
-    display: flex; align-items: center; gap: 24px;
-    margin-top: 28px; padding-top: 24px;
-    border-top: 1px solid var(--border);
+  /* ── FLOATING BADGE ── */
+  .rp-float-badge {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: white;
+    border-radius: 14px;
+    padding: 14px 18px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+    border: 1px solid rgba(0,0,0,0.06);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 50;
+    animation: badgeIn 0.8s 1s cubic-bezier(0.34,1.3,0.64,1) both;
   }
-  .rp-trust-item {
-    display: flex; align-items: center; gap: 8px;
-    font-size: 11px; color: var(--muted);
-  }
-  .rp-trust-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--green); }
 
-  /* ── ANIMATIONS ── */
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+  @keyframes badgeIn {
+    from { opacity: 0; transform: translateY(20px) scale(0.9); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .rp-float-avatar {
+    display: flex;
+    flex-direction: row-reverse;
+  }
+
+  .rp-float-avatar span {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    border: 2px solid white;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px;
+    margin-left: -8px;
+  }
+
+  .rp-float-avatar span:last-child { margin-left: 0; }
+
+  .rp-float-text { font-size: 12px; line-height: 1.4; }
+  .rp-float-text strong { font-weight: 700; font-size: 13px; display: block; color: #1a1a1a; }
+  .rp-float-text span { color: #888; }
 
   /* ── RESPONSIVE ── */
-  @media(max-width:640px){
-    .rp-nav { padding: 16px 24px; }
-    .rp-header { padding: 36px 28px 28px; }
-    .rp-content { padding: 0 28px 40px; }
-    .rp-grid-2 { grid-template-columns: 1fr; }
-    .rp-full { grid-column: 1; }
-    .rp-footer { padding: 14px 24px; flex-direction: column; gap: 8px; }
-    .rp-trust { flex-direction: column; align-items: flex-start; gap: 12px; }
+  @media (max-width: 1200px) {
+    .rp-main { grid-template-columns: 1fr 540px 1fr; }
+    .rp-col-left, .rp-col-right { padding-left: 24px; padding-right: 24px; }
+  }
+
+  @media (max-width: 960px) {
+    .rp-main { grid-template-columns: 1fr; padding: 32px 16px 48px; }
+    .rp-col-left, .rp-col-right { display: none; }
+  }
+
+  @media (max-width: 520px) {
+    .rp-header { padding: 28px 24px 24px; }
+    .rp-body { padding: 24px; }
+    .rp-grid { grid-template-columns: 1fr; }
+    .rp-field.full { grid-column: 1; }
+    .rp-title { font-size: 22px; }
+    .rp-float-badge { display: none; }
+  }
+
+  /* Input field animation on load */
+  .rp-field {
+    animation: fieldIn 0.5s ease both;
+  }
+  .rp-field:nth-child(1)  { animation-delay: 0.05s; }
+  .rp-field:nth-child(2)  { animation-delay: 0.10s; }
+  .rp-field:nth-child(3)  { animation-delay: 0.15s; }
+  .rp-field:nth-child(4)  { animation-delay: 0.20s; }
+  .rp-field:nth-child(5)  { animation-delay: 0.25s; }
+  .rp-field:nth-child(6)  { animation-delay: 0.30s; }
+  .rp-field:nth-child(7)  { animation-delay: 0.35s; }
+  .rp-field:nth-child(8)  { animation-delay: 0.40s; }
+  .rp-field:nth-child(9)  { animation-delay: 0.45s; }
+  .rp-field:nth-child(10) { animation-delay: 0.50s; }
+
+  @keyframes fieldIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
   }
 `;
 
+/* ── Field component ─────────────────────────────────────── */
+function Field({ label, hint, icon: Icon, children, full }) {
+  return (
+    <div className={`rp-field${full ? " full" : ""}`}>
+      <label className="rp-label">{label}</label>
+      <div className="rp-input-wrap">
+        {Icon && <Icon size={14} className="rp-input-icon" />}
+        {children}
+      </div>
+      {hint && <p className="rp-hint">{hint}</p>}
+    </div>
+  );
+}
+
+/* ── Main Component ──────────────────────────────────────── */
 export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [category, setCategory] = useState("");
+  const [showPass, setShowPass] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const router = useRouter();
 
   async function handleSubmit(e) {
@@ -408,283 +770,536 @@ export default function RegisterPage() {
       redirect: false,
     });
 
-    toast.success("Restaurant registered!");
+    toast.success("Welcome! Your restaurant account is ready 🎉");
     router.push("/dashboard");
   }
 
   return (
     <>
-      <style>{styles}</style>
-
+      <style>{css}</style>
       <div className="rp-root">
-        {/* Atmospheric layers */}
-        <div className="rp-noise" />
-        <div className="rp-glow" />
-        <div className="rp-grid" />
-
-        {/* Nav */}
+        {/* ── NAV ── */}
         <nav className="rp-nav">
-          <a className="rp-logo" href="/">
-            Table<span>OS</span>
-          </a>
-          <span className="rp-nav-right">
-            Already have an account? <a href="/login">Sign in →</a>
+          <Link href="/" className="rp-logo">
+            <div className="rp-logo-icon">
+              <ChefHat size={18} color="white" />
+            </div>
+            <span className="rp-logo-text">
+              Restaurant<span>OS</span>
+            </span>
+          </Link>
+          <span className="rp-nav-hint">
+            Already have an account? <Link href="/login">Sign in →</Link>
           </span>
         </nav>
 
-        {/* Main */}
+        {/* ── MAIN ── */}
         <main className="rp-main">
-          <div className="rp-card">
-            {/* ── HEADER ── */}
-            <div className="rp-header">
-              <div className="rp-header-top">
-                <div className="rp-icon-wrap">
-                  <Store size={22} />
-                </div>
-                <div>
-                  <span className="rp-eyebrow">New Account · Step 1 of 1</span>
-                  <h1 className="rp-title">
-                    Register Your
-                    <br />
-                    <em>Restaurant</em>
-                  </h1>
-                </div>
+          {/* Left sidebar — social proof */}
+          <div className="rp-col-left">
+            <div className="rp-side-card" style={{ animationDelay: "0.3s" }}>
+              <div className="rp-side-icon" style={{ background: "#fff3ed" }}>
+                <Store size={16} color="#ff6b35" />
               </div>
-              <p className="rp-subtitle">
-                Set up your restaurant and start managing orders, tables, and
-                revenue in minutes. No credit card required.
-              </p>
-              <div className="rp-progress">
-                <div className="rp-dot" />
-                <div className="rp-dot inactive" />
-                <div className="rp-dot inactive" />
+              <div className="rp-side-stat" style={{ color: "#ff6b35" }}>
+                12k+
+              </div>
+              <div className="rp-side-label">Restaurants on platform</div>
+            </div>
+            <div className="rp-side-card" style={{ animationDelay: "0.45s" }}>
+              <div className="rp-side-icon" style={{ background: "#f0fdf4" }}>
+                <CheckCircle2 size={16} color="#34a853" />
+              </div>
+              <div className="rp-side-stat" style={{ color: "#34a853" }}>
+                5M+
+              </div>
+              <div className="rp-side-label">Orders processed monthly</div>
+            </div>
+            <div className="rp-side-card" style={{ animationDelay: "0.6s" }}>
+              <div style={{ display: "flex", gap: 3, marginBottom: 10 }}>
+                {[...Array(5)].map((_, i) => (
+                  <span key={i} style={{ color: "#ffa500", fontSize: 15 }}>
+                    ★
+                  </span>
+                ))}
+              </div>
+              <div
+                className="rp-side-stat"
+                style={{ color: "#1a1a1a", fontSize: 24 }}
+              >
+                "Changed how we operate"
+              </div>
+              <div className="rp-side-label" style={{ marginTop: 6 }}>
+                — Marco R., Bella Italia
               </div>
             </div>
+          </div>
 
-            {/* ── CONTENT ── */}
-            <div className="rp-content">
-              <form onSubmit={handleSubmit}>
-                {/* ── RESTAURANT INFO ── */}
-                <div className="rp-section">
-                  <div className="rp-section-label">
-                    <div className="rp-section-label-icon">
-                      <Store size={15} />
+          {/* ── CENTER: FORM CARD ── */}
+          <div className="rp-col-center">
+            <div className="rp-card">
+              {/* Header */}
+              <div className="rp-header">
+                <div className="rp-header-inner">
+                  <div className="rp-header-top">
+                    <div className="rp-header-icon">
+                      <Store size={24} />
                     </div>
                     <div>
-                      <span className="rp-section-label-text">
-                        Restaurant Information
+                      <span className="rp-eyebrow">
+                        New Account · Free Trial
                       </span>
-                      <span className="rp-section-label-num">SECTION 01</span>
+                      <h1 className="rp-title">
+                        Register Your
+                        <br />
+                        <em>Restaurant</em>
+                      </h1>
                     </div>
                   </div>
-
-                  <div className="rp-grid-2">
-                    {/* Restaurant Name */}
-                    <div className="rp-field">
-                      <Label className="rp-label">Restaurant Name</Label>
-                      <Input
-                        name="restaurantName"
-                        placeholder="Burger Palace"
-                        required
-                        className="rp-input"
-                      />
-                    </div>
-
-                    {/* Category */}
-                    <div className="rp-field">
-                      <Label className="rp-label">Category</Label>
-                      <Select value={category} onValueChange={setCategory}>
-                        <SelectTrigger className="rp-select-trigger">
-                          <SelectValue placeholder="Select category" />
-                        </SelectTrigger>
-                        <SelectContent position="popper" className="z-50">
-                          <SelectItem value="fast-food">Fast Food</SelectItem>
-                          <SelectItem value="cafe">Cafe</SelectItem>
-                          <SelectItem value="fine-dining">
-                            Fine Dining
-                          </SelectItem>
-                          <SelectItem value="desserts">Desserts</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <input
-                        type="hidden"
-                        name="category"
-                        value={category}
-                        required
-                      />
-                    </div>
-
-                    {/* Mall / Location */}
-                    <div className="rp-field">
-                      <Label className="rp-label">Mall / Location</Label>
-                      <Input
-                        name="mallName"
-                        placeholder="Jamuna Mall"
-                        required
-                        className="rp-input"
-                      />
-                    </div>
-
-                    {/* Total Tables */}
-                    <div className="rp-field">
-                      <Label className="rp-label">Total Tables</Label>
-                      <Input
-                        name="tablesCount"
-                        type="number"
-                        min="1"
-                        placeholder="40"
-                        required
-                        className="rp-input"
-                      />
-                    </div>
-
-                    {/* Address */}
-                    <div className="rp-field rp-full">
-                      <Label className="rp-label">Address</Label>
-                      <Textarea
-                        name="address"
-                        placeholder="Level 3, Food Court Zone B"
-                        required
-                        className="rp-textarea"
-                      />
-                    </div>
-
-                    {/* Restaurant Phone */}
-                    <div className="rp-field">
-                      <Label className="rp-label">Restaurant Phone</Label>
-                      <Input
-                        name="restaurantPhone"
-                        placeholder="+8801XXXXXXXXX"
-                        required
-                        className="rp-input"
-                      />
-                    </div>
-
-                    {/* Restaurant Email */}
-                    <div className="rp-field">
-                      <Label className="rp-label">Restaurant Email</Label>
-                      <Input
-                        name="restaurantEmail"
-                        type="email"
-                        placeholder="info@restaurant.com"
-                        required
-                        className="rp-input"
-                      />
-                    </div>
+                  <p className="rp-subtitle">
+                    Set up your restaurant and start managing orders, tables,
+                    and revenue — all in one place. Ready in under 5 minutes.
+                  </p>
+                  <div className="rp-progress">
+                    <div className="rp-progress-dot active" />
+                    <div className="rp-progress-dot inactive" />
+                    <div className="rp-progress-dot inactive" />
                   </div>
                 </div>
+              </div>
 
-                {/* ── DIVIDER ── */}
-                <div className="rp-divider" />
-
-                {/* ── ADMIN ACCOUNT ── */}
-                <div className="rp-section">
-                  <div className="rp-section-label">
-                    <div className="rp-section-label-icon">
-                      <User size={15} />
+              {/* Form body */}
+              <div className="rp-body">
+                <form onSubmit={handleSubmit}>
+                  {/* ── SECTION 1: Restaurant Info ── */}
+                  <div className="rp-section">
+                    <div className="rp-section-header">
+                      <div
+                        className="rp-section-icon"
+                        style={{ background: "#fff3ed" }}
+                      >
+                        <Store size={15} color="#ff6b35" />
+                      </div>
+                      <div className="rp-section-text">
+                        <span className="rp-section-title">
+                          Restaurant Information
+                        </span>
+                        <span className="rp-section-num">Section 01 of 02</span>
+                      </div>
                     </div>
-                    <div>
-                      <span className="rp-section-label-text">
-                        Admin Account
-                      </span>
-                      <span className="rp-section-label-num">SECTION 02</span>
+
+                    <div className="rp-grid">
+                      <Field
+                        label="Restaurant Name"
+                        icon={Store}
+                        hint="The name your customers will see"
+                      >
+                        <Input
+                          name="restaurantName"
+                          placeholder="Burger Palace"
+                          required
+                          autoFocus
+                          className="rp-input"
+                          style={{ paddingLeft: 36 }}
+                        />
+                      </Field>
+
+                      <Field
+                        label="Cuisine Type"
+                        hint="Helps us customize your dashboard"
+                      >
+                        <div className="rp-select" style={{ width: "100%" }}>
+                          <Select value={category} onValueChange={setCategory}>
+                            <SelectTrigger
+                              className="rp-input"
+                              style={{
+                                paddingLeft: 14,
+                                height: 42,
+                                border: "1.5px solid #e8e8e8",
+                                borderRadius: 10,
+                                background: "#fafaf9",
+                                fontSize: 13.5,
+                              }}
+                            >
+                              <SelectValue placeholder="Select cuisine…" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="fast-food">
+                                🍔 Fast Food
+                              </SelectItem>
+                              <SelectItem value="cafe">☕ Café</SelectItem>
+                              <SelectItem value="fine-dining">
+                                🍷 Fine Dining
+                              </SelectItem>
+                              <SelectItem value="desserts">
+                                🍰 Desserts
+                              </SelectItem>
+                              <SelectItem value="pizza">🍕 Pizza</SelectItem>
+                              <SelectItem value="asian">🍜 Asian</SelectItem>
+                              <SelectItem value="other">🍽️ Other</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <input
+                            type="hidden"
+                            name="category"
+                            value={category}
+                          />
+                        </div>
+                      </Field>
+
+                      <Field
+                        label="Mall / Location"
+                        icon={MapPin}
+                        hint="Where your restaurant is located"
+                      >
+                        <Input
+                          name="mallName"
+                          placeholder="Jamuna Future Park"
+                          required
+                          className="rp-input"
+                          style={{ paddingLeft: 36 }}
+                        />
+                      </Field>
+
+                      <Field
+                        label="Number of Tables"
+                        icon={Hash}
+                        hint="You can update this later"
+                      >
+                        <Input
+                          name="tablesCount"
+                          type="number"
+                          min="1"
+                          max="999"
+                          placeholder="40"
+                          required
+                          className="rp-input"
+                          style={{ paddingLeft: 36 }}
+                        />
+                      </Field>
+
+                      <Field
+                        label="Restaurant Phone"
+                        icon={Phone}
+                        hint="For customer bookings & inquiries"
+                        full
+                      >
+                        <Input
+                          name="restaurantPhone"
+                          placeholder="+880 1XXX-XXXXXX"
+                          required
+                          className="rp-input"
+                          style={{ paddingLeft: 36 }}
+                        />
+                      </Field>
+
+                      <Field
+                        label="Restaurant Email"
+                        icon={Mail}
+                        hint="Public contact email for reservations"
+                      >
+                        <Input
+                          name="restaurantEmail"
+                          type="email"
+                          placeholder="info@yourrestaurant.com"
+                          required
+                          className="rp-input"
+                          style={{ paddingLeft: 36 }}
+                        />
+                      </Field>
+
+                      <Field
+                        label="Full Address"
+                        icon={MapPin}
+                        hint="Complete address for delivery and listings"
+                        full
+                      >
+                        <Textarea
+                          name="address"
+                          placeholder="Level 3, Food Court Zone B, Jamuna Future Park, Dhaka"
+                          required
+                          className="rp-textarea"
+                          style={{ paddingLeft: 36 }}
+                        />
+                      </Field>
                     </div>
                   </div>
 
-                  <div className="rp-grid-2">
-                    {/* Owner Name */}
-                    <div className="rp-field">
-                      <Label className="rp-label">Owner Name</Label>
-                      <Input
-                        name="ownerName"
-                        placeholder="John Doe"
-                        required
-                        className="rp-input"
-                      />
+                  {/* ── DIVIDER ── */}
+                  <div className="rp-divider">
+                    <div className="rp-divider-line" />
+                    <span className="rp-divider-text">Admin Account</span>
+                    <div className="rp-divider-line" />
+                  </div>
+
+                  {/* ── SECTION 2: Admin Account ── */}
+                  <div className="rp-section">
+                    <div className="rp-section-header">
+                      <div
+                        className="rp-section-icon"
+                        style={{ background: "#f0fdf4" }}
+                      >
+                        <User size={15} color="#34a853" />
+                      </div>
+                      <div className="rp-section-text">
+                        <span className="rp-section-title">
+                          Your Admin Account
+                        </span>
+                        <span className="rp-section-num">Section 02 of 02</span>
+                      </div>
                     </div>
 
-                    {/* Admin Email */}
-                    <div className="rp-field">
-                      <Label className="rp-label">Admin Email</Label>
-                      <Input
-                        name="email"
-                        type="email"
-                        placeholder="admin@restaurant.com"
-                        required
-                        className="rp-input"
-                      />
-                    </div>
+                    <div className="rp-grid">
+                      <Field
+                        label="Your Name"
+                        icon={User}
+                        hint="For account verification"
+                      >
+                        <Input
+                          name="ownerName"
+                          placeholder="John Doe"
+                          required
+                          className="rp-input"
+                          style={{ paddingLeft: 36 }}
+                        />
+                      </Field>
 
-                    {/* Password */}
-                    <div className="rp-field">
-                      <Label className="rp-label">Password</Label>
-                      <Input
-                        name="password"
-                        type="password"
-                        minLength={6}
-                        placeholder="••••••••"
-                        required
-                        className="rp-input"
-                      />
-                    </div>
+                      <Field
+                        label="Login Email"
+                        icon={Mail}
+                        hint="You'll use this to sign in"
+                      >
+                        <Input
+                          name="email"
+                          type="email"
+                          placeholder="admin@yourrestaurant.com"
+                          required
+                          className="rp-input"
+                          style={{ paddingLeft: 36 }}
+                        />
+                      </Field>
 
-                    {/* Confirm Password */}
-                    <div className="rp-field">
-                      <Label className="rp-label">Confirm Password</Label>
-                      <Input
-                        name="confirmPassword"
-                        type="password"
-                        minLength={6}
-                        placeholder="••••••••"
-                        required
-                        className="rp-input"
-                      />
+                      <Field
+                        label="Password"
+                        icon={Lock}
+                        hint="Minimum 6 characters"
+                      >
+                        <Input
+                          name="password"
+                          type={showPass ? "text" : "password"}
+                          minLength={6}
+                          placeholder="Create a strong password"
+                          required
+                          className="rp-input"
+                          style={{ paddingLeft: 36, paddingRight: 40 }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPass((v) => !v)}
+                          style={{
+                            position: "absolute",
+                            right: 12,
+                            background: "none",
+                            border: "none",
+                            cursor: "pointer",
+                            color: "#bbb",
+                            padding: 0,
+                            display: "flex",
+                          }}
+                        >
+                          {showPass ? <EyeOff size={14} /> : <Eye size={14} />}
+                        </button>
+                      </Field>
+
+                      <Field
+                        label="Confirm Password"
+                        icon={Lock}
+                        hint="Must match your password"
+                      >
+                        <Input
+                          name="confirmPassword"
+                          type={showConfirm ? "text" : "password"}
+                          minLength={6}
+                          placeholder="Re-enter your password"
+                          required
+                          className="rp-input"
+                          style={{ paddingLeft: 36, paddingRight: 40 }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowConfirm((v) => !v)}
+                          style={{
+                            position: "absolute",
+                            right: 12,
+                            background: "none",
+                            border: "none",
+                            cursor: "pointer",
+                            color: "#bbb",
+                            padding: 0,
+                            display: "flex",
+                          }}
+                        >
+                          {showConfirm ? (
+                            <EyeOff size={14} />
+                          ) : (
+                            <Eye size={14} />
+                          )}
+                        </button>
+                      </Field>
                     </div>
                   </div>
-                </div>
 
-                {/* ── SUBMIT ── */}
-                <div style={{ paddingTop: "32px" }}>
+                  {/* ── SUBMIT ── */}
                   <button
                     type="submit"
                     className="rp-submit"
                     disabled={loading}
                   >
-                    {loading
-                      ? "Creating account…"
-                      : "Create Restaurant Account"}
+                    {loading ? (
+                      <>
+                        <Loader2
+                          size={16}
+                          style={{ animation: "spin 1s linear infinite" }}
+                        />
+                        Creating your account…
+                      </>
+                    ) : (
+                      <>
+                        Create Restaurant Account
+                        <ArrowRight size={16} />
+                      </>
+                    )}
                   </button>
 
                   <p className="rp-login-hint">
-                    Already have an account? <a href="/login">Login here</a>
+                    Already have an account?{" "}
+                    <Link href="/login">Sign in here</Link>
                   </p>
 
                   {/* Trust signals */}
                   <div className="rp-trust">
                     <div className="rp-trust-item">
-                      <span className="rp-trust-dot" />
-                      No credit card required
+                      <Shield size={13} className="rp-trust-icon" />
+                      No credit card
                     </div>
                     <div className="rp-trust-item">
-                      <span className="rp-trust-dot" />
+                      <Gift size={13} className="rp-trust-icon" />
                       14-day free trial
                     </div>
                     <div className="rp-trust-item">
-                      <span className="rp-trust-dot" />
+                      <Clock size={13} className="rp-trust-icon" />
                       Cancel anytime
                     </div>
                   </div>
+                </form>
+              </div>
+            </div>
+          </div>
+
+          {/* Right sidebar — how it works */}
+          <div className="rp-col-right">
+            <p
+              style={{
+                fontSize: 11,
+                fontWeight: 700,
+                letterSpacing: 2,
+                textTransform: "uppercase",
+                color: "#bbb",
+                marginBottom: 4,
+              }}
+            >
+              How it works
+            </p>
+            {[
+              {
+                n: "01",
+                title: "Register your restaurant",
+                desc: "Fill in your restaurant details and create your admin account.",
+              },
+              {
+                n: "02",
+                title: "Set up your menu & tables",
+                desc: "Add your menu items, configure tables, and customize your QR codes.",
+              },
+              {
+                n: "03",
+                title: "Start accepting orders",
+                desc: "Go live instantly. Customers scan, order, and pay from their phones.",
+              },
+              {
+                n: "04",
+                title: "Track & grow",
+                desc: "Use live analytics to optimize pricing, staffing, and peak hours.",
+              },
+            ].map((s, i) => (
+              <div
+                key={i}
+                className="rp-step-item"
+                style={{ animationDelay: `${0.3 + i * 0.1}s` }}
+              >
+                <div className="rp-step-num">{s.n}</div>
+                <div>
+                  <div className="rp-step-title">{s.title}</div>
+                  <div className="rp-step-desc">{s.desc}</div>
                 </div>
-              </form>
+              </div>
+            ))}
+
+            {/* Security badge */}
+            <div
+              className="rp-step-item"
+              style={{
+                animationDelay: "0.75s",
+                background: "#fafaf9",
+                borderColor: "#f0f0ee",
+              }}
+            >
+              <div
+                className="rp-step-num"
+                style={{ background: "#f0fdf4", color: "#34a853" }}
+              >
+                <Shield size={13} />
+              </div>
+              <div>
+                <div className="rp-step-title">Bank-level security</div>
+                <div className="rp-step-desc">
+                  SOC 2 compliant · 256-bit encryption · Daily backups
+                </div>
+              </div>
             </div>
           </div>
         </main>
 
         {/* Footer */}
         <footer className="rp-footer">
-          <p>© 2026 TableOS · All rights reserved</p>
-          <p>Privacy Policy · Terms of Service</p>
+          <span>© 2026 RestaurantOS · All rights reserved</span>
+          <span>Privacy Policy · Terms of Service</span>
         </footer>
+
+        {/* Floating social-proof badge */}
+        <div className="rp-float-badge">
+          <div className="rp-float-avatar">
+            {["🧑‍🍳", "👨‍🍳", "👩‍🍳"].map((e, i) => (
+              <span
+                key={i}
+                style={{ background: `hsl(${i * 40 + 20},60%,88%)` }}
+              >
+                {e}
+              </span>
+            ))}
+          </div>
+          <div className="rp-float-text">
+            <strong>47 restaurants</strong>
+            <span>joined this week</span>
+          </div>
+        </div>
+
+        <style>{`
+          @keyframes spin {
+            from { transform: rotate(0deg); }
+            to   { transform: rotate(360deg); }
+          }
+        `}</style>
       </div>
     </>
   );
