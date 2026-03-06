@@ -8,9 +8,7 @@ import { CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 export const dynamic = "force-dynamic";
 
 export default function OnboardingSuccess() {
-  const sessionResult = useSession();
-  const session = sessionResult?.data;
-  const status = sessionResult?.status;
+  const { data: session, status } = useSession() || {};
   const router = useRouter();
   const [stripeStatus, setStripeStatus] = useState(null);
   const [loading, setLoading] = useState(true);
