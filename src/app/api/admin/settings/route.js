@@ -32,8 +32,10 @@ export async function GET() {
         _id: "platform_settings",
         platformName: "Restaurant SaaS",
         platformEmail: "support@example.com",
+        platformLogo: "",
         enableRegistration: true,
         maintenanceMode: false,
+        pricingPlans: [],
         features: {
           orders: true,
           tables: true,

@@ -45,13 +45,9 @@ export async function POST(req) {
       mode: "payment",
       success_url: `${process.env.NEXT_PUBLIC_APP_URL}/payment?success=true&orderId=${orderId}`,
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/payment?canceled=true&orderId=${orderId}`,
-      payment_intent_data: {
-        application_fee_amount: Math.floor(
-          amount *
-            (parseFloat(process.env.STRIPE_PLATFORM_FEE_PERCENT || 2.5) / 100),
-        ),
-        transfer_data: { destination: restaurant.stripeAccountId },
-      },
+      // Note: Funds go directly to platform account
+      // application_fee_amount is not used because transfer_data is not specified
+      // Restaurant transfers can be handled separately after payment via webhook
       metadata: { orderId, restaurantId },
     });
 

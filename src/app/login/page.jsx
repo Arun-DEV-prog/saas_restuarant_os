@@ -111,7 +111,7 @@ export default function LoginPage() {
                       type="email"
                       required
                       placeholder="you@restaurant.com"
-                      className="pl-12 h-12 border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 rounded-xl transition-all bg-gray-50/50 focus:bg-white"
+                      className="pl-12 h-12 border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 rounded-xl transition-all bg-gray-50/50 focus:bg-white text-black"
                       autoFocus
                     />
                   </div>
@@ -144,7 +144,7 @@ export default function LoginPage() {
                       type="password"
                       required
                       placeholder="••••••••"
-                      className="pl-12 h-12 border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 rounded-xl transition-all bg-gray-50/50 focus:bg-white"
+                      className="pl-12 h-12 border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 rounded-xl transition-all bg-gray-50/50 focus:bg-white text-black"
                     />
                   </div>
                   <p className="text-xs text-gray-500 ml-1">
