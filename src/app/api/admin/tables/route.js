@@ -21,7 +21,11 @@ export async function GET(request) {
       userId: session?.user?.id,
     });
 
-    if (!session || !userRole || !["owner", "admin"].includes(userRole)) {
+    if (
+      !session ||
+      !userRole ||
+      !["owner", "admin", "restaurant_admin"].includes(userRole)
+    ) {
       console.log("❌ Auth failed: missing session or invalid role", userRole);
       return NextResponse.json(
         { error: "Forbidden - Admin role required" },
