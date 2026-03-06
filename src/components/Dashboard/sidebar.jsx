@@ -160,6 +160,16 @@ export default function Sidebar() {
                 icon: "🔥",
               },
               {
+                name: "Integrations",
+                href: `/dashboard/${restaurantId}/integrations`,
+                icon: "🔗",
+              },
+              {
+                name: "Billing & Plans",
+                href: `/dashboard/billing`,
+                icon: "💳",
+              },
+              {
                 name: "Settings",
                 href: `/dashboard/${restaurantId}/setting`,
                 icon: "⚙️",

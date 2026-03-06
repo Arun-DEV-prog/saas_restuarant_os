@@ -56,14 +56,20 @@ export async function GET(request) {
       restaurants.map((r) => r.name || r.slug),
     );
 
-    // Map to response format
-    const restaurantsWithStats = restaurants.map((restaurant) => ({
-      ...restaurant,
-      ordersCount: restaurant.orders?.length || 0,
-      totalRevenue: 0, // Calculate if needed
-      tablesCount: restaurant.tables?.length || restaurant.tablesCount || 0,
-      menusCount: restaurant.menus?.length || 0,
-    }));
+    // Map to response format with safe array handling
+    const restaurantsWithStats = restaurants.map((restaurant) => {
+      const orders = Array.isArray(restaurant.orders) ? restaurant.orders : [];
+      const menus = Array.isArray(restaurant.menus) ? restaurant.menus : [];
+      const tables = Array.isArray(restaurant.tables) ? restaurant.tables : [];
+
+      return {
+        ...restaurant,
+        ordersCount: orders.length,
+        totalRevenue: 0, // Calculate if needed
+        tablesCount: tables.length || restaurant.tablesCount || 0,
+        menusCount: menus.length,
+      };
+    });
 
     return Response.json({
       success: true,

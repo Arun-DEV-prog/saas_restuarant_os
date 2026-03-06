@@ -11,20 +11,41 @@ import { ObjectId } from "mongodb";
 // ─────────────────────────────────────────────────────────────
 export async function GET(request) {
   try {
-    // Check authorization - middleware already validated JWT role
+    // Check authorization
     const session = await getServerSession(authOptions);
     const userRole = session?.user?.role || session?.user?.userRole;
+    const userId = session?.user?.id;
 
-    if (!session || !userRole || !["owner", "admin"].includes(userRole)) {
-      console.log("❌ Auth failed: missing session or invalid role", userRole);
-      return NextResponse.json(
-        { error: "Forbidden - Admin role required" },
-        { status: 403 },
-      );
+    if (!session || !userRole) {
+      console.log("❌ Auth failed: missing session", userRole);
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { searchParams } = new URL(request.url);
     const restaurantId = searchParams.get("restaurantId");
+
+    // Check role-based access
+    const isOwnerOrAdmin = ["owner", "admin"].includes(userRole);
+    const isRestaurantAdmin = userRole === "restaurant_admin";
+
+    if (!isOwnerOrAdmin && !isRestaurantAdmin) {
+      console.log("❌ Auth failed: insufficient role", userRole);
+      return NextResponse.json(
+        { error: "Forbidden - insufficient permissions" },
+        { status: 403 },
+      );
+    }
+
+    // If restaurant_admin, verify they own this restaurant
+    if (isRestaurantAdmin && session?.user?.restaurantId !== restaurantId) {
+      console.log(
+        "❌ Auth failed: restaurant_admin accessing different restaurant",
+      );
+      return NextResponse.json(
+        { error: "Forbidden - not your restaurant" },
+        { status: 403 },
+      );
+    }
     if (!restaurantId)
       return NextResponse.json(
         { error: "restaurantId required" },

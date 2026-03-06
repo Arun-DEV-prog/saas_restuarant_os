@@ -410,6 +410,132 @@ export default function AdminRestaurantDetailPage() {
               )}
             </div>
           </div>
+
+          {/* Menus Section */}
+          {restaurant.menus && restaurant.menus.length > 0 && (
+            <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-gray-200 dark:border-slate-700">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6">
+                Menus ({restaurant.menus.length})
+              </h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {restaurant.menus.map((menu, index) => (
+                  <div
+                    key={menu._id || index}
+                    className="p-4 bg-gray-50 dark:bg-slate-700 rounded-lg border border-gray-200 dark:border-slate-600"
+                  >
+                    <h4 className="font-semibold text-gray-900 dark:text-white mb-2">
+                      {menu.name || menu.title || `Menu ${index + 1}`}
+                    </h4>
+                    {menu.description && (
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-2 line-clamp-2">
+                        {menu.description}
+                      </p>
+                    )}
+                    {menu._id && (
+                      <p className="text-xs text-gray-500 dark:text-gray-500 font-mono truncate">
+                        ID: {menu._id.toString()}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Orders Section */}
+          {restaurant.orders && restaurant.orders.length > 0 && (
+            <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-gray-200 dark:border-slate-700">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6">
+                Recent Orders ({restaurant.orders.length})
+              </h3>
+
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-gray-200 dark:border-slate-700">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                        Order #
+                      </th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                        Persons
+                      </th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                        Table
+                      </th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                        Total
+                      </th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                        Status
+                      </th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                        Items
+                      </th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                        Date
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {restaurant.orders.slice(0, 10).map((order, index) => (
+                      <tr
+                        key={order._id || index}
+                        className="border-b border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-700/50"
+                      >
+                        <td className="px-4 py-3 text-sm text-gray-900 dark:text-white font-mono">
+                          {order.orderNumber || `Order ${index + 1}`}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
+                          {order.persons || "-"}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
+                          {order.tableNumber || "-"}
+                        </td>
+                        <td className="px-4 py-3 text-sm font-semibold text-green-600 dark:text-green-400">
+                          ${(order.total || 0).toFixed(2)}
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          <span
+                            className={`px-3 py-1 rounded-full text-xs font-medium ${
+                              order.status === "completed"
+                                ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
+                                : order.status === "pending"
+                                  ? "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400"
+                                  : order.status === "cancelled"
+                                    ? "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400"
+                                    : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-400"
+                            }`}
+                          >
+                            {order.status || "unknown"}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
+                          {Array.isArray(order.items) ? order.items.length : 0}{" "}
+                          item
+                          {Array.isArray(order.items) &&
+                          order.items.length !== 1
+                            ? "s"
+                            : ""}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
+                          {order.createdAt
+                            ? new Date(order.createdAt).toLocaleDateString()
+                            : "-"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {restaurant.orders.length > 10 && (
+                <div className="mt-4 text-center text-sm text-gray-600 dark:text-gray-400">
+                  Showing 10 of {restaurant.orders.length} orders
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </ProtectedAdminRoute>

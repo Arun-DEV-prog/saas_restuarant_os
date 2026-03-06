@@ -33,11 +33,19 @@ export async function middleware(request) {
       return NextResponse.redirect(new URL("/login", request.url));
     }
 
-    // Check if user has owner/admin role
+    // Check if user has owner/admin role OR restaurant_admin for table routes
     const userRole = token.role || token.userRole;
     const isOwner = userRole === "owner";
     const isAdmin = userRole === "admin";
-    const isAuthorized = isOwner || isAdmin;
+    const isRestaurantAdmin = userRole === "restaurant_admin";
+
+    // restaurant_admin can only access table/seating routes
+    const isTableRoute =
+      pathname.includes("/tables") ||
+      pathname.includes("/seating") ||
+      pathname.includes("/config");
+    const isAuthorized =
+      isOwner || isAdmin || (isRestaurantAdmin && isTableRoute);
 
     if (!isAuthorized) {
       console.warn(
@@ -49,7 +57,10 @@ export async function middleware(request) {
         return NextResponse.json(
           {
             error: "Forbidden - Insufficient permissions",
-            requiredRole: "owner or admin",
+            requiredRole:
+              userRole === "restaurant_admin"
+                ? "owner, admin, or authorized restaurant_admin"
+                : "owner or admin",
             userRole: userRole || "unknown",
           },
           { status: 403 },
@@ -60,10 +71,8 @@ export async function middleware(request) {
       return NextResponse.redirect(new URL("/unauthorized", request.url));
     }
 
-    // Log successful admin access
-    console.log(
-      `✅ Admin access granted to ${pathname} for user role: ${userRole}`,
-    );
+    // Log successful admin/restaurant access
+    console.log(`✅ Access granted to ${pathname} for user role: ${userRole}`);
   }
 
   return NextResponse.next();

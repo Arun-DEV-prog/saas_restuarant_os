@@ -3,9 +3,189 @@
 import ProtectedAdminRoute from "@/components/ProtectedAdminRoute";
 import DashboardHeader from "@/components/Dashboard/DashboardHeader";
 import { useState, useEffect } from "react";
-import { Settings, Save, RefreshCw, AlertCircle } from "lucide-react";
+import {
+  Settings,
+  Save,
+  RefreshCw,
+  AlertCircle,
+  CreditCard,
+  Loader2,
+} from "lucide-react";
 import { toast } from "sonner";
 
+// ══════════════════════════════════════════════════════════════════════════════
+// BILLING SUBSCRIPTIONS TAB
+// ══════════════════════════════════════════════════════════════════════════════
+function BillingSubscriptionsTab() {
+  const [subscriptions, setSubscriptions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    fetchSubscriptions();
+  }, []);
+
+  const fetchSubscriptions = async () => {
+    try {
+      setLoading(true);
+      setError("");
+
+      const res = await fetch("/api/admin/subscriptions");
+      if (!res.ok) throw new Error("Failed to fetch subscriptions");
+
+      const data = await res.json();
+      setSubscriptions(Array.isArray(data) ? data : data.data || []);
+    } catch (error) {
+      console.error("Error fetching subscriptions:", error);
+      setError(error.message);
+      toast.error("Failed to load subscriptions");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case "active":
+        return "emerald";
+      case "pending":
+        return "amber";
+      case "canceled":
+      case "expired":
+        return "red";
+      default:
+        return "gray";
+    }
+  };
+
+  const getStatusBadgeClass = (status) => {
+    const colors = {
+      active:
+        "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300",
+      pending:
+        "bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300",
+      canceled: "bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-300",
+      expired: "bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-300",
+      default:
+        "bg-gray-50 dark:bg-gray-950/30 text-gray-700 dark:text-gray-300",
+    };
+    return colors[status] || colors.default;
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mx-auto mb-2"></div>
+          <p className="text-gray-600 dark:text-gray-400 text-sm">
+            Loading subscriptions...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/50 rounded-lg">
+        <p className="text-red-800 dark:text-red-200">{error}</p>
+        <button
+          onClick={fetchSubscriptions}
+          className="mt-2 text-sm text-red-600 dark:text-red-400 underline hover:no-underline"
+        >
+          Try again
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {subscriptions.length === 0 ? (
+        <div className="p-6 text-center bg-gray-50 dark:bg-white/5 rounded-lg border border-gray-200 dark:border-white/10">
+          <CreditCard size={32} className="mx-auto mb-2 text-gray-400" />
+          <p className="text-gray-600 dark:text-gray-400">
+            No subscriptions found
+          </p>
+        </div>
+      ) : (
+        subscriptions.map((subscription) => (
+          <div
+            key={subscription._id}
+            className="p-4 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg hover:shadow-md transition"
+          >
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  {subscription.restaurantName}
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  Restaurant ID: {subscription.restaurantId}
+                </p>
+              </div>
+              <span
+                className={`text-xs font-bold px-3 py-1 rounded-full capitalize ${getStatusBadgeClass(subscription.status)}`}
+              >
+                {subscription.status}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+              <div>
+                <p className="text-xs text-gray-600 dark:text-gray-400 uppercase font-medium">
+                  Plan
+                </p>
+                <p className="text-sm font-semibold text-gray-900 dark:text-white mt-1">
+                  {subscription.planName}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-xs text-gray-600 dark:text-gray-400 uppercase font-medium">
+                  Price
+                </p>
+                <p className="text-sm font-semibold text-gray-900 dark:text-white mt-1">
+                  ${subscription.planId?.price || subscription.price || "0"}/mo
+                </p>
+              </div>
+
+              <div>
+                <p className="text-xs text-gray-600 dark:text-gray-400 uppercase font-medium">
+                  Start Date
+                </p>
+                <p className="text-sm font-semibold text-gray-900 dark:text-white mt-1">
+                  {new Date(subscription.startDate).toLocaleDateString()}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-xs text-gray-600 dark:text-gray-400 uppercase font-medium">
+                  Renewal
+                </p>
+                <p className="text-sm font-semibold text-gray-900 dark:text-white mt-1">
+                  {new Date(subscription.renewalDate).toLocaleDateString()}
+                </p>
+              </div>
+            </div>
+
+            {subscription.endDate && subscription.status === "canceled" && (
+              <div className="mt-3 p-3 bg-red-50 dark:bg-red-900/20 rounded border border-red-100 dark:border-red-900/50">
+                <p className="text-xs text-red-700 dark:text-red-300">
+                  Ended on{" "}
+                  <span className="font-semibold">
+                    {new Date(subscription.endDate).toLocaleDateString()}
+                  </span>
+                </p>
+              </div>
+            )}
+          </div>
+        ))
+      )}
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
 export default function AdminSettingsPage() {
   const [settings, setSettings] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -261,6 +441,15 @@ export default function AdminSettingsPage() {
                   />
                 </div>
               </div>
+            </div>
+
+            {/* Billing & Subscriptions */}
+            <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-gray-200 dark:border-slate-700">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+                <CreditCard size={24} className="text-blue-600" />
+                Billing & Subscriptions
+              </h2>
+              <BillingSubscriptionsTab />
             </div>
 
             {/* Save Button */}

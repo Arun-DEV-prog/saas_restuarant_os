@@ -18,355 +18,446 @@ import {
 import { toast } from "sonner";
 import { Store, User } from "lucide-react";
 
-/* ─── MATCHING LANDING PAGE STYLES ─────────────────────────────────────────── */
+/* ─── MODERN LIGHT THEME REGISTER PAGE ─────────────────────────────────────── */
 const styles = `
-  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,300;0,400;0,700;1,300;1,400&family=Outfit:wght@200;300;400;500;600&family=DM+Mono:wght@300&display=swap');
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
 
   .rp-root {
-    --bg:       #05050a;
-    --surface:  #0c0c14;
-    --card:     #111118;
-    --border:   rgba(255,255,255,0.08);
-    --gold:     #d4a853;
-    --gold-dim: rgba(212,168,83,0.1);
-    --gold-glow:rgba(212,168,83,0.3);
-    --cream:    #f0e6d0;
-    --muted:    rgba(240,230,208,0.42);
-    --accent:   #c0392b;
-    --green:    #27ae60;
-
     min-height: 100vh;
-    background: var(--bg);
-    color: var(--cream);
-    font-family: 'Outfit', sans-serif;
-    font-weight: 300;
-    position: relative;
-    overflow: hidden;
+    background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 50%, #f0f9ff 100%);
     display: flex;
     flex-direction: column;
   }
 
-  /* ── NOISE OVERLAY ── */
-  .rp-noise {
-    position: fixed; inset: 0; z-index: 0; pointer-events: none;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
-    opacity: .45;
-  }
-
-  /* ── RADIAL GLOW BEHIND FORM ── */
-  .rp-glow {
-    position: fixed; inset: 0; z-index: 0; pointer-events: none;
-    background:
-      radial-gradient(ellipse 60% 50% at 50% -10%, rgba(212,168,83,0.14) 0%, transparent 70%),
-      radial-gradient(ellipse 40% 30% at 10% 80%, rgba(192,57,43,0.07) 0%, transparent 60%);
-  }
-
-  /* ── DECORATIVE GRID LINES ── */
-  .rp-grid {
-    position: fixed; inset: 0; z-index: 0; pointer-events: none;
-    background-image:
-      linear-gradient(rgba(212,168,83,0.04) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(212,168,83,0.04) 1px, transparent 1px);
-    background-size: 60px 60px;
-  }
-
-  /* ── NAV ── */
+  /* ── NAVIGATION ── */
   .rp-nav {
-    position: relative; z-index: 10;
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 20px 60px;
-    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 40px;
+    border-bottom: 1px solid #e5e7eb;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
   }
+
   .rp-logo {
-    font-family: 'Playfair Display', serif;
-    font-size: 22px; font-weight: 700; letter-spacing: 0.04em;
-    color: var(--gold); text-decoration: none;
+    font-size: 18px;
+    font-weight: 600;
+    color: #111827;
+    text-decoration: none;
   }
-  .rp-logo span { color: var(--cream); }
+
+  .rp-logo span {
+    color: #059669;
+  }
+
   .rp-nav-right {
-    font-size: 13px; color: var(--muted);
+    font-size: 13px;
+    color: #6b7280;
   }
+
   .rp-nav-right a {
-    color: var(--gold); text-decoration: none; font-weight: 500;
-    transition: opacity .2s;
+    color: #059669;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s;
   }
-  .rp-nav-right a:hover { opacity: .7; }
+
+  .rp-nav-right a:hover {
+    color: #047857;
+  }
 
   /* ── MAIN LAYOUT ── */
   .rp-main {
-    position: relative; z-index: 10;
     flex: 1;
-    display: flex; align-items: flex-start; justify-content: center;
-    padding: 60px 24px 80px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 40px 20px 60px;
   }
 
   /* ── FORM CARD ── */
   .rp-card {
-    width: 100%; max-width: 780px;
-    background: rgba(11,11,18,0.85);
-    backdrop-filter: blur(32px) saturate(1.4);
-    border: 1px solid var(--border);
-    border-radius: 4px;
+    width: 100%;
+    max-width: 700px;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 10px 40px rgba(0, 0, 0, 0.08);
     overflow: hidden;
-    box-shadow:
-      0 0 0 1px rgba(212,168,83,0.08),
-      0 40px 80px rgba(0,0,0,0.6),
-      0 0 60px rgba(212,168,83,0.06);
-    animation: cardIn .7s cubic-bezier(.22,1,.36,1) both;
-  }
-  @keyframes cardIn {
-    from { opacity:0; transform: translateY(32px); }
-    to   { opacity:1; transform: translateY(0); }
   }
 
   /* ── CARD HEADER ── */
   .rp-header {
-    padding: 52px 56px 36px;
-    border-bottom: 1px solid var(--border);
-    position: relative;
+    padding: 40px;
+    border-bottom: 1px solid #e5e7eb;
+    background: linear-gradient(135deg, #f9fafb 0%, #f0fdf4 100%);
   }
+
   .rp-header-top {
-    display: flex; align-items: center; gap: 20px; margin-bottom: 20px;
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 20px;
   }
+
   .rp-icon-wrap {
-    width: 52px; height: 52px; border-radius: 2px; flex-shrink: 0;
-    background: linear-gradient(135deg, rgba(212,168,83,0.2) 0%, rgba(212,168,83,0.05) 100%);
-    border: 1px solid rgba(212,168,83,0.3);
-    display: flex; align-items: center; justify-content: center;
-    color: var(--gold);
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    flex-shrink: 0;
+    background: linear-gradient(135deg, #dbeafe 0%, #dcfce7 100%);
+    border: 1px solid #86efac;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #059669;
   }
+
   .rp-eyebrow {
-    font-family: 'DM Mono', monospace;
-    font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase;
-    color: var(--gold); margin-bottom: 6px; display: block;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #059669;
+    margin-bottom: 8px;
+    display: block;
   }
+
   .rp-title {
-    font-family: 'Playfair Display', serif;
-    font-size: clamp(24px, 3vw, 36px); font-weight: 300;
-    line-height: 1.1; letter-spacing: -0.01em;
-    color: var(--cream);
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1.2;
+    color: #111827;
   }
-  .rp-title em { font-style: italic; color: var(--gold); }
+
+  .rp-title em {
+    font-style: italic;
+    color: #059669;
+  }
+
   .rp-subtitle {
-    color: var(--muted); font-size: 13px; line-height: 1.7;
-    margin-top: 12px; max-width: 420px;
-  }
-  /* Corner ornament */
-  .rp-header::after {
-    content: '';
-    position: absolute; top: 0; right: 0;
-    width: 120px; height: 120px;
-    background: radial-gradient(circle at top right, rgba(212,168,83,0.1) 0%, transparent 70%);
-    pointer-events: none;
+    color: #6b7280;
+    font-size: 14px;
+    line-height: 1.6;
+    margin-top: 12px;
   }
 
   /* ── PROGRESS DOTS ── */
   .rp-progress {
-    display: flex; gap: 6px; align-items: center; margin-top: 28px;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    margin-top: 20px;
   }
+
   .rp-dot {
-    width: 20px; height: 2px; border-radius: 1px;
-    background: var(--gold); transition: all .3s;
+    width: 20px;
+    height: 3px;
+    border-radius: 2px;
+    background: #059669;
+    transition: all 0.3s;
   }
+
   .rp-dot.inactive {
-    width: 8px; height: 2px; background: var(--border);
+    width: 8px;
+    background: #d1d5db;
   }
 
   /* ── CARD CONTENT ── */
-  .rp-content { padding: 0 56px 52px; }
+  .rp-content {
+    padding: 40px;
+  }
 
-  /* ── SECTION SEPARATOR ── */
+  /* ── SECTION ── */
   .rp-section {
-    padding-top: 40px;
+    margin-bottom: 32px;
   }
+
+  .rp-section:last-of-type {
+    margin-bottom: 0;
+  }
+
   .rp-section-label {
-    display: flex; align-items: center; gap: 12px;
-    margin-bottom: 28px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
   }
+
   .rp-section-label-icon {
-    width: 32px; height: 32px; border-radius: 2px; flex-shrink: 0;
-    background: var(--gold-dim);
-    border: 1px solid rgba(212,168,83,0.2);
-    display: flex; align-items: center; justify-content: center;
-    color: var(--gold);
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    flex-shrink: 0;
+    background: #f0fdf4;
+    border: 1px solid #dcfce7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #059669;
   }
+
   .rp-section-label-text {
-    font-family: 'Playfair Display', serif;
-    font-size: 16px; font-weight: 400; color: var(--cream);
+    font-size: 16px;
+    font-weight: 600;
+    color: #111827;
   }
+
   .rp-section-label-num {
-    font-family: 'DM Mono', monospace;
-    font-size: 10px; letter-spacing: 0.15em;
-    color: rgba(212,168,83,0.4); margin-top: 2px; display: block;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: #9ca3af;
+    text-transform: uppercase;
+    display: block;
+    margin-top: 2px;
   }
 
   /* ── DIVIDER ── */
   .rp-divider {
     height: 1px;
-    background: linear-gradient(90deg, transparent 0%, var(--border) 20%, var(--border) 80%, transparent 100%);
-    margin: 36px 0 0;
-    position: relative;
-  }
-  .rp-divider::after {
-    content: '◆';
-    position: absolute; left: 50%; top: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 8px; color: rgba(212,168,83,0.3);
-    background: rgba(11,11,18,0.95); padding: 0 8px;
+    background: #e5e7eb;
+    margin: 32px 0;
   }
 
   /* ── GRID ── */
   .rp-grid-2 {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
   }
-  .rp-full { grid-column: 1 / -1; }
+
+  .rp-full {
+    grid-column: 1 / -1;
+  }
 
   /* ── FIELD ── */
-  .rp-field { display: flex; flex-direction: column; gap: 8px; }
+  .rp-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
 
   /* ── LABEL ── */
   .rp-label {
-    font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
-    color: var(--muted); font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #6b7280;
   }
 
   /* ── INPUT ── */
   .rp-input {
     width: 100%;
-    background: rgba(255,255,255,0.04);
-    border: 1px solid var(--border);
-    border-radius: 2px;
-    color: var(--cream);
-    padding: 12px 16px;
-    font-family: 'Outfit'; font-size: 14px; font-weight: 300;
+    padding: 11px 14px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    background: #f9fafb;
+    color: #111827;
     outline: none;
-    transition: border-color .25s, background .25s, box-shadow .25s;
-    -webkit-appearance: none;
+    transition: all 0.2s;
   }
-  .rp-input::placeholder { color: rgba(240,230,208,0.2); }
+
+  .rp-input::placeholder {
+    color: #d1d5db;
+  }
+
   .rp-input:focus {
-    border-color: var(--gold);
-    background: rgba(212,168,83,0.05);
-    box-shadow: 0 0 0 3px rgba(212,168,83,0.08);
+    background: white;
+    border-color: #059669;
+    box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1);
   }
-  .rp-input:hover:not(:focus) { border-color: rgba(212,168,83,0.25); }
+
+  .rp-input:hover:not(:focus) {
+    border-color: #bfdbfe;
+  }
 
   /* ── TEXTAREA ── */
   .rp-textarea {
-    width: 100%; min-height: 90px; resize: vertical;
-    background: rgba(255,255,255,0.04);
-    border: 1px solid var(--border);
-    border-radius: 2px;
-    color: var(--cream);
-    padding: 12px 16px;
-    font-family: 'Outfit'; font-size: 14px; font-weight: 300;
+    width: 100%;
+    min-height: 90px;
+    padding: 11px 14px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    background: #f9fafb;
+    color: #111827;
     outline: none;
-    transition: border-color .25s, background .25s, box-shadow .25s;
-  }
-  .rp-textarea::placeholder { color: rgba(240,230,208,0.2); }
-  .rp-textarea:focus {
-    border-color: var(--gold);
-    background: rgba(212,168,83,0.05);
-    box-shadow: 0 0 0 3px rgba(212,168,83,0.08);
+    transition: all 0.2s;
+    resize: vertical;
   }
 
-  /* ── SELECT TRIGGER OVERRIDE ── */
+  .rp-textarea::placeholder {
+    color: #d1d5db;
+  }
+
+  .rp-textarea:focus {
+    background: white;
+    border-color: #059669;
+    box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1);
+  }
+
+  /* ── SELECT TRIGGER ── */
   .rp-select-trigger {
     width: 100% !important;
-    background: rgba(255,255,255,0.04) !important;
-    border: 1px solid var(--border) !important;
-    border-radius: 2px !important;
-    color: var(--cream) !important;
-    padding: 12px 16px !important;
-    font-family: 'Outfit' !important; font-size: 14px !important; font-weight: 300 !important;
+    padding: 11px 14px !important;
+    border: 1px solid #d1d5db !important;
+    border-radius: 8px !important;
+    font-size: 14px !important;
+    background: #f9fafb !important;
+    color: #111827 !important;
     height: auto !important;
-    transition: border-color .25s, background .25s !important;
+    transition: all 0.2s !important;
   }
+
   .rp-select-trigger:focus,
   .rp-select-trigger[data-state="open"] {
-    border-color: var(--gold) !important;
-    background: rgba(212,168,83,0.05) !important;
-    box-shadow: 0 0 0 3px rgba(212,168,83,0.08) !important;
-    outline: none !important;
+    background: white !important;
+    border-color: #059669 !important;
+    box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1) !important;
   }
 
   /* ── SUBMIT BUTTON ── */
   .rp-submit {
     width: 100%;
-    background: var(--gold);
-    color: #05050a;
-    border: none; border-radius: 2px;
-    padding: 16px 32px;
-    font-family: 'Outfit'; font-size: 13px; font-weight: 600;
-    letter-spacing: 0.12em; text-transform: uppercase;
+    padding: 12px 24px;
+    background: #059669;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
     cursor: pointer;
-    transition: all .3s;
-    position: relative; overflow: hidden;
-    margin-top: 12px;
+    transition: all 0.2s;
+    margin-top: 20px;
   }
-  .rp-submit::before {
-    content: '';
-    position: absolute; inset: 0;
-    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.18) 50%, transparent 100%);
-    transform: translateX(-100%);
-    transition: transform .5s;
-  }
-  .rp-submit:hover::before { transform: translateX(100%); }
-  .rp-submit:hover {
-    background: var(--cream);
-    box-shadow: 0 16px 40px var(--gold-glow);
-    transform: translateY(-1px);
-  }
-  .rp-submit:disabled { opacity: .5; cursor: not-allowed; transform: none; box-shadow: none; }
 
-  /* ── LOGIN LINK ── */
+  .rp-submit:hover:not(:disabled) {
+    background: #047857;
+    box-shadow: 0 10px 25px rgba(5, 150, 105, 0.2);
+    transform: translateY(-2px);
+  }
+
+  .rp-submit:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  /* ── LOGIN HINT ── */
   .rp-login-hint {
-    text-align: center; margin-top: 20px;
-    font-size: 13px; color: var(--muted);
+    text-align: center;
+    margin-top: 16px;
+    font-size: 13px;
+    color: #6b7280;
   }
-  .rp-login-hint a {
-    color: var(--gold); font-weight: 500; text-decoration: none;
-    border-bottom: 1px solid rgba(212,168,83,0.3);
-    padding-bottom: 1px; transition: border-color .2s;
-  }
-  .rp-login-hint a:hover { border-color: var(--gold); }
 
-  /* ── FOOTER ── */
-  .rp-footer {
-    position: relative; z-index: 10;
-    border-top: 1px solid var(--border);
-    padding: 16px 60px;
-    display: flex; align-items: center; justify-content: space-between;
+  .rp-login-hint a {
+    color: #059669;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s;
   }
-  .rp-footer p {
-    font-size: 11px; color: rgba(240,230,208,0.2);
-    font-family: 'DM Mono', monospace; letter-spacing: 0.06em;
+
+  .rp-login-hint a:hover {
+    color: #047857;
   }
 
   /* ── TRUST BADGES ── */
   .rp-trust {
-    display: flex; align-items: center; gap: 24px;
-    margin-top: 28px; padding-top: 24px;
-    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid #e5e7eb;
   }
-  .rp-trust-item {
-    display: flex; align-items: center; gap: 8px;
-    font-size: 11px; color: var(--muted);
-  }
-  .rp-trust-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--green); }
 
-  /* ── ANIMATIONS ── */
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+  .rp-trust-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .rp-trust-dot {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: #059669;
+  }
+
+  /* ── FOOTER ── */
+  .rp-footer {
+    border-top: 1px solid #e5e7eb;
+    padding: 20px 40px;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(10px);
+  }
+
+  .rp-footer p {
+    font-size: 11px;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
 
   /* ── RESPONSIVE ── */
-  @media(max-width:640px){
-    .rp-nav { padding: 16px 24px; }
-    .rp-header { padding: 36px 28px 28px; }
-    .rp-content { padding: 0 28px 40px; }
-    .rp-grid-2 { grid-template-columns: 1fr; }
-    .rp-full { grid-column: 1; }
-    .rp-footer { padding: 14px 24px; flex-direction: column; gap: 8px; }
-    .rp-trust { flex-direction: column; align-items: flex-start; gap: 12px; }
+  @media (max-width: 640px) {
+    .rp-nav {
+      padding: 16px 20px;
+    }
+
+    .rp-main {
+      padding: 20px 16px 40px;
+    }
+
+    .rp-header {
+      padding: 24px;
+    }
+
+    .rp-content {
+      padding: 24px;
+    }
+
+    .rp-grid-2 {
+      grid-template-columns: 1fr;
+    }
+
+    .rp-full {
+      grid-column: 1;
+    }
+
+    .rp-title {
+      font-size: 22px;
+    }
+
+    .rp-trust {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+    }
   }
 `;
 
@@ -417,15 +508,10 @@ export default function RegisterPage() {
       <style>{styles}</style>
 
       <div className="rp-root">
-        {/* Atmospheric layers */}
-        <div className="rp-noise" />
-        <div className="rp-glow" />
-        <div className="rp-grid" />
-
-        {/* Nav */}
+        {/* Navigation */}
         <nav className="rp-nav">
-          <a className="rp-logo" href="/">
-            Table<span>OS</span>
+          <a href="/" className="rp-logo">
+            RestaurantOS<span>.</span>
           </a>
           <span className="rp-nav-right">
             Already have an account? <a href="/login">Sign in →</a>
@@ -439,10 +525,12 @@ export default function RegisterPage() {
             <div className="rp-header">
               <div className="rp-header-top">
                 <div className="rp-icon-wrap">
-                  <Store size={22} />
+                  <Store size={20} />
                 </div>
                 <div>
-                  <span className="rp-eyebrow">New Account · Step 1 of 1</span>
+                  <span className="rp-eyebrow">
+                    Create Account · Step 1 of 1
+                  </span>
                   <h1 className="rp-title">
                     Register Your
                     <br />
@@ -468,7 +556,7 @@ export default function RegisterPage() {
                 <div className="rp-section">
                   <div className="rp-section-label">
                     <div className="rp-section-label-icon">
-                      <Store size={15} />
+                      <Store size={16} />
                     </div>
                     <div>
                       <span className="rp-section-label-text">
@@ -581,7 +669,7 @@ export default function RegisterPage() {
                 <div className="rp-section">
                   <div className="rp-section-label">
                     <div className="rp-section-label-icon">
-                      <User size={15} />
+                      <User size={16} />
                     </div>
                     <div>
                       <span className="rp-section-label-text">
@@ -644,7 +732,7 @@ export default function RegisterPage() {
                 </div>
 
                 {/* ── SUBMIT ── */}
-                <div style={{ paddingTop: "32px" }}>
+                <div style={{ paddingTop: "24px" }}>
                   <button
                     type="submit"
                     className="rp-submit"
@@ -656,7 +744,7 @@ export default function RegisterPage() {
                   </button>
 
                   <p className="rp-login-hint">
-                    Already have an account? <a href="/login">Login here</a>
+                    Already have an account? <a href="/login">Sign in here</a>
                   </p>
 
                   {/* Trust signals */}
@@ -682,8 +770,7 @@ export default function RegisterPage() {
 
         {/* Footer */}
         <footer className="rp-footer">
-          <p>© 2026 TableOS · All rights reserved</p>
-          <p>Privacy Policy · Terms of Service</p>
+          <p>© 2026 RestaurantOS · All rights reserved</p>
         </footer>
       </div>
     </>

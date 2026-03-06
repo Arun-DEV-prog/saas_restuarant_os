@@ -53,16 +53,80 @@ export async function GET(request, { params }) {
 
     console.log("✅ Restaurant detail fetch successful");
 
+    // Fetch orders from separate orders collection
+    const ordersCollection = db.collection("orders");
+    const restaurantIdString = id; // Orders use string restaurantId
+
+    let orders = [];
+    try {
+      orders = await ordersCollection
+        .find({ restaurantId: restaurantIdString })
+        .toArray();
+      console.log("📦 Found orders in orders collection:", orders.length);
+    } catch (err) {
+      console.warn(
+        "⚠️ Could not fetch orders from orders collection:",
+        err.message,
+      );
+      orders = [];
+    }
+
+    // Calculate financial stats from orders
+    let totalRevenue = 0;
+    try {
+      totalRevenue = orders.reduce((sum, order) => {
+        if (!order) return sum;
+        // Handle different order total formats
+        const orderTotal = order.total || order.amount || order.subtotal || 0;
+        const amount = typeof orderTotal === "number" ? orderTotal : 0;
+        console.log(`  Order ${order.orderNumber}: $${amount}`);
+        return sum + amount;
+      }, 0);
+    } catch (err) {
+      console.error("⚠️ Error calculating revenue:", err);
+      totalRevenue = 0;
+    }
+
+    const avgOrderValue = orders.length > 0 ? totalRevenue / orders.length : 0;
+
+    // Fetch menus from separate menus collection
+    const menusCollection = db.collection("menus");
+    let menus = [];
+    try {
+      menus = await menusCollection
+        .find({ restaurantId: restaurantIdString })
+        .toArray();
+      console.log("📋 Found menus in menus collection:", menus.length);
+    } catch (err) {
+      console.warn(
+        "⚠️ Could not fetch menus from menus collection:",
+        err.message,
+      );
+      menus = [];
+    }
+
+    console.log(
+      "💰 Financial stats - Total Revenue:",
+      totalRevenue.toFixed(2),
+      "| Avg Order Value:",
+      avgOrderValue.toFixed(2),
+      "| Orders:",
+      orders.length,
+    );
+    console.log("📋 Menus count:", menus.length);
+
     return Response.json({
       success: true,
       restaurant: {
         ...restaurant,
+        orders: orders, // Include orders in response for page display
+        menus: menus, // Include menus in response for page display
         stats: {
-          ordersCount: restaurant.orders?.length || 0,
-          totalRevenue: 0,
-          avgOrderValue: 0,
+          ordersCount: orders.length,
+          totalRevenue: parseFloat(totalRevenue.toFixed(2)),
+          avgOrderValue: parseFloat(avgOrderValue.toFixed(2)),
           tablesCount: restaurant.tables?.length || restaurant.tablesCount || 0,
-          menusCount: restaurant.menus?.length || 0,
+          menusCount: menus.length,
         },
       },
     });

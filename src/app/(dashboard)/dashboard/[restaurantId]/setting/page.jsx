@@ -2,6 +2,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
+import Link from "next/link";
 import { useRef, useState, useEffect } from "react";
 import {
   ImagePlus,
@@ -711,80 +712,287 @@ function DeveloperTab({ restaurantId }) {
   );
 }
 
-function BillingTab() {
+function BillingTab({ restaurantId }) {
+  const [subscription, setSubscription] = useState(null);
+  const [usage, setUsage] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!restaurantId) return;
+
+    const fetchSubscriptionData = async () => {
+      try {
+        setLoading(true);
+        setError("");
+
+        // Fetch subscription details
+        const subscRes = await fetch("/api/subscriptions/check", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ restaurantId }),
+        });
+
+        if (!subscRes.ok) {
+          throw new Error("Failed to fetch subscription");
+        }
+
+        const subscData = await subscRes.json();
+        setSubscription(subscData.data);
+
+        // Fetch usage data
+        if (subscData.data?.subscription?.isActive) {
+          const usageRes = await fetch("/api/subscriptions/usage", {
+            headers: { "X-Restaurant-Id": restaurantId },
+          });
+
+          if (usageRes.ok) {
+            const usageData = await usageRes.json();
+            setUsage(usageData.data);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching subscription:", error);
+        setError(error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSubscriptionData();
+  }, [restaurantId]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-emerald-600 mx-auto mb-2"></div>
+          <p className="text-gray-600 dark:text-gray-400 text-sm">
+            Loading billing info...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !subscription?.subscription) {
+    return (
+      <div className="max-w-xl">
+        <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-900/50 rounded-lg">
+          <p className="text-amber-800 dark:text-amber-200">
+            {error || "No active subscription found"}
+          </p>
+          <p className="text-sm text-amber-700 dark:text-amber-300 mt-2">
+            <Link
+              href="/dashboard/billing"
+              className="underline hover:no-underline"
+            >
+              Purchase a plan now
+            </Link>
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const { subscription: sub, plan } = subscription;
+  const renewalDate = new Date(sub.renewalDate).toLocaleDateString();
+
+  const getGradientClass = () => {
+    if (sub.status === "active")
+      return "bg-gradient-to-br from-emerald-500 to-emerald-600";
+    if (sub.status === "pending")
+      return "bg-gradient-to-br from-amber-500 to-amber-600";
+    return "bg-gradient-to-br from-red-500 to-red-600";
+  };
+
+  const getStatusBadgeClass = () => {
+    if (sub.status === "active")
+      return "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300";
+    if (sub.status === "pending")
+      return "bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300";
+    return "bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-300";
+  };
+
   return (
-    <div className="max-w-xl space-y-6">
-      <div className="p-5 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl text-white">
+    <div className="max-w-4xl space-y-6">
+      {/* Current Plan Card */}
+      <div className={`p-5 rounded-2xl text-white ${getGradientClass()}`}>
         <div className="flex items-center justify-between mb-4">
           <div>
-            <p className="text-xs font-semibold text-emerald-100 uppercase tracking-wider">
+            <p className="text-xs font-semibold text-white/80 uppercase tracking-wider">
               Current Plan
             </p>
-            <p className="text-2xl font-bold mt-0.5">Pro Plan</p>
-          </div>
-          <span className="bg-white/20 text-white text-xs font-bold px-3 py-1 rounded-full">
-            Active
-          </span>
-        </div>
-        <p className="text-sm text-emerald-100">
-          Unlimited orders · Up to 5 staff · Analytics dashboard
-        </p>
-        <p className="text-lg font-bold mt-4">
-          $29
-          <span className="text-sm font-normal text-emerald-200">/month</span>
-        </p>
-      </div>
-      <div className="p-5 bg-gray-50 dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-white/10 space-y-3">
-        <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-          Payment Method
-        </p>
-        <div className="flex items-center gap-3 p-3 bg-white dark:bg-white/10 rounded-xl border border-gray-100 dark:border-white/10">
-          <div className="w-10 h-7 bg-blue-600 rounded-md flex items-center justify-center text-white text-xs font-bold">
-            VISA
-          </div>
-          <div className="flex-1">
-            <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
-              •••• •••• •••• 4242
+            <p className="text-2xl font-bold mt-0.5">
+              {plan?.name || "Free Plan"}
             </p>
-            <p className="text-xs text-gray-400">Expires 12/27</p>
           </div>
-          <span className="text-xs text-emerald-600 font-semibold bg-emerald-50 dark:bg-emerald-950/30 px-2 py-0.5 rounded-full">
-            Default
-          </span>
-        </div>
-        <button className="w-full py-2.5 rounded-xl border-2 border-dashed border-gray-200 dark:border-white/10 text-sm text-gray-500 hover:border-emerald-400 hover:text-emerald-600 transition">
-          + Add payment method
-        </button>
-      </div>
-      <div className="p-5 bg-gray-50 dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-white/10">
-        <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
-          Recent Invoices
-        </p>
-        {[
-          { date: "Jan 2026", amount: "$29.00", status: "Paid" },
-          { date: "Dec 2025", amount: "$29.00", status: "Paid" },
-          { date: "Nov 2025", amount: "$29.00", status: "Paid" },
-        ].map((inv) => (
-          <div
-            key={inv.date}
-            className="flex items-center justify-between py-2.5 border-b border-gray-100 dark:border-white/5 last:border-0"
+          <span
+            className={`bg-white/20 text-white text-xs font-bold px-3 py-1 rounded-full capitalize`}
           >
-            <p className="text-sm text-gray-700 dark:text-gray-300">
-              {inv.date}
+            {sub.status}
+          </span>
+        </div>
+        <p className="text-sm text-white/90 mb-4">
+          {plan?.features && plan.features.length > 0
+            ? plan.features.join(" · ")
+            : "Basic features"}
+        </p>
+        <div className="flex items-end justify-between">
+          <div>
+            <p className="text-lg font-bold">
+              ${plan?.price || "0"}
+              <span className="text-sm font-normal text-white/80">/month</span>
             </p>
-            <div className="flex items-center gap-3">
-              <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                {inv.amount}
-              </span>
-              <span className="text-xs text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 px-2 py-0.5 rounded-full font-semibold">
-                {inv.status}
-              </span>
-              <button className="text-xs text-gray-400 hover:text-emerald-500 transition">
-                PDF
-              </button>
-            </div>
+            <p className="text-xs text-white/70 mt-1">
+              Renews on {renewalDate}
+            </p>
           </div>
-        ))}
+          <Link
+            href="/dashboard/billing"
+            className="px-4 py-2 bg-white/20 text-white text-sm font-medium rounded-lg hover:bg-white/30 transition"
+          >
+            Change Plan
+          </Link>
+        </div>
+      </div>
+
+      {/* Usage Statistics */}
+      {usage && plan && (
+        <div className="p-5 bg-gray-50 dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-white/10">
+          <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">
+            Monthly Usage
+          </p>
+
+          <div className="space-y-4">
+            {/* Orders */}
+            {plan.monthlyOrderLimit > 0 && (
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm text-gray-700 dark:text-gray-300 font-medium">
+                    Orders
+                  </p>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                    {usage.ordersCount || 0} / {plan.monthlyOrderLimit}
+                  </p>
+                </div>
+                <div className="w-full bg-gray-200 dark:bg-white/10 rounded-full h-2">
+                  <div
+                    className="bg-blue-500 h-2 rounded-full"
+                    style={{
+                      width: `${Math.min(((usage.ordersCount || 0) / plan.monthlyOrderLimit) * 100, 100)}%`,
+                    }}
+                  ></div>
+                </div>
+              </div>
+            )}
+
+            {/* Table Requests */}
+            {plan.monthlyTableRequestLimit > 0 && (
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm text-gray-700 dark:text-gray-300 font-medium">
+                    Table Requests
+                  </p>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                    {usage.tableRequestsCount || 0} /{" "}
+                    {plan.monthlyTableRequestLimit}
+                  </p>
+                </div>
+                <div className="w-full bg-gray-200 dark:bg-white/10 rounded-full h-2">
+                  <div
+                    className="bg-purple-500 h-2 rounded-full"
+                    style={{
+                      width: `${Math.min(((usage.tableRequestsCount || 0) / plan.monthlyTableRequestLimit) * 100, 100)}%`,
+                    }}
+                  ></div>
+                </div>
+              </div>
+            )}
+
+            {/* Menu Items */}
+            {plan.monthlyMenuItemsLimit > 0 && (
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm text-gray-700 dark:text-gray-300 font-medium">
+                    Menu Items
+                  </p>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                    {usage.menuItemsCount || 0} / {plan.monthlyMenuItemsLimit}
+                  </p>
+                </div>
+                <div className="w-full bg-gray-200 dark:bg-white/10 rounded-full h-2">
+                  <div
+                    className="bg-orange-500 h-2 rounded-full"
+                    style={{
+                      width: `${Math.min(((usage.menuItemsCount || 0) / plan.monthlyMenuItemsLimit) * 100, 100)}%`,
+                    }}
+                  ></div>
+                </div>
+              </div>
+            )}
+
+            {/* Users */}
+            {plan.monthlyUsersLimit > 0 && (
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm text-gray-700 dark:text-gray-300 font-medium">
+                    Users
+                  </p>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                    {usage.usersCount || 0} / {plan.monthlyUsersLimit}
+                  </p>
+                </div>
+                <div className="w-full bg-gray-200 dark:bg-white/10 rounded-full h-2">
+                  <div
+                    className="bg-emerald-500 h-2 rounded-full"
+                    style={{
+                      width: `${Math.min(((usage.usersCount || 0) / plan.monthlyUsersLimit) * 100, 100)}%`,
+                    }}
+                  ></div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Subscription Info */}
+      <div className="p-5 bg-gray-50 dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-white/10">
+        <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">
+          Subscription Details
+        </p>
+
+        <div className="space-y-3">
+          <div className="flex items-center justify-between p-3 bg-white dark:bg-white/10 rounded-lg">
+            <p className="text-sm text-gray-700 dark:text-gray-300">
+              Start Date
+            </p>
+            <p className="text-sm font-semibold text-gray-900 dark:text-white">
+              {new Date(sub.startDate).toLocaleDateString()}
+            </p>
+          </div>
+
+          {sub.endDate && (
+            <div className="flex items-center justify-between p-3 bg-white dark:bg-white/10 rounded-lg">
+              <p className="text-sm text-gray-700 dark:text-gray-300">
+                End Date
+              </p>
+              <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                {new Date(sub.endDate).toLocaleDateString()}
+              </p>
+            </div>
+          )}
+
+          <div className="flex items-center justify-between p-3 bg-white dark:bg-white/10 rounded-lg">
+            <p className="text-sm text-gray-700 dark:text-gray-300">
+              Auto-Renewal
+            </p>
+            <p className="text-sm font-semibold text-gray-900 dark:text-white">
+              {sub.autoRenewal ? "Enabled" : "Disabled"}
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -905,7 +1113,7 @@ export default function SettingPage() {
       <OrderSettingsTab settings={settings} onSettingsChange={setSettings} />
     ),
     developer: <DeveloperTab restaurantId={restaurantId} />,
-    billing: <BillingTab />,
+    billing: <BillingTab restaurantId={restaurantId} />,
   };
 
   if (!restaurantId) {

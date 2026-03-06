@@ -1,1396 +1,3186 @@
 "use client";
-import Link from "next/link";
-import { useEffect, useRef } from "react";
 
-// ── SpotlightTrail: follows mouse with a soft radial glow ──────────────────
-function SpotlightTrail() {
-  const ref = useRef(null);
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const el = ref.current;
-    if (!el) return;
-    let lx = window.innerWidth / 2,
-      ly = window.innerHeight / 2;
-    let raf;
-    const onMove = (e) => {
-      lx = e.clientX;
-      ly = e.clientY;
-    };
-    window.addEventListener("mousemove", onMove);
-    const loop = () => {
-      el.style.left = lx + "px";
-      el.style.top = ly + "px";
-      raf = requestAnimationFrame(loop);
-    };
-    raf = requestAnimationFrame(loop);
-    return () => {
-      window.removeEventListener("mousemove", onMove);
-      cancelAnimationFrame(raf);
-    };
-  }, []);
-  return <div ref={ref} className="rsl-spotlight" />;
+import Link from "next/link";
+import { useState, useEffect, useRef, useCallback } from "react";
+import {
+  ChefHat,
+  Zap,
+  BarChart3,
+  Users,
+  Clock,
+  ShieldCheck,
+  Smartphone,
+  TrendingUp,
+  ArrowRight,
+  Star,
+  Check,
+  Menu,
+  X,
+  Send,
+  Play,
+  Pause,
+} from "lucide-react";
+
+/* ─── Global CSS ─────────────────────────────────────────── */
+const globalCSS = `
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; }
+
+  :root {
+    --green: #00e87a;
+    --green-mid: #00b85f;
+    --green-dark: #007a40;
+    --blue: #0080ff;
+    --blue-mid: #0055cc;
+    --gold: #ffd166;
+    --surface: #0a0f0d;
+    --surface2: #111a14;
+    --surface3: #182118;
+    --text: #e8f5ec;
+    --text-dim: #7a9a82;
+    --border: rgba(0,232,122,0.12);
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    margin: 0;
+    background: var(--surface);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    overflow-x: hidden;
+  }
+
+  .syne { font-family: 'Syne', sans-serif; }
+
+  /* Noise texture overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 1000;
+    opacity: 0.35;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--surface); }
+  ::-webkit-scrollbar-thumb { background: var(--green-dark); border-radius: 2px; }
+
+  /* Magnetic button base */
+  .mag-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.15s ease;
+  }
+
+  /* Glow pulse */
+  @keyframes glowPulse {
+    0%, 100% { box-shadow: 0 0 20px rgba(0,232,122,0.3), 0 0 60px rgba(0,232,122,0.1); }
+    50% { box-shadow: 0 0 40px rgba(0,232,122,0.6), 0 0 100px rgba(0,232,122,0.2); }
+  }
+
+  @keyframes floatY {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-18px); }
+  }
+
+  @keyframes rotateOrbit {
+    from { transform: rotate(0deg) translateX(120px) rotate(0deg); }
+    to   { transform: rotate(360deg) translateX(120px) rotate(-360deg); }
+  }
+
+  @keyframes textReveal {
+    from { clip-path: inset(0 100% 0 0); opacity: 0; }
+    to   { clip-path: inset(0 0% 0 0); opacity: 1; }
+  }
+
+  @keyframes scanline {
+    from { transform: translateY(-100%); }
+    to   { transform: translateY(100vh); }
+  }
+
+  @keyframes counterUp {
+    from { transform: translateY(100%); opacity: 0; }
+    to   { transform: translateY(0); opacity: 1; }
+  }
+
+  @keyframes shimmer {
+    0% { background-position: -200% center; }
+    100% { background-position: 200% center; }
+  }
+
+  @keyframes borderFlow {
+    0%, 100% { border-color: rgba(0,232,122,0.2); }
+    50% { border-color: rgba(0,232,122,0.7); }
+  }
+
+  @keyframes particleFade {
+    0%   { opacity: 1; transform: translate(0,0) scale(1); }
+    100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0.2); }
+  }
+
+  @keyframes ripple {
+    0%   { transform: scale(0); opacity: 0.6; }
+    100% { transform: scale(4); opacity: 0; }
+  }
+
+  @keyframes spin3d {
+    0%   { transform: rotateY(0deg) rotateX(0deg); }
+    25%  { transform: rotateY(90deg) rotateX(15deg); }
+    50%  { transform: rotateY(180deg) rotateX(0deg); }
+    75%  { transform: rotateY(270deg) rotateX(-15deg); }
+    100% { transform: rotateY(360deg) rotateX(0deg); }
+  }
+
+  @keyframes slideInLeft {
+    from { transform: translateX(-60px); opacity: 0; }
+    to   { transform: translateX(0); opacity: 1; }
+  }
+
+  @keyframes slideInRight {
+    from { transform: translateX(60px); opacity: 0; }
+    to   { transform: translateX(0); opacity: 1; }
+  }
+
+  @keyframes slideInUp {
+    from { transform: translateY(40px); opacity: 0; }
+    to   { transform: translateY(0); opacity: 1; }
+  }
+
+  @keyframes scaleIn {
+    from { transform: scale(0.7); opacity: 0; }
+    to   { transform: scale(1); opacity: 1; }
+  }
+
+  .animate-float { animation: floatY 4s ease-in-out infinite; }
+  .animate-glow { animation: glowPulse 3s ease-in-out infinite; }
+  .animate-shimmer {
+    background: linear-gradient(90deg, transparent 0%, rgba(0,232,122,0.15) 50%, transparent 100%);
+    background-size: 200% 100%;
+    animation: shimmer 2.5s linear infinite;
+  }
+
+  .tilt-card {
+    transform-style: preserve-3d;
+    transition: transform 0.1s ease;
+  }
+  .tilt-card:hover { box-shadow: 0 30px 60px rgba(0,0,0,0.5); }
+
+  .hover-lift {
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+                box-shadow 0.3s ease;
+  }
+  .hover-lift:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.4), 0 0 30px rgba(0,232,122,0.15);
+  }
+
+  .card-reveal {
+    opacity: 0;
+    transform: translateY(50px);
+    transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.34,1.3,0.64,1);
+  }
+  .card-reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .number-ticker {
+    overflow: hidden;
+    display: inline-block;
+  }
+  .number-ticker span {
+    display: inline-block;
+    transition: transform 1.5s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  /* Particle canvas */
+  #hero-particles {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Cursor glow */
+  #cursor-glow {
+    position: fixed;
+    width: 300px;
+    height: 300px;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(circle, rgba(0,232,122,0.07) 0%, transparent 70%);
+    transition: opacity 0.3s ease;
+  }
+
+  /* Scanline effect */
+  .scanline::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(transparent 50%, rgba(0,0,0,0.03) 50%);
+    background-size: 100% 4px;
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  /* Nav pill active */
+  .nav-link {
+    position: relative;
+    padding: 6px 0;
+  }
+  .nav-link::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0;
+    height: 1.5px;
+    width: 0;
+    background: var(--green);
+    transition: width 0.3s ease;
+  }
+  .nav-link:hover::after { width: 100%; }
+
+  /* Pricing highlight border animation */
+  .pricing-popular {
+    position: relative;
+    background: linear-gradient(135deg, #0a1a0f, #0f2018);
+  }
+  .pricing-popular::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: 17px;
+    background: conic-gradient(from var(--angle), transparent 0deg, var(--green) 60deg, transparent 120deg);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    padding: 1px;
+    animation: rotateBorder 4s linear infinite;
+  }
+  @property --angle {
+    syntax: '<angle>';
+    initial-value: 0deg;
+    inherits: false;
+  }
+  @keyframes rotateBorder {
+    to { --angle: 360deg; }
+  }
+
+  /* Feature icon spin on hover */
+  .feat-icon-wrap {
+    transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .feat-card:hover .feat-icon-wrap {
+    transform: rotate(15deg) scale(1.15);
+  }
+
+  /* Progress bar in stats */
+  .progress-bar {
+    height: 2px;
+    background: var(--border);
+    border-radius: 1px;
+    overflow: hidden;
+    margin-top: 8px;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--green-dark), var(--green));
+    border-radius: 1px;
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 1.5s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .progress-fill.animated { transform: scaleX(1); }
+
+  /* Ripple on click */
+  .ripple-container {
+    position: relative;
+    overflow: hidden;
+  }
+  .ripple-circle {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(0,232,122,0.25);
+    transform: scale(0);
+    animation: ripple 0.6s linear;
+    pointer-events: none;
+  }
+
+  canvas { display: block; }
+
+  /* Tooltip */
+  .tooltip {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%) translateY(6px);
+    background: var(--surface3);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-size: 12px;
+    padding: 5px 10px;
+    border-radius: 6px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s, transform 0.2s;
+    z-index: 100;
+  }
+  .has-tooltip:hover .tooltip {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* Mobile */
+  @media (max-width: 640px) {
+    canvas { min-height: 220px; }
+  }
+`;
+
+/* ─── Three.js loader (handles ESM named + default export) ── */
+async function loadThree() {
+  const mod = await import("three");
+  // Next.js bundler gives named exports; CJS interop gives .default
+  return mod.Scene ? mod : (mod.default ?? mod);
 }
 
-// ─── RestaurantSaaS Landing Page ──────────────────────────────────────────────
-// Stack: React, Three.js (CDN via script), GSAP (CDN via script)
-// To use: Drop into a Next.js /app or /pages dir, add CDN scripts to layout.js
-// Required in layout.js <head>:
-//   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-//   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-//   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
-// Font in layout.js: import { Cormorant_Garamond, Syne } from "next/font/google"
+/* ─── Ripple helper ──────────────────────────────────────── */
+function addRipple(e, container) {
+  const rect = container.getBoundingClientRect();
+  const size = Math.max(rect.width, rect.height) * 2;
+  const x = e.clientX - rect.left - size / 2;
+  const y = e.clientY - rect.top - size / 2;
+  const ripple = document.createElement("div");
+  ripple.className = "ripple-circle";
+  ripple.style.cssText = `width:${size}px;height:${size}px;left:${x}px;top:${y}px`;
+  container.appendChild(ripple);
+  ripple.addEventListener("animationend", () => ripple.remove());
+}
 
-export default function RestaurantSaaSLanding() {
-  const canvasRef = useRef(null);
-  const heroRef = useRef(null);
-  const statsRef = useRef(null);
-  const featuresRef = useRef(null);
-  const navRef = useRef(null);
-  const waiterRef = useRef(null);
-  const cursorRef = useRef(null);
-  const cursorDotRef = useRef(null);
-  const mouse = useRef({ x: 0, y: 0, nx: 0, ny: 0 }); // normalized -1 to 1
+/* ─── Magnetic Button ────────────────────────────────────── */
+function MagBtn({
+  children,
+  className = "",
+  onClick,
+  href,
+  as: Tag = "button",
+}) {
+  const ref = useRef(null);
+  const handleMove = useCallback((e) => {
+    const el = ref.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    const dx = (e.clientX - cx) * 0.35;
+    const dy = (e.clientY - cy) * 0.35;
+    el.style.transform = `translate(${dx}px, ${dy}px)`;
+  }, []);
+  const handleLeave = useCallback(() => {
+    if (ref.current) ref.current.style.transform = "";
+  }, []);
+  const handleClick = useCallback(
+    (e) => {
+      if (ref.current) addRipple(e, ref.current);
+      if (onClick) onClick(e);
+    },
+    [onClick],
+  );
+  return (
+    <Tag
+      ref={ref}
+      className={`mag-btn ripple-container ${className}`}
+      onMouseMove={handleMove}
+      onMouseLeave={handleLeave}
+      onClick={handleClick}
+      href={href}
+    >
+      {children}
+    </Tag>
+  );
+}
 
-  // ─── Three.js 3D Waiter Scene ──────────────────────────────────────────────
+/* ─── Tilt Card ──────────────────────────────────────────── */
+function TiltCard({ children, className = "", style = {}, cardRef }) {
+  const ref = cardRef || useRef(null);
+  const handleMove = useCallback((e) => {
+    const el = ref.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width - 0.5;
+    const y = (e.clientY - rect.top) / rect.height - 0.5;
+    el.style.transform = `perspective(800px) rotateX(${-y * 12}deg) rotateY(${x * 12}deg) translateZ(10px)`;
+  }, []);
+  const handleLeave = useCallback(() => {
+    if (ref.current)
+      ref.current.style.transform =
+        "perspective(800px) rotateX(0) rotateY(0) translateZ(0)";
+  }, []);
+  return (
+    <div
+      ref={ref}
+      className={`tilt-card ${className}`}
+      style={style}
+      onMouseMove={handleMove}
+      onMouseLeave={handleLeave}
+    >
+      {children}
+    </div>
+  );
+}
+
+/* ─── Animated Counter ───────────────────────────────────── */
+function AnimatedCounter({ target, suffix = "", duration = 2000 }) {
+  const [count, setCount] = useState(0);
+  const ref = useRef(null);
+  const started = useRef(false);
   useEffect(() => {
-    if (typeof window === "undefined" || !window.THREE) return;
-    const THREE = window.THREE;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !started.current) {
+          started.current = true;
+          const numTarget = parseFloat(target.replace(/[^0-9.]/g, ""));
+          const start = Date.now();
+          const tick = () => {
+            const elapsed = Date.now() - start;
+            const progress = Math.min(elapsed / duration, 1);
+            const ease = 1 - Math.pow(1 - progress, 4);
+            setCount(Math.round(numTarget * ease * 10) / 10);
+            if (progress < 1) requestAnimationFrame(tick);
+          };
+          tick();
+        }
+      },
+      { threshold: 0.5 },
+    );
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, [target, duration]);
+  const isDecimal = target.includes(".");
+  const display = isDecimal ? count.toFixed(1) : Math.round(count);
+  return (
+    <span ref={ref}>
+      {display}
+      {suffix}
+    </span>
+  );
+}
+
+/* ─── Particle Canvas ────────────────────────────────────── */
+function ParticleField() {
+  const canvasRef = useRef(null);
+  useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-
-    const renderer = new THREE.WebGLRenderer({
-      canvas,
-      alpha: true,
-      antialias: true,
-    });
-    renderer.setSize(canvas.clientWidth, canvas.clientHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.shadowMap.enabled = true;
-
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(
-      45,
-      canvas.clientWidth / canvas.clientHeight,
-      0.1,
-      100,
-    );
-    camera.position.set(0, 2.5, 7);
-
-    // Lighting
-    const ambient = new THREE.AmbientLight(0xfff0d0, 0.6);
-    scene.add(ambient);
-    const spotlight = new THREE.SpotLight(0xff9f43, 3, 20, Math.PI / 5, 0.3);
-    spotlight.position.set(2, 8, 4);
-    spotlight.castShadow = true;
-    scene.add(spotlight);
-    const rimLight = new THREE.DirectionalLight(0xff6b35, 1.2);
-    rimLight.position.set(-4, 3, -2);
-    scene.add(rimLight);
-    const fillLight = new THREE.PointLight(0xc0392b, 0.8, 15);
-    fillLight.position.set(3, 1, 3);
-    scene.add(fillLight);
-
-    // ── Floor ──────────────────────────────────────────────────────────────
-    const floorGeo = new THREE.CircleGeometry(3.5, 64);
-    const floorMat = new THREE.MeshStandardMaterial({
-      color: 0x1a0a00,
-      metalness: 0.4,
-      roughness: 0.6,
-    });
-    const floor = new THREE.Mesh(floorGeo, floorMat);
-    floor.rotation.x = -Math.PI / 2;
-    floor.position.y = -0.01;
-    floor.receiveShadow = true;
-    scene.add(floor);
-
-    // Helper: rounded box
-    function roundedBox(w, h, d, r, segs) {
-      const geo = new THREE.BoxGeometry(w, h, d, segs, segs, segs);
-      const pos = geo.attributes.position;
-      const v3 = new THREE.Vector3();
-      for (let i = 0; i < pos.count; i++) {
-        v3.fromBufferAttribute(pos, i);
-        v3.x =
-          Math.sign(v3.x) * Math.max(Math.abs(v3.x) - r, 0) +
-          Math.sign(v3.x) * r * Math.tanh(Math.abs(v3.x) / r);
-        pos.setXYZ(i, v3.x, v3.y, v3.z);
-      }
-      return geo;
-    }
-
-    const skinColor = 0xf5cba7;
-    const suitColor = 0x1a0a00;
-    const shirtColor = 0xfdf5e6;
-    const goldColor = 0xd4a843;
-    const plateColor = 0xffffff;
-    const foodColor = 0xc0392b;
-
-    const group = new THREE.Group();
-
-    // ── Head ──────────────────────────────────────────────────────────────
-    const headGeo = new THREE.SphereGeometry(0.28, 32, 32);
-    const skinMat = new THREE.MeshStandardMaterial({
-      color: skinColor,
-      roughness: 0.7,
-    });
-    const head = new THREE.Mesh(headGeo, skinMat);
-    head.position.set(0, 3.6, 0);
-    head.castShadow = true;
-    group.add(head);
-
-    // Hair
-    const hairGeo = new THREE.SphereGeometry(
-      0.285,
-      32,
-      16,
-      0,
-      Math.PI * 2,
-      0,
-      Math.PI * 0.45,
-    );
-    const hairMat = new THREE.MeshStandardMaterial({
-      color: 0x1a0a00,
-      roughness: 0.9,
-    });
-    const hair = new THREE.Mesh(hairGeo, hairMat);
-    hair.position.set(0, 3.6, 0);
-    hair.rotation.x = -0.1;
-    group.add(hair);
-
-    // Eyes
-    [-0.1, 0.1].forEach((x) => {
-      const eye = new THREE.Mesh(
-        new THREE.SphereGeometry(0.04, 16, 16),
-        new THREE.MeshStandardMaterial({ color: 0x111111 }),
-      );
-      eye.position.set(x, 3.62, 0.25);
-      group.add(eye);
-    });
-
-    // Smile
-    const smileGeo = new THREE.TorusGeometry(0.08, 0.015, 8, 20, Math.PI * 0.7);
-    const smileMesh = new THREE.Mesh(
-      smileGeo,
-      new THREE.MeshStandardMaterial({ color: 0x8b3a3a }),
-    );
-    smileMesh.rotation.z = Math.PI;
-    smileMesh.position.set(0, 3.46, 0.265);
-    group.add(smileMesh);
-
-    // ── Neck ──────────────────────────────────────────────────────────────
-    const neck = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.1, 0.12, 0.2, 16),
-      skinMat,
-    );
-    neck.position.set(0, 3.22, 0);
-    group.add(neck);
-
-    // ── Torso / Suit Jacket ───────────────────────────────────────────────
-    const torsoGeo = roundedBox(0.72, 1.1, 0.42, 0.06, 4);
-    const suitMat = new THREE.MeshStandardMaterial({
-      color: suitColor,
-      roughness: 0.5,
-      metalness: 0.15,
-    });
-    const torso = new THREE.Mesh(torsoGeo, suitMat);
-    torso.position.set(0, 2.45, 0);
-    torso.castShadow = true;
-    group.add(torso);
-
-    // Shirt front
-    const shirt = new THREE.Mesh(
-      new THREE.PlaneGeometry(0.22, 0.7),
-      new THREE.MeshStandardMaterial({ color: shirtColor, roughness: 0.8 }),
-    );
-    shirt.position.set(0, 2.55, 0.215);
-    group.add(shirt);
-
-    // Bow tie
-    [-0.07, 0.07].forEach((x) => {
-      const wing = new THREE.Mesh(
-        new THREE.ConeGeometry(0.055, 0.12, 3),
-        new THREE.MeshStandardMaterial({
-          color: goldColor,
-          metalness: 0.6,
-          roughness: 0.3,
-        }),
-      );
-      wing.rotation.z = x > 0 ? -Math.PI / 2 : Math.PI / 2;
-      wing.position.set(x, 3.07, 0.22);
-      group.add(wing);
-    });
-
-    // Lapels
-    [
-      [-0.18, 0.08],
-      [0.18, -0.08],
-    ].forEach(([x, rz]) => {
-      const lapel = new THREE.Mesh(
-        new THREE.BoxGeometry(0.14, 0.35, 0.02),
-        suitMat,
-      );
-      lapel.position.set(x, 2.8, 0.22);
-      lapel.rotation.z = rz;
-      group.add(lapel);
-    });
-
-    // Gold button
-    const btn = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.025, 0.025, 0.02, 12),
-      new THREE.MeshStandardMaterial({
-        color: goldColor,
-        metalness: 0.8,
-        roughness: 0.2,
-      }),
-    );
-    btn.rotation.x = Math.PI / 2;
-    btn.position.set(0, 2.2, 0.22);
-    group.add(btn);
-
-    // ── Waist / Trousers ──────────────────────────────────────────────────
-    const waistGeo = new THREE.CylinderGeometry(0.28, 0.26, 0.15, 16);
-    const waist = new THREE.Mesh(waistGeo, suitMat);
-    waist.position.set(0, 1.82, 0);
-    group.add(waist);
-
-    // Legs
-    [
-      [-0.15, 0],
-      [0.15, 0],
-    ].forEach(([x]) => {
-      const leg = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.1, 0.09, 1.0, 16),
-        suitMat,
-      );
-      leg.position.set(x, 1.22, 0);
-      leg.castShadow = true;
-      group.add(leg);
-
-      // Shoe
-      const shoe = new THREE.Mesh(
-        new THREE.BoxGeometry(0.14, 0.1, 0.28),
-        new THREE.MeshStandardMaterial({
-          color: 0x0d0000,
-          roughness: 0.3,
-          metalness: 0.5,
-        }),
-      );
-      shoe.position.set(x, 0.7, 0.05);
-      group.add(shoe);
-    });
-
-    // ── Left arm (down by side) ────────────────────────────────────────────
-    const leftArmGeo = new THREE.CylinderGeometry(0.085, 0.075, 0.85, 16);
-    const leftArm = new THREE.Mesh(leftArmGeo, suitMat);
-    leftArm.rotation.z = 0.15;
-    leftArm.position.set(-0.45, 2.2, 0);
-    group.add(leftArm);
-    const leftHand = new THREE.Mesh(
-      new THREE.SphereGeometry(0.09, 16, 16),
-      skinMat,
-    );
-    leftHand.position.set(-0.51, 1.75, 0);
-    group.add(leftHand);
-
-    // ── Right arm (raised, serving) ────────────────────────────────────────
-    const rightArmUpper = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.085, 0.08, 0.55, 16),
-      suitMat,
-    );
-    rightArmUpper.rotation.z = -1.1;
-    rightArmUpper.position.set(0.52, 2.6, 0);
-    rightArmUpper.castShadow = true;
-    group.add(rightArmUpper);
-
-    const rightArmLower = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.075, 0.07, 0.55, 16),
-      suitMat,
-    );
-    rightArmLower.rotation.z = -0.2;
-    rightArmLower.rotation.x = -0.3;
-    rightArmLower.position.set(0.85, 3.0, 0.1);
-    group.add(rightArmLower);
-
-    const rightHand = new THREE.Mesh(
-      new THREE.SphereGeometry(0.09, 16, 16),
-      skinMat,
-    );
-    rightHand.position.set(0.98, 3.22, 0.2);
-    group.add(rightHand);
-
-    // ── Serving plate ─────────────────────────────────────────────────────
-    const plateGroup = new THREE.Group();
-    plateGroup.position.set(0.98, 3.38, 0.22);
-
-    const plateBase = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.32, 0.28, 0.04, 32),
-      new THREE.MeshStandardMaterial({
-        color: plateColor,
-        metalness: 0.3,
-        roughness: 0.2,
-      }),
-    );
-    plateGroup.add(plateBase);
-
-    // Dome cloche
-    const domeGeo = new THREE.SphereGeometry(
-      0.28,
-      32,
-      16,
-      0,
-      Math.PI * 2,
-      0,
-      Math.PI * 0.55,
-    );
-    const domeMat = new THREE.MeshStandardMaterial({
-      color: 0xd4d4d4,
-      metalness: 0.85,
-      roughness: 0.1,
-      transparent: true,
-      opacity: 0.88,
-    });
-    const dome = new THREE.Mesh(domeGeo, domeMat);
-    dome.position.y = 0.04;
-    plateGroup.add(dome);
-
-    // Dome handle knob
-    const knob = new THREE.Mesh(
-      new THREE.SphereGeometry(0.04, 12, 12),
-      new THREE.MeshStandardMaterial({
-        color: goldColor,
-        metalness: 0.9,
-        roughness: 0.1,
-      }),
-    );
-    knob.position.y = 0.32;
-    plateGroup.add(knob);
-
-    // Food visible on plate edge
-    const foodColors = [0xc0392b, 0x27ae60, 0xf39c12, 0xe74c3c];
-    for (let i = 0; i < 6; i++) {
-      const food = new THREE.Mesh(
-        new THREE.SphereGeometry(0.045, 8, 8),
-        new THREE.MeshStandardMaterial({
-          color: foodColors[i % 4],
-          roughness: 0.7,
-        }),
-      );
-      const angle = (i / 6) * Math.PI * 2;
-      food.position.set(Math.cos(angle) * 0.18, 0.06, Math.sin(angle) * 0.18);
-      plateGroup.add(food);
-    }
-
-    group.add(plateGroup);
-
-    // Floating sparkles around plate
-    const sparkleGeo = new THREE.BufferGeometry();
-    const sparkleCount = 18;
-    const sparklePos = new Float32Array(sparkleCount * 3);
-    for (let i = 0; i < sparkleCount; i++) {
-      sparklePos[i * 3] = (Math.random() - 0.5) * 1.2 + 0.98;
-      sparklePos[i * 3 + 1] = Math.random() * 1.5 + 3.0;
-      sparklePos[i * 3 + 2] = (Math.random() - 0.5) * 0.8 + 0.22;
-    }
-    sparkleGeo.setAttribute(
-      "position",
-      new THREE.BufferAttribute(sparklePos, 3),
-    );
-    const sparkleMat = new THREE.PointsMaterial({
-      color: goldColor,
-      size: 0.04,
-      transparent: true,
-      opacity: 0.8,
-    });
-    const sparkles = new THREE.Points(sparkleGeo, sparkleMat);
-    group.add(sparkles);
-
-    scene.add(group);
-    group.position.y = -0.5;
-
-    // ── Floating particles (ambient ambiance) ──────────────────────────────
-    const particleGeo = new THREE.BufferGeometry();
-    const pCount = 120;
-    const pPos = new Float32Array(pCount * 3);
-    for (let i = 0; i < pCount; i++) {
-      pPos[i * 3] = (Math.random() - 0.5) * 10;
-      pPos[i * 3 + 1] = Math.random() * 6;
-      pPos[i * 3 + 2] = (Math.random() - 0.5) * 10 - 2;
-    }
-    particleGeo.setAttribute("position", new THREE.BufferAttribute(pPos, 3));
-    const particleMat = new THREE.PointsMaterial({
-      color: 0xd4a843,
-      size: 0.028,
-      transparent: true,
-      opacity: 0.5,
-    });
-    const particles = new THREE.Points(particleGeo, particleMat);
-    scene.add(particles);
-
-    // ── Mouse tracking for 3D scene ────────────────────────────────────────
-    const onMouseMove3D = (e) => {
-      mouse.current.nx = (e.clientX / window.innerWidth) * 2 - 1;
-      mouse.current.ny = -(e.clientY / window.innerHeight) * 2 + 1;
+    const ctx = canvas.getContext("2d");
+    let w = canvas.offsetWidth,
+      h = canvas.offsetHeight;
+    canvas.width = w;
+    canvas.height = h;
+    const particles = Array.from({ length: 80 }, () => ({
+      x: Math.random() * w,
+      y: Math.random() * h,
+      r: Math.random() * 1.5 + 0.3,
+      dx: (Math.random() - 0.5) * 0.4,
+      dy: (Math.random() - 0.5) * 0.4,
+      opacity: Math.random() * 0.6 + 0.2,
+    }));
+    let mouse = { x: -999, y: -999 };
+    const onMove = (e) => {
+      const r = canvas.getBoundingClientRect();
+      mouse = { x: e.clientX - r.left, y: e.clientY - r.top };
     };
-    window.addEventListener("mousemove", onMouseMove3D);
-
-    // ── Animation loop ─────────────────────────────────────────────────────
-    let frame = 0;
-    let animId;
-    let smoothX = 0,
-      smoothY = 0;
-    function animate() {
-      animId = requestAnimationFrame(animate);
-      frame += 0.01;
-
-      // Smooth mouse interpolation
-      smoothX += (mouse.current.nx - smoothX) * 0.04;
-      smoothY += (mouse.current.ny - smoothY) * 0.04;
-
-      // Body follows mouse gently
-      group.rotation.y = Math.sin(frame * 0.5) * 0.08 + smoothX * 0.22;
-      group.rotation.x = smoothY * 0.06;
-      group.position.y = Math.sin(frame * 0.8) * 0.04 - 0.5;
-
-      // Head looks toward mouse
-      head.rotation.y = smoothX * 0.35;
-      head.rotation.x = smoothY * 0.2;
-      hair.rotation.y = smoothX * 0.35;
-      hair.rotation.x = smoothY * 0.2;
-
-      // Camera subtle parallax
-      camera.position.x = smoothX * 0.4;
-      camera.position.y = 2.5 + smoothY * 0.3;
-      camera.lookAt(0, 2.5, 0);
-
-      // Plate gentle hover + mouse influence
-      plateGroup.position.y =
-        3.38 + Math.sin(frame * 1.2) * 0.04 + smoothY * 0.08;
-      plateGroup.rotation.y = frame * 0.3;
-      plateGroup.position.x = 0.98 + smoothX * 0.12;
-
-      // Spotlight tracks mouse
-      spotlight.position.x = 2 + smoothX * 3;
-      spotlight.position.z = 4 + smoothY * 2;
-
-      // Sparkles pulse
-      sparkleMat.opacity = 0.5 + Math.sin(frame * 2) * 0.3;
-      sparkles.rotation.y = frame * 0.5;
-
-      // Particles drift + mouse
-      particles.rotation.y = frame * 0.04 + smoothX * 0.1;
-      particles.position.y = Math.sin(frame * 0.2) * 0.1;
-      particles.position.x = smoothX * 0.3;
-
-      renderer.render(scene, camera);
-    }
-    animate();
-
-    // Resize
+    canvas.addEventListener("mousemove", onMove);
+    let raf;
+    const draw = () => {
+      ctx.clearRect(0, 0, w, h);
+      particles.forEach((p) => {
+        p.x += p.dx;
+        p.y += p.dy;
+        if (p.x < 0) p.x = w;
+        if (p.x > w) p.x = 0;
+        if (p.y < 0) p.y = h;
+        if (p.y > h) p.y = 0;
+        const dist = Math.hypot(p.x - mouse.x, p.y - mouse.y);
+        const scale = dist < 100 ? 1 + (100 - dist) / 60 : 1;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r * scale, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(0,232,122,${p.opacity * (dist < 100 ? 1.5 : 1)})`;
+        ctx.fill();
+        particles.forEach((p2) => {
+          const d = Math.hypot(p.x - p2.x, p.y - p2.y);
+          if (d < 100) {
+            ctx.beginPath();
+            ctx.moveTo(p.x, p.y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.strokeStyle = `rgba(0,232,122,${(1 - d / 100) * 0.12})`;
+            ctx.lineWidth = 0.5;
+            ctx.stroke();
+          }
+        });
+      });
+      raf = requestAnimationFrame(draw);
+    };
+    draw();
     const onResize = () => {
-      if (!canvas) return;
-      const w = canvas.clientWidth;
-      const h = canvas.clientHeight;
-      camera.aspect = w / h;
-      camera.updateProjectionMatrix();
-      renderer.setSize(w, h);
+      w = canvas.offsetWidth;
+      h = canvas.offsetHeight;
+      canvas.width = w;
+      canvas.height = h;
     };
     window.addEventListener("resize", onResize);
-
-    return () => {
-      cancelAnimationFrame(animId);
-      window.removeEventListener("resize", onResize);
-      window.removeEventListener("mousemove", onMouseMove3D);
-      renderer.dispose();
-    };
-  }, []);
-
-  // ─── GSAP Animations ───────────────────────────────────────────────────────
-  useEffect(() => {
-    if (typeof window === "undefined" || !window.gsap || !window.ScrollTrigger)
-      return;
-    const { gsap } = window;
-    const ScrollTrigger = window.ScrollTrigger;
-    gsap.registerPlugin(ScrollTrigger);
-
-    // Nav slide in
-    gsap.fromTo(
-      navRef.current,
-      { y: -80, opacity: 0 },
-      { y: 0, opacity: 1, duration: 1, ease: "power3.out", delay: 0.3 },
-    );
-
-    // Hero text stagger
-    gsap.fromTo(
-      ".hero-anim",
-      { y: 60, opacity: 0 },
-      {
-        y: 0,
-        opacity: 1,
-        duration: 1.1,
-        stagger: 0.15,
-        ease: "power4.out",
-        delay: 0.6,
-      },
-    );
-
-    // Waiter scale-in
-    gsap.fromTo(
-      waiterRef.current,
-      { scale: 0.7, opacity: 0, x: 80 },
-      {
-        scale: 1,
-        opacity: 1,
-        x: 0,
-        duration: 1.4,
-        ease: "back.out(1.4)",
-        delay: 0.4,
-      },
-    );
-
-    // Stats counter animation
-    gsap.fromTo(
-      ".stat-card",
-      { y: 50, opacity: 0 },
-      {
-        y: 0,
-        opacity: 1,
-        duration: 0.8,
-        stagger: 0.12,
-        ease: "power3.out",
-        scrollTrigger: { trigger: statsRef.current, start: "top 75%" },
-      },
-    );
-
-    // Feature cards
-    gsap.fromTo(
-      ".feature-card",
-      { y: 70, opacity: 0, scale: 0.95 },
-      {
-        y: 0,
-        opacity: 1,
-        scale: 1,
-        duration: 0.9,
-        stagger: 0.1,
-        ease: "power3.out",
-        scrollTrigger: { trigger: featuresRef.current, start: "top 75%" },
-      },
-    );
-
-    // Section headings parallax
-    gsap.utils.toArray(".section-heading").forEach((el) => {
-      gsap.fromTo(
-        el,
-        { y: 40, opacity: 0 },
-        {
-          y: 0,
-          opacity: 1,
-          duration: 1,
-          ease: "power3.out",
-          scrollTrigger: { trigger: el, start: "top 80%" },
-        },
-      );
-    });
-
-    // Magnetic button effect
-    const magnetBtns = document.querySelectorAll(
-      ".rsl-btn-primary, .rsl-btn-ghost, .rsl-nav-cta",
-    );
-    const magnetHandlers = [];
-    magnetBtns.forEach((btn) => {
-      const onEnter = (e) => {
-        const rect = btn.getBoundingClientRect();
-        const cx = rect.left + rect.width / 2;
-        const cy = rect.top + rect.height / 2;
-        const dx = (e.clientX - cx) * 0.3;
-        const dy = (e.clientY - cy) * 0.3;
-        gsap.to(btn, { x: dx, y: dy, duration: 0.3, ease: "power2.out" });
-      };
-      const onLeave = () =>
-        gsap.to(btn, {
-          x: 0,
-          y: 0,
-          duration: 0.5,
-          ease: "elastic.out(1.2, 0.5)",
-        });
-      btn.addEventListener("mousemove", onEnter);
-      btn.addEventListener("mouseleave", onLeave);
-      magnetHandlers.push({ btn, onEnter, onLeave });
-    });
-
-    return () => {
-      ScrollTrigger.getAll().forEach((t) => t.kill());
-      magnetHandlers.forEach(({ btn, onEnter, onLeave }) => {
-        btn.removeEventListener("mousemove", onEnter);
-        btn.removeEventListener("mouseleave", onLeave);
-      });
-    };
-  }, []);
-
-  // ─── Custom Cursor ─────────────────────────────────────────────────────────
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const cursor = cursorRef.current;
-    const dot = cursorDotRef.current;
-    if (!cursor || !dot) return;
-
-    let cx = 0,
-      cy = 0,
-      dx = 0,
-      dy = 0;
-    let raf;
-
-    const onMove = (e) => {
-      dx = e.clientX;
-      dy = e.clientY;
-      // Dot snaps instantly
-      dot.style.transform = `translate(${dx - 4}px, ${dy - 4}px)`;
-      dot.style.opacity = "1";
-    };
-
-    const loop = () => {
-      cx += (dx - cx) * 0.1;
-      cy += (dy - cy) * 0.1;
-      cursor.style.transform = `translate(${cx - 20}px, ${cy - 20}px)`;
-      raf = requestAnimationFrame(loop);
-    };
-
-    const onEnterLink = () => {
-      cursor.style.width = "56px";
-      cursor.style.height = "56px";
-      cursor.style.borderColor = "var(--gold)";
-      cursor.style.background = "rgba(212,168,67,0.08)";
-    };
-    const onLeaveLink = () => {
-      cursor.style.width = "40px";
-      cursor.style.height = "40px";
-      cursor.style.borderColor = "rgba(212,168,67,0.6)";
-      cursor.style.background = "transparent";
-    };
-    const onMouseLeave = () => {
-      cursor.style.opacity = "0";
-      dot.style.opacity = "0";
-    };
-    const onMouseEnter = () => {
-      cursor.style.opacity = "1";
-      dot.style.opacity = "1";
-    };
-
-    document
-      .querySelectorAll(
-        "a, button, .feature-card, .stat-card, .testimonial-card",
-      )
-      .forEach((el) => {
-        el.addEventListener("mouseenter", onEnterLink);
-        el.addEventListener("mouseleave", onLeaveLink);
-      });
-
-    window.addEventListener("mousemove", onMove);
-    document.addEventListener("mouseleave", onMouseLeave);
-    document.addEventListener("mouseenter", onMouseEnter);
-    raf = requestAnimationFrame(loop);
-
     return () => {
       cancelAnimationFrame(raf);
-      window.removeEventListener("mousemove", onMove);
-      document.removeEventListener("mouseleave", onMouseLeave);
-      document.removeEventListener("mouseenter", onMouseEnter);
+      window.removeEventListener("resize", onResize);
+      canvas.removeEventListener("mousemove", onMove);
     };
   }, []);
+  return (
+    <canvas
+      ref={canvasRef}
+      id="hero-particles"
+      style={{ width: "100%", height: "100%" }}
+    />
+  );
+}
 
-  // ─── Hero Parallax Layers on Mouse Move ────────────────────────────────────
+/* ─── 3D Restaurant Scene ────────────────────────────────── */
+function RestaurantScene() {
+  const canvasRef = useRef(null);
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const hero = heroRef.current;
-    if (!hero) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    let cleanup;
+    const timer = setTimeout(() => {
+      const init = async () => {
+        const THREE = await loadThree();
+        if (!THREE || !THREE.Scene) return;
+        const w = Math.max(canvas.clientWidth, 100),
+          h = Math.max(canvas.clientHeight, 100);
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(60, w / h, 0.1, 1000);
+        camera.position.set(3, 2.5, 4);
+        camera.lookAt(0, 1, 0);
+        const renderer = new THREE.WebGLRenderer({
+          canvas,
+          alpha: true,
+          antialias: true,
+        });
+        renderer.setSize(w, h);
+        renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 
-    const onMove = (e) => {
-      const nx = (e.clientX / window.innerWidth - 0.5) * 2;
-      const ny = (e.clientY / window.innerHeight - 0.5) * 2;
+        scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+        const pl1 = new THREE.PointLight(0x00e87a, 2, 50);
+        pl1.position.set(2, 4, 2);
+        scene.add(pl1);
+        const pl2 = new THREE.PointLight(0x0080ff, 1, 50);
+        pl2.position.set(-3, 3, 1);
+        scene.add(pl2);
+        const pl3 = new THREE.PointLight(0xffd166, 0.8, 30);
+        pl3.position.set(0, 2, -2);
+        scene.add(pl3);
 
-      // Eyebrow + title layer — slow drift
-      document.querySelectorAll(".parallax-slow").forEach((el) => {
-        el.style.transform = `translate(${nx * -10}px, ${ny * -6}px)`;
-      });
-      // Sub text — medium
-      document.querySelectorAll(".parallax-mid").forEach((el) => {
-        el.style.transform = `translate(${nx * -18}px, ${ny * -10}px)`;
-      });
-      // Background glow — fast
-      document.querySelectorAll(".parallax-bg").forEach((el) => {
-        el.style.transform = `translate(${nx * 30}px, ${ny * 20}px)`;
-      });
+        const mat = (c, s = 80) =>
+          new THREE.MeshPhongMaterial({ color: c, shininess: s });
+        const box = (w, h, d, c, x, y, z) => {
+          const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat(c));
+          m.position.set(x, y, z);
+          scene.add(m);
+          return m;
+        };
+        const cyl = (r, h, c, x, y, z) => {
+          const m = new THREE.Mesh(
+            new THREE.CylinderGeometry(r, r, h, 16),
+            mat(c),
+          );
+          m.position.set(x, y, z);
+          scene.add(m);
+          return m;
+        };
+        const sph = (r, c, x, y, z) => {
+          const m = new THREE.Mesh(new THREE.SphereGeometry(r, 24, 24), mat(c));
+          m.position.set(x, y, z);
+          scene.add(m);
+          return m;
+        };
+
+        // Floor
+        box(8, 0.05, 6, 0x0d1f10, 0, -0.02, 0);
+
+        // Table
+        box(3, 0.15, 1.8, 0x3d1a00, 0, 1.2, 0);
+        [
+          [-1.2, -0.7],
+          [1.2, -0.7],
+          [-1.2, 0.7],
+          [1.2, 0.7],
+        ].forEach(([x, z]) => cyl(0.07, 1.2, 0x1a0800, x, 0.6, z));
+
+        // Chair
+        box(0.6, 0.08, 0.55, 0x00603a, -1.7, 0.5, 0);
+        box(0.6, 0.75, 0.08, 0x00603a, -1.7, 1.1, -0.27);
+        [
+          [-1.42, -0.18],
+          [-1.42, 0.18],
+          [-1.98, -0.18],
+          [-1.98, 0.18],
+        ].forEach(([x, z]) => cyl(0.04, 0.5, 0x004d2e, x, 0.25, z));
+
+        // Person
+        const head = sph(0.18, 0xf4b880, -1.7, 2.0, 0);
+        const torso = box(0.28, 0.55, 0.18, 0x1a4fff, -1.7, 1.45, 0);
+        const lArm = cyl(0.045, 0.45, 0xf4b880, -1.9, 1.4, 0);
+        lArm.rotation.z = 0.4;
+        const rArm = cyl(0.045, 0.45, 0xf4b880, -1.5, 1.4, 0);
+        rArm.rotation.z = -0.4;
+        cyl(0.045, 0.45, 0x111, -1.82, 0.6, 0);
+        cyl(0.045, 0.45, 0x111, -1.58, 0.6, 0);
+
+        // Plate + food
+        cyl(0.32, 0.04, 0xfff8e7, 0.4, 1.28, 0);
+        sph(0.13, 0xb5500a, 0.4, 1.45, 0); // burger
+        sph(0.1, 0xff3c00, -0.35, 1.42, 0.3); // tomato
+        cyl(0.07, 0.22, 0xff9900, 0.85, 1.38, 0); // drink
+        box(0.18, 0.09, 0.13, 0xd4a855, -0.5, 1.37, 0.2); // bread
+        sph(0.12, 0x1aaa60, 0.2, 1.45, -0.38); // salad
+
+        // Floating digital screen
+        const screenGeo = new THREE.BoxGeometry(1.2, 0.8, 0.05);
+        const screenMat = new THREE.MeshPhongMaterial({
+          color: 0x0a1a0f,
+          emissive: 0x003320,
+          emissiveIntensity: 0.5,
+        });
+        const screen = new THREE.Mesh(screenGeo, screenMat);
+        screen.position.set(1.8, 2.2, -0.5);
+        screen.rotation.y = -0.5;
+        scene.add(screen);
+        const screenLight = new THREE.PointLight(0x00e87a, 1.5, 3);
+        screenLight.position.set(1.8, 2.2, 0);
+        scene.add(screenLight);
+
+        const onResize = () => {
+          const w2 = canvas.clientWidth,
+            h2 = canvas.clientHeight;
+          camera.aspect = w2 / h2;
+          camera.updateProjectionMatrix();
+          renderer.setSize(w2, h2);
+        };
+        window.addEventListener("resize", onResize);
+
+        let raf;
+        const animate = () => {
+          raf = requestAnimationFrame(animate);
+          const t = Date.now() * 0.001;
+          scene.rotation.y = t * 0.15;
+          scene.rotation.x = Math.sin(t * 0.3) * 0.05;
+          lArm.rotation.z = 0.4 + Math.sin(t * 2) * 0.25;
+          rArm.rotation.z = -0.4 - Math.sin(t * 2) * 0.18;
+          head.position.y = 2.0 + Math.sin(t * 1.5) * 0.04;
+          torso.position.x = -1.7 + Math.sin(t) * 0.03;
+          screen.position.y = 2.2 + Math.sin(t * 0.8) * 0.15;
+          screen.rotation.y = -0.5 + Math.sin(t * 0.5) * 0.1;
+          screenLight.intensity = 1.2 + Math.sin(t * 2) * 0.3;
+          pl1.position.x = Math.sin(t * 0.7) * 3 + 2;
+          pl2.position.x = Math.cos(t * 0.5) * 3 - 2;
+          renderer.render(scene, camera);
+        };
+        animate();
+        cleanup = () => {
+          cancelAnimationFrame(raf);
+          window.removeEventListener("resize", onResize);
+          renderer.dispose();
+        };
+      };
+      init();
+    }, 50);
+    return () => {
+      clearTimeout(timer);
+      if (cleanup) cleanup();
     };
-
-    window.addEventListener("mousemove", onMove);
-    return () => window.removeEventListener("mousemove", onMove);
   }, []);
+  return (
+    <canvas
+      ref={canvasRef}
+      style={{
+        width: "100%",
+        height: "100%",
+        minHeight: 320,
+        display: "block",
+      }}
+    />
+  );
+}
+
+/* ─── Floating Orb ───────────────────────────────────────── */
+function FloatingOrb({
+  size = 300,
+  x = "10%",
+  y = "20%",
+  color = "rgba(0,232,122,0.08)",
+  blur = 80,
+  delay = 0,
+}) {
+  return (
+    <div
+      style={{
+        position: "absolute",
+        width: size,
+        height: size,
+        left: x,
+        top: y,
+        background: `radial-gradient(circle, ${color}, transparent 70%)`,
+        filter: `blur(${blur}px)`,
+        borderRadius: "50%",
+        pointerEvents: "none",
+        animation: `floatY ${4 + delay}s ${delay}s ease-in-out infinite`,
+      }}
+    />
+  );
+}
+
+/* ─── Type Writer ────────────────────────────────────────── */
+function TypeWriter({ words, speed = 80, pause = 2000 }) {
+  const [text, setText] = useState("");
+  const [wi, setWi] = useState(0);
+  const [deleting, setDeleting] = useState(false);
+  useEffect(() => {
+    const word = words[wi % words.length];
+    const timeout = setTimeout(
+      () => {
+        if (!deleting) {
+          setText(word.slice(0, text.length + 1));
+          if (text.length + 1 === word.length)
+            setTimeout(() => setDeleting(true), pause);
+        } else {
+          setText(word.slice(0, text.length - 1));
+          if (text.length - 1 === 0) {
+            setDeleting(false);
+            setWi((w) => w + 1);
+          }
+        }
+      },
+      deleting ? speed / 2 : speed,
+    );
+    return () => clearTimeout(timeout);
+  }, [text, deleting, wi, words, speed, pause]);
+  return (
+    <span>
+      {text}
+      <span
+        style={{
+          borderRight: "2px solid var(--green)",
+          marginLeft: 2,
+          animation: "glowPulse 1s ease-in-out infinite",
+        }}
+      >
+        &nbsp;
+      </span>
+    </span>
+  );
+}
+
+/* ─── Food 3D Scene ──────────────────────────────────────── */
+function FoodScene3D() {
+  const canvasRef = useRef(null);
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    let cleanupFn;
+
+    // Wait a tick so canvas has layout dimensions
+    const timer = setTimeout(() => {
+      const init = async () => {
+        const THREE = await loadThree();
+        if (!THREE || !THREE.Scene) {
+          console.error("Three.js failed to load");
+          return;
+        }
+        const w = Math.max(canvas.clientWidth, 100),
+          h = Math.max(canvas.clientHeight, 100);
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(55, w / h, 0.1, 200);
+        camera.position.set(0, 0, 14);
+        const renderer = new THREE.WebGLRenderer({
+          canvas,
+          alpha: true,
+          antialias: true,
+        });
+        renderer.setSize(w, h);
+        renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+
+        // Lighting
+        scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+        const sun = new THREE.DirectionalLight(0xfff4e0, 1.8);
+        sun.position.set(6, 10, 8);
+        sun.castShadow = true;
+        scene.add(sun);
+        const fill = new THREE.PointLight(0x00e87a, 1.2, 40);
+        fill.position.set(-8, 4, 4);
+        scene.add(fill);
+        const rim = new THREE.PointLight(0x0080ff, 0.8, 30);
+        rim.position.set(8, -4, -4);
+        scene.add(rim);
+        const warm = new THREE.PointLight(0xff6b35, 0.6, 25);
+        warm.position.set(0, -6, 6);
+        scene.add(warm);
+
+        const mat = (color, opts = {}) =>
+          new THREE.MeshPhongMaterial({
+            color,
+            shininess: opts.shiny ?? 80,
+            ...opts,
+          });
+        const box = (w, h, d, c, opts) =>
+          new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat(c, opts));
+        const cyl = (r1, r2, h, segs, c, opts) =>
+          new THREE.Mesh(
+            new THREE.CylinderGeometry(r1, r2, h, segs),
+            mat(c, opts),
+          );
+        const sph = (r, ws, hs, c, opts) =>
+          new THREE.Mesh(new THREE.SphereGeometry(r, ws, hs), mat(c, opts));
+        const tor = (r, t, rs, ts, c, opts) =>
+          new THREE.Mesh(new THREE.TorusGeometry(r, t, rs, ts), mat(c, opts));
+
+        const foodItems = [];
+
+        // ── BURGER GROUP ──────────────────────────────
+        const burger = new THREE.Group();
+        // Bottom bun
+        const bbun = cyl(0.7, 0.75, 0.28, 32, 0xd4822a);
+        bbun.position.y = -0.55;
+        burger.add(bbun);
+        // Sesame seeds on bottom bun
+        for (let i = 0; i < 5; i++) {
+          const seed = sph(0.045, 8, 8, 0xf5e6c8);
+          const angle = (i / 5) * Math.PI * 2;
+          seed.position.set(
+            Math.cos(angle) * 0.38,
+            -0.41,
+            Math.sin(angle) * 0.38,
+          );
+          burger.add(seed);
+        }
+        // Patty
+        const patty = cyl(0.65, 0.68, 0.2, 32, 0x5c2800);
+        patty.position.y = -0.22;
+        burger.add(patty);
+        // Patty rim darker edge
+        const pattyRim = tor(0.66, 0.06, 8, 32, 0x3a1500);
+        pattyRim.position.y = -0.22;
+        pattyRim.rotation.x = Math.PI / 2;
+        burger.add(pattyRim);
+        // Cheese slice (square-ish, hanging over)
+        const cheese = box(1.5, 0.06, 1.5, 0xffcc00);
+        cheese.position.y = -0.02;
+        cheese.rotation.y = 0.4;
+        burger.add(cheese);
+        // Lettuce (green wavy disk using torus)
+        const lettuce = cyl(0.78, 0.85, 0.1, 32, 0x1a8c3a);
+        lettuce.position.y = 0.06;
+        burger.add(lettuce);
+        const letEdge = tor(0.8, 0.08, 6, 32, 0x25b050);
+        letEdge.position.y = 0.06;
+        letEdge.rotation.x = Math.PI / 2;
+        burger.add(letEdge);
+        // Tomato slice
+        const tomato = cyl(0.6, 0.62, 0.1, 32, 0xdd2200);
+        tomato.position.y = 0.2;
+        burger.add(tomato);
+        // Top bun
+        const tbun = sph(0.72, 32, 16, 0xe8922a);
+        tbun.scale.y = 0.58;
+        tbun.position.y = 0.58;
+        burger.add(tbun);
+        // Sesame on top
+        for (let i = 0; i < 6; i++) {
+          const seed = sph(0.048, 8, 8, 0xf5e6c8);
+          const angle = (i / 6) * Math.PI * 2 + 0.3;
+          const r = 0.28 + (i % 2) * 0.18;
+          seed.position.set(Math.cos(angle) * r, 0.88, Math.sin(angle) * r);
+          burger.add(seed);
+        }
+        burger.position.set(-3.5, 2.2, 0);
+        burger.scale.setScalar(1.0);
+        scene.add(burger);
+        foodItems.push({
+          group: burger,
+          spin: 0.008,
+          float: { amp: 0.4, speed: 1.2, offset: 0 },
+          baseY: 2.2,
+          baseX: -3.5,
+        });
+
+        // ── PIZZA SLICE GROUP ──────────────────────────
+        const pizza = new THREE.Group();
+        // Crust (wedge shape via custom geometry)
+        const crustShape = new THREE.Shape();
+        crustShape.moveTo(0, 0);
+        crustShape.arc(0, 0, 1.1, -Math.PI / 6, Math.PI / 6, false);
+        crustShape.lineTo(0, 0);
+        const crustGeo = new THREE.ShapeGeometry(crustShape, 32);
+        const crustMesh = new THREE.Mesh(crustGeo, mat(0xf0c06a));
+        crustMesh.rotation.x = -Math.PI / 2;
+        pizza.add(crustMesh);
+        // Sauce layer
+        const sauceShape = new THREE.Shape();
+        sauceShape.moveTo(0, 0);
+        sauceShape.arc(0, 0, 0.92, -Math.PI / 6.5, Math.PI / 6.5, false);
+        sauceShape.lineTo(0, 0);
+        const sauceMesh = new THREE.Mesh(
+          new THREE.ShapeGeometry(sauceShape, 32),
+          mat(0xcc2200),
+        );
+        sauceMesh.rotation.x = -Math.PI / 2;
+        sauceMesh.position.y = 0.04;
+        pizza.add(sauceMesh);
+        // Cheese top
+        const cheeseShape = new THREE.Shape();
+        cheeseShape.moveTo(0, 0);
+        cheeseShape.arc(0, 0, 0.85, -Math.PI / 7, Math.PI / 7, false);
+        cheeseShape.lineTo(0, 0);
+        const cheeseMesh = new THREE.Mesh(
+          new THREE.ShapeGeometry(cheeseShape, 32),
+          mat(0xffe066),
+        );
+        cheeseMesh.rotation.x = -Math.PI / 2;
+        cheeseMesh.position.y = 0.07;
+        pizza.add(cheeseMesh);
+        // Pepperoni circles
+        [
+          [0.45, 0.1],
+          [0.3, -0.1],
+          [0.55, -0.08],
+          [0.22, 0.18],
+        ].forEach(([x, z]) => {
+          const pep = cyl(0.1, 0.1, 0.06, 16, 0xaa1100);
+          pep.position.set(x, 0.1, z);
+          pizza.add(pep);
+        });
+        // Crust edge
+        const crustEdge = new THREE.Mesh(
+          new THREE.CylinderGeometry(
+            0.12,
+            0.14,
+            0.18,
+            16,
+            1,
+            false,
+            -Math.PI / 6,
+            Math.PI / 3,
+          ),
+          mat(0xe8a840),
+        );
+        crustEdge.position.set(Math.cos(0) * 1.1, 0.08, 0);
+        crustEdge.rotation.y = Math.PI / 2;
+        pizza.add(crustEdge);
+        pizza.position.set(3.5, 2.0, 0);
+        pizza.rotation.x = 0.3;
+        scene.add(pizza);
+        foodItems.push({
+          group: pizza,
+          spin: -0.007,
+          float: { amp: 0.35, speed: 1.0, offset: 1.1 },
+          baseY: 2.0,
+          baseX: 3.5,
+        });
+
+        // ── SUSHI ROLL ────────────────────────────────
+        const sushi = new THREE.Group();
+        // Nori wrap (outer black cylinder)
+        const nori = cyl(0.52, 0.52, 0.55, 32, 0x1a1a1a);
+        nori.rotation.z = Math.PI / 2;
+        sushi.add(nori);
+        // Rice layer
+        const rice = cyl(0.44, 0.44, 0.58, 32, 0xf8f4ee);
+        rice.rotation.z = Math.PI / 2;
+        sushi.add(rice);
+        // Salmon filling
+        const salmon = cyl(0.2, 0.2, 0.6, 16, 0xff8c50);
+        salmon.rotation.z = Math.PI / 2;
+        sushi.add(salmon);
+        // Avocado
+        const avo = cyl(0.12, 0.12, 0.6, 12, 0x5a9e3a);
+        avo.rotation.z = Math.PI / 2;
+        avo.position.set(0, 0.22, 0);
+        sushi.add(avo);
+        // Sesame seeds on top
+        for (let i = 0; i < 8; i++) {
+          const s = sph(0.035, 6, 6, 0xf0e8d0);
+          const angle = (i / 8) * Math.PI * 2;
+          s.position.set(Math.cos(angle) * 0.3, 0.55, Math.sin(angle) * 0.18);
+          s.rotation.z = Math.PI / 2;
+          sushi.add(s);
+        }
+        // Wasabi blob
+        const wasabi = sph(0.15, 12, 10, 0x6abf4b);
+        wasabi.position.set(0.7, -0.1, 0.3);
+        wasabi.scale.set(1, 0.6, 0.9);
+        sushi.add(wasabi);
+        sushi.position.set(0, -2.2, 1);
+        scene.add(sushi);
+        foodItems.push({
+          group: sushi,
+          spin: 0.01,
+          float: { amp: 0.45, speed: 1.4, offset: 2.2 },
+          baseY: -2.2,
+          baseX: 0,
+        });
+
+        // ── STRAWBERRY ────────────────────────────────
+        const berry = new THREE.Group();
+        // Berry body (cone-ish sphere)
+        const bodyGeo = new THREE.SphereGeometry(0.55, 24, 20);
+        const bodyPos = bodyGeo.attributes.position;
+        for (let i = 0; i < bodyPos.count; i++) {
+          const y = bodyPos.getY(i);
+          if (y < 0) {
+            bodyPos.setY(i, y * 1.35);
+          }
+        }
+        bodyPos.needsUpdate = true;
+        bodyGeo.computeVertexNormals();
+        const body = new THREE.Mesh(bodyGeo, mat(0xee1133, { shininess: 120 }));
+        berry.add(body);
+        // Seeds (tiny yellow ovals on surface)
+        for (let i = 0; i < 20; i++) {
+          const seed = sph(0.04, 6, 6, 0xffee88);
+          const phi = Math.acos(-1 + (2 * i) / 20);
+          const theta = Math.sqrt(20 * Math.PI) * phi;
+          seed.position.setFromSphericalCoords(0.55, phi, theta);
+          if (seed.position.y > -0.3) berry.add(seed);
+        }
+        // Leaf cap
+        for (let i = 0; i < 5; i++) {
+          const leaf = box(0.08, 0.35, 0.06, 0x228822);
+          const angle = (i / 5) * Math.PI * 2;
+          leaf.position.set(
+            Math.cos(angle) * 0.18,
+            0.55,
+            Math.sin(angle) * 0.18,
+          );
+          leaf.rotation.z = angle + Math.PI / 2;
+          leaf.rotation.x = -0.5;
+          berry.add(leaf);
+        }
+        // Stem
+        const stem = cyl(0.04, 0.03, 0.35, 8, 0x2d5c1e);
+        stem.position.y = 0.78;
+        berry.add(stem);
+        berry.position.set(-3.2, -2.0, 0.5);
+        scene.add(berry);
+        foodItems.push({
+          group: berry,
+          spin: 0.012,
+          float: { amp: 0.5, speed: 1.6, offset: 3.4 },
+          baseY: -2.0,
+          baseX: -3.2,
+        });
+
+        // ── DONUT ─────────────────────────────────────
+        const donut = new THREE.Group();
+        // Base torus
+        const donutBody = tor(0.55, 0.3, 20, 48, 0xf0b050, { shininess: 100 });
+        donut.add(donutBody);
+        // Pink glaze on top half
+        const glazeGeo = new THREE.TorusGeometry(0.55, 0.31, 10, 48, Math.PI);
+        const glazeMesh = new THREE.Mesh(
+          glazeGeo,
+          mat(0xff80b0, { shininess: 150 }),
+        );
+        glazeMesh.rotation.x = -Math.PI / 2;
+        glazeMesh.position.y = 0.05;
+        donut.add(glazeMesh);
+        // Sprinkles
+        const sprinkleColors = [
+          0xff2244, 0x22aaff, 0xffee00, 0x44dd66, 0xff8800,
+        ];
+        for (let i = 0; i < 18; i++) {
+          const sp = box(
+            0.06,
+            0.18,
+            0.06,
+            sprinkleColors[i % sprinkleColors.length],
+          );
+          const angle = (i / 18) * Math.PI * 2;
+          const r = 0.48 + (i % 3) * 0.05;
+          sp.position.set(Math.cos(angle) * r, 0.28, Math.sin(angle) * r);
+          sp.rotation.y = angle;
+          sp.rotation.x = 0.4;
+          donut.add(sp);
+        }
+        donut.position.set(3.3, -2.0, 0.5);
+        scene.add(donut);
+        foodItems.push({
+          group: donut,
+          spin: -0.009,
+          float: { amp: 0.38, speed: 1.1, offset: 4.5 },
+          baseY: -2.0,
+          baseX: 3.3,
+        });
+
+        // ── COCKTAIL GLASS ────────────────────────────
+        const cocktail = new THREE.Group();
+        // Glass body (inverted cone shape)
+        const glassBody = cyl(0.7, 0.08, 0.9, 32, 0xaaddff, {
+          transparent: true,
+          opacity: 0.35,
+          shininess: 200,
+        });
+        glassBody.position.y = 0.1;
+        cocktail.add(glassBody);
+        // Liquid (slightly smaller, colored)
+        const liquid = cyl(0.65, 0.06, 0.75, 32, 0xff6688, {
+          transparent: true,
+          opacity: 0.8,
+          shininess: 100,
+        });
+        liquid.position.y = 0.05;
+        cocktail.add(liquid);
+        // Stem
+        const glStem = cyl(0.04, 0.04, 0.7, 12, 0xaaddff, {
+          transparent: true,
+          opacity: 0.5,
+        });
+        glStem.position.y = -0.5;
+        cocktail.add(glStem);
+        // Base
+        const glBase = cyl(0.35, 0.38, 0.07, 32, 0xaaddff, {
+          transparent: true,
+          opacity: 0.5,
+        });
+        glBase.position.y = -0.88;
+        cocktail.add(glBase);
+        // Garnish (orange slice)
+        const garnish = cyl(0.22, 0.22, 0.05, 16, 0xff9900);
+        garnish.position.set(0.55, 0.55, 0);
+        garnish.rotation.z = 0.6;
+        cocktail.add(garnish);
+        // Straw
+        const straw = cyl(0.04, 0.04, 1.1, 8, 0xff4488);
+        straw.position.set(0.2, 0.5, 0);
+        straw.rotation.z = -0.3;
+        cocktail.add(straw);
+        // Bubbles
+        for (let i = 0; i < 5; i++) {
+          const bub = sph(0.04 + Math.random() * 0.04, 8, 8, 0xffffff, {
+            transparent: true,
+            opacity: 0.5,
+          });
+          bub.position.set(
+            (Math.random() - 0.5) * 0.8,
+            -0.1 + i * 0.15,
+            (Math.random() - 0.5) * 0.5,
+          );
+          cocktail.add(bub);
+        }
+        cocktail.position.set(0, 2.3, -1.5);
+        scene.add(cocktail);
+        foodItems.push({
+          group: cocktail,
+          spin: 0.006,
+          float: { amp: 0.42, speed: 0.9, offset: 5.5 },
+          baseY: 2.3,
+          baseX: 0,
+        });
+
+        // ── SPARKLE PARTICLES around food ─────────────
+        const sparkles = [];
+        for (let i = 0; i < 60; i++) {
+          const spark = sph(0.035, 6, 6, 0x00e87a, {
+            transparent: true,
+            opacity: 0.7,
+          });
+          const theta = Math.random() * Math.PI * 2;
+          const phi = Math.random() * Math.PI;
+          const r = 3.5 + Math.random() * 3;
+          spark.position.set(
+            Math.sin(phi) * Math.cos(theta) * r,
+            Math.sin(phi) * Math.sin(theta) * r * 0.8,
+            Math.cos(phi) * r * 0.4,
+          );
+          spark.userData = {
+            theta,
+            phi,
+            r,
+            speed: 0.002 + Math.random() * 0.004,
+            phase: Math.random() * Math.PI * 2,
+          };
+          scene.add(spark);
+          sparkles.push(spark);
+        }
+
+        // Mouse interaction
+        let mouseX = 0,
+          mouseY = 0;
+        const onMouseMove = (e) => {
+          const rect = canvas.getBoundingClientRect();
+          mouseX = ((e.clientX - rect.left) / rect.width - 0.5) * 2;
+          mouseY = -((e.clientY - rect.top) / rect.height - 0.5) * 2;
+        };
+        canvas.addEventListener("mousemove", onMouseMove);
+
+        // Touch support
+        const onTouch = (e) => {
+          const rect = canvas.getBoundingClientRect();
+          const t = e.touches[0];
+          mouseX = ((t.clientX - rect.left) / rect.width - 0.5) * 2;
+          mouseY = -((t.clientY - rect.top) / rect.height - 0.5) * 2;
+        };
+        canvas.addEventListener("touchmove", onTouch, { passive: true });
+
+        // Resize
+        const onResize = () => {
+          const nw = canvas.clientWidth,
+            nh = canvas.clientHeight;
+          camera.aspect = nw / nh;
+          camera.updateProjectionMatrix();
+          renderer.setSize(nw, nh);
+        };
+        window.addEventListener("resize", onResize);
+
+        let raf;
+        const animate = () => {
+          raf = requestAnimationFrame(animate);
+          const t = Date.now() * 0.001;
+
+          // Subtle camera drift following mouse
+          camera.position.x += (mouseX * 1.5 - camera.position.x) * 0.04;
+          camera.position.y += (mouseY * 1.0 - camera.position.y) * 0.04;
+          camera.lookAt(0, 0, 0);
+
+          // Animate each food item
+          foodItems.forEach(({ group, spin, float: f }) => {
+            group.rotation.y += spin;
+            group.position.y =
+              f.baseY ?? 0 + Math.sin(t * f.speed + f.offset) * f.amp;
+            // Gentle wobble
+            group.rotation.x = Math.sin(t * 0.7 + f.offset) * 0.08;
+            group.rotation.z = Math.cos(t * 0.5 + f.offset) * 0.05;
+          });
+
+          // Fix Y position (group.position.y assignment above has precedence issue)
+          foodItems.forEach(({ group, float: f, baseY }) => {
+            group.position.y = baseY + Math.sin(t * f.speed + f.offset) * f.amp;
+          });
+
+          // Animate sparkles
+          sparkles.forEach((sp, i) => {
+            const d = sp.userData;
+            d.theta += d.speed;
+            sp.position.x = Math.sin(d.phi + t * 0.2) * Math.cos(d.theta) * d.r;
+            sp.position.y =
+              Math.sin(d.phi + t * 0.2) * Math.sin(d.theta) * d.r * 0.8;
+            sp.position.z = Math.cos(d.phi + t * 0.2) * d.r * 0.4;
+            sp.material.opacity = 0.3 + Math.sin(t * 3 + d.phase) * 0.4;
+            const sc = 0.6 + Math.sin(t * 2.5 + d.phase) * 0.4;
+            sp.scale.setScalar(sc);
+          });
+
+          // Animate point lights
+          fill.position.x = Math.sin(t * 0.4) * 8;
+          fill.position.z = Math.cos(t * 0.3) * 5;
+          rim.position.x = Math.cos(t * 0.3) * 8;
+
+          renderer.render(scene, camera);
+        };
+        animate();
+
+        cleanupFn = () => {
+          cancelAnimationFrame(raf);
+          canvas.removeEventListener("mousemove", onMouseMove);
+          canvas.removeEventListener("touchmove", onTouch);
+          window.removeEventListener("resize", onResize);
+          renderer.dispose();
+        };
+      };
+
+      init();
+    }, 50); // end setTimeout — wait for canvas layout
+
+    return () => {
+      clearTimeout(timer);
+      if (cleanupFn) cleanupFn();
+    };
+  }, []);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      style={{
+        width: "100%",
+        height: "100%",
+        display: "block",
+        cursor: "grab",
+      }}
+    />
+  );
+}
+
+/* ─── Scroll Observer Hook ───────────────────────────────── */
+function useScrollReveal() {
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) {
+            e.target.classList.add("visible");
+          }
+        });
+      },
+      { threshold: 0.1, rootMargin: "0px 0px -50px 0px" },
+    );
+    document
+      .querySelectorAll(".card-reveal")
+      .forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, []);
+}
+
+/* ─── Main Component ─────────────────────────────────────── */
+export default function RestaurantLanding() {
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [email, setEmail] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+  const [activeFeature, setActiveFeature] = useState(0);
+  const [videoPlaying, setVideoPlaying] = useState(false);
+  const [hoveredPlan, setHoveredPlan] = useState(null);
+  useScrollReveal();
+
+  // Cursor glow
+  useEffect(() => {
+    const glow = document.getElementById("cursor-glow");
+    if (!glow) return;
+    const move = (e) => {
+      glow.style.left = e.clientX + "px";
+      glow.style.top = e.clientY + "px";
+    };
+    window.addEventListener("mousemove", move);
+    return () => window.removeEventListener("mousemove", move);
+  }, []);
+
+  // Progress bars
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) {
+            e.target
+              .querySelectorAll(".progress-fill")
+              .forEach((f) => f.classList.add("animated"));
+          }
+        });
+      },
+      { threshold: 0.3 },
+    );
+    document
+      .querySelectorAll(".stats-section")
+      .forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, []);
+
+  // Feature auto-rotate
+  useEffect(() => {
+    const interval = setInterval(
+      () => setActiveFeature((f) => (f + 1) % features.length),
+      3000,
+    );
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleSubmit = (e) => {
+    if (e.currentTarget) addRipple(e, e.currentTarget);
+    if (email) setSubmitted(true);
+  };
 
   const features = [
     {
-      icon: "🍽️",
-      title: "Smart Menu Builder",
-      desc: "Drag-and-drop menu creation with real-time preview. Update items, prices, and photos instantly from any device.",
+      icon: <BarChart3 size={22} />,
+      title: "Real-Time Analytics",
+      description:
+        "Track orders, revenue, and customer behavior with live dashboards and predictive insights.",
+      stat: "↑ 47% avg revenue",
+      color: "#00e87a",
     },
     {
-      icon: "📊",
-      title: "Live Analytics",
-      desc: "Track orders, revenue, peak hours, and customer trends. Make data-driven decisions with beautiful dashboards.",
+      icon: <Clock size={22} />,
+      title: "Smart Table Management",
+      description:
+        "Auto-release tables, manage reservations, and optimize seating with AI-powered suggestions.",
+      stat: "↑ 32% table turnover",
+      color: "#0080ff",
     },
     {
-      icon: "🛎️",
-      title: "Table Management",
-      desc: "Interactive floor plans, reservation sync, and QR-code ordering — all from one unified platform.",
+      icon: <ChefHat size={22} />,
+      title: "Kitchen Integration",
+      description:
+        "Sync orders directly to kitchen displays in real-time with priority queue management.",
+      stat: "↓ 40% ticket time",
+      color: "#ffd166",
     },
     {
-      icon: "🚀",
-      title: "Kitchen Display",
-      desc: "Real-time order routing to kitchen stations. Reduce wait times, eliminate miscommunication, delight guests.",
+      icon: <Zap size={22} />,
+      title: "QR Code Menu",
+      description:
+        "Digital menus with no setup cost — customers scan, customize, and order instantly.",
+      stat: "↑ 28% avg check size",
+      color: "#ff6b6b",
     },
     {
-      icon: "💳",
-      title: "Integrated Payments",
-      desc: "Accept all major cards, Apple Pay, and crypto. Auto-split bills, apply discounts, and close tabs in seconds.",
+      icon: <Users size={22} />,
+      title: "Team Collaboration",
+      description:
+        "Manage staff roles, track performance, and coordinate shifts across all locations.",
+      stat: "↓ 60% admin time",
+      color: "#c77dff",
     },
     {
-      icon: "🤖",
-      title: "AI Recommendations",
-      desc: "Personalized upsell suggestions for waitstaff. Boost average check size by up to 23% effortlessly.",
+      icon: <ShieldCheck size={22} />,
+      title: "Enterprise Security",
+      description:
+        "Bank-level security with daily backups, SOC2 compliance, and 99.99% uptime SLA.",
+      stat: "0 breaches ever",
+      color: "#4cc9f0",
     },
-  ];
-
-  const stats = [
-    { value: "12,000+", label: "Restaurants" },
-    { value: "98.9%", label: "Uptime SLA" },
-    { value: "$2.4B", label: "Processed" },
-    { value: "4.2min", label: "Avg. Onboarding" },
   ];
 
   const testimonials = [
     {
-      name: "Layla Hassan",
-      role: "Owner, Saffron Dubai",
-      text: "TableOS transformed our entire operation. Revenue up 34% in 90 days.",
-      avatar: "L",
+      name: "Marco Rossi",
+      role: "Owner, Bella Italia",
+      text: "Revenue increased by 35% in the first month. The analytics dashboard is genuinely addictive.",
+      stars: 5,
+      flag: "🇮🇹",
+      highlight: "35% revenue boost",
     },
     {
-      name: "Marco Bianchi",
-      role: "Chef, Rosso Milano",
-      text: "The kitchen display system alone saved us 40 minutes of chaos every service.",
-      avatar: "M",
+      name: "Sarah Chen",
+      role: "Manager, Urban Bistro",
+      text: "The analytics dashboard alone has saved us thousands. Real data finally drives our decisions.",
+      stars: 5,
+      flag: "🇸🇬",
+      highlight: "$48K saved annually",
     },
     {
-      name: "Sara Park",
-      role: "GM, Seoul Bites",
-      text: "Our guests love the QR experience. Tips increased noticeably — genuinely incredible.",
-      avatar: "S",
+      name: "James O'Brien",
+      role: "CEO, 12-location Group",
+      text: "Managing 12 locations is seamless. Centralized reporting saves our team hours every day.",
+      stars: 5,
+      flag: "🇮🇪",
+      highlight: "12 locations unified",
+    },
+  ];
+
+  const stats = [
+    {
+      label: "Active Restaurants",
+      value: "12000",
+      suffix: "+",
+      progress: 0.85,
+      desc: "globally",
+    },
+    {
+      label: "Orders Processed",
+      value: "5",
+      suffix: "M+",
+      progress: 0.92,
+      desc: "this month",
+    },
+    {
+      label: "Revenue Tracked",
+      value: "1.2",
+      suffix: "B+",
+      progress: 0.78,
+      desc: "USD total",
+    },
+    {
+      label: "Average ROI",
+      value: "340",
+      suffix: "%",
+      progress: 0.97,
+      desc: "for customers",
+    },
+  ];
+
+  const plans = [
+    {
+      name: "Starter",
+      price: "$99",
+      period: "/mo",
+      description: "Perfect for independent restaurants",
+      features: [
+        "Up to 30 tables",
+        "Basic analytics",
+        "Mobile app access",
+        "Email support",
+        "QR code menu",
+      ],
+      cta: "Start Free Trial",
+    },
+    {
+      name: "Professional",
+      price: "$299",
+      period: "/mo",
+      description: "For restaurants serious about growth",
+      features: [
+        "Up to 100 tables",
+        "Advanced analytics",
+        "Kitchen display system",
+        "Staff management",
+        "Priority 24/7 support",
+        "Multi-location",
+        "Custom branding",
+      ],
+      highlight: true,
+      cta: "Start Free Trial",
+    },
+    {
+      name: "Enterprise",
+      price: "Custom",
+      period: "pricing",
+      description: "For large-scale operations",
+      features: [
+        "Unlimited tables",
+        "Custom integrations",
+        "Dedicated account manager",
+        "API access",
+        "On-premise option",
+        "SLA guarantee",
+        "Training included",
+      ],
+      cta: "Contact Sales",
     },
   ];
 
   return (
-    <>
-      {/* ── Inline Styles & Global CSS ─────────────────────────────────────── */}
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Syne:wght@400;500;600;700;800&display=swap');
+    <div
+      style={{
+        background: "var(--surface)",
+        color: "var(--text)",
+        fontFamily: "'DM Sans', sans-serif",
+        minHeight: "100vh",
+        overflowX: "hidden",
+      }}
+    >
+      <style>{globalCSS}</style>
 
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      {/* Cursor glow */}
+      <div id="cursor-glow" />
 
-        :root {
-          --bg: #050200;
-          --bg2: #0d0500;
-          --bg3: #120700;
-          --gold: #d4a843;
-          --gold2: #f0c96a;
-          --red: #c0392b;
-          --red2: #e74c3c;
-          --cream: #fdf5e6;
-          --cream2: #f5e6c8;
-          --muted: rgba(253,245,230,0.45);
-          --glass: rgba(255,255,255,0.04);
-          --glass-border: rgba(212,168,67,0.18);
-          --font-display: 'Cormorant Garamond', serif;
-          --font-body: 'Syne', sans-serif;
-        }
-
-        html { scroll-behavior: smooth; }
-
-        body {
-          background: var(--bg);
-          color: var(--cream);
-          font-family: var(--font-body);
-          overflow-x: hidden;
-        }
-
-        .rsl-root { min-height: 100vh; background: var(--bg); }
-
-        /* SCROLLBAR */
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-track { background: var(--bg); }
-        ::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 2px; }
-
-        /* ── NAV ─────────────────────────────────────────────────────────── */
-        .rsl-nav {
-          position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-          display: flex; align-items: center; justify-content: space-between;
-          padding: 0 5vw; height: 70px;
-          background: rgba(5,2,0,0.82);
-          backdrop-filter: blur(20px);
-          border-bottom: 1px solid var(--glass-border);
-        }
-        .rsl-logo {
-          font-family: var(--font-display);
-          font-size: 1.7rem; font-weight: 700;
-          color: var(--gold);
-          letter-spacing: 0.02em;
-        }
-        .rsl-logo span { color: var(--red2); }
-        .rsl-nav-links { display: flex; gap: 2.5rem; list-style: none; }
-        .rsl-nav-links a {
-          font-size: 0.78rem; font-weight: 500; letter-spacing: 0.12em;
-          text-transform: uppercase; color: var(--muted);
-          text-decoration: none; transition: color 0.25s;
-        }
-        .rsl-nav-links a:hover { color: var(--gold); }
-        .rsl-nav-cta {
-          background: var(--gold); color: #050200;
-          padding: 0.5rem 1.4rem; border-radius: 2px;
-          font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em;
-          text-transform: uppercase; text-decoration: none;
-          transition: background 0.25s, transform 0.2s;
-          border: none; cursor: pointer;
-        }
-        .rsl-nav-cta:hover { background: var(--gold2); transform: translateY(-1px); }
-
-        /* ── HERO ─────────────────────────────────────────────────────────── */
-        .rsl-hero {
-          min-height: 100vh; display: grid;
-          grid-template-columns: 1fr 1fr;
-          align-items: center;
-          padding: 120px 5vw 80px;
-          position: relative; overflow: hidden;
-          gap: 2rem;
-        }
-
-        .rsl-hero::before {
-          content: '';
-          position: absolute; inset: 0;
-          background: radial-gradient(ellipse 70% 60% at 70% 50%, rgba(192,57,43,0.12) 0%, transparent 70%),
-                      radial-gradient(ellipse 50% 80% at 0% 100%, rgba(212,168,67,0.06) 0%, transparent 60%);
-          pointer-events: none;
-        }
-
-        .rsl-hero-eyebrow {
-          display: inline-flex; align-items: center; gap: 0.6rem;
-          font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase;
-          color: var(--gold); font-weight: 600; margin-bottom: 1.5rem;
-        }
-        .rsl-hero-eyebrow::before {
-          content: ''; width: 28px; height: 1px; background: var(--gold);
-        }
-
-        .rsl-hero-title {
-          font-family: var(--font-display);
-          font-size: clamp(3.2rem, 5.5vw, 5.8rem);
-          line-height: 1.0; font-weight: 700;
-          color: var(--cream); margin-bottom: 1.6rem;
-        }
-        .rsl-hero-title em {
-          font-style: italic; color: var(--gold);
-          display: block;
-        }
-        .rsl-hero-title .rsl-red { color: var(--red2); }
-
-        .rsl-hero-sub {
-          font-size: 1.0rem; line-height: 1.75;
-          color: var(--muted); max-width: 480px;
-          margin-bottom: 2.5rem; font-weight: 400;
-        }
-
-        .rsl-hero-actions { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }
-
-        .rsl-btn-primary {
-          background: linear-gradient(135deg, var(--gold), var(--gold2));
-          color: #050200; padding: 0.85rem 2.2rem; border-radius: 2px;
-          font-size: 0.78rem; font-weight: 700; letter-spacing: 0.12em;
-          text-transform: uppercase; text-decoration: none; border: none;
-          cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;
-          box-shadow: 0 4px 24px rgba(212,168,67,0.3);
-        }
-        .rsl-btn-primary:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 8px 32px rgba(212,168,67,0.45);
-        }
-
-        .rsl-btn-ghost {
-          background: transparent; color: var(--cream);
-          padding: 0.85rem 2rem; border-radius: 2px;
-          font-size: 0.78rem; font-weight: 600; letter-spacing: 0.1em;
-          text-transform: uppercase; text-decoration: none;
-          border: 1px solid rgba(253,245,230,0.2); cursor: pointer;
-          transition: border-color 0.25s, color 0.25s;
-        }
-        .rsl-btn-ghost:hover { border-color: var(--gold); color: var(--gold); }
-
-        .rsl-play-btn {
-          display: flex; align-items: center; gap: 0.6rem;
-          font-size: 0.78rem; color: var(--muted); text-decoration: none;
-          transition: color 0.25s;
-        }
-        .rsl-play-btn:hover { color: var(--gold); }
-        .rsl-play-icon {
-          width: 40px; height: 40px; border-radius: 50%;
-          border: 1px solid rgba(212,168,67,0.4);
-          display: flex; align-items: center; justify-content: center;
-          font-size: 0.9rem; transition: background 0.25s, border-color 0.25s;
-        }
-        .rsl-play-btn:hover .rsl-play-icon {
-          background: rgba(212,168,67,0.1); border-color: var(--gold);
-        }
-
-        /* ── WAITER / 3D CANVAS ───────────────────────────────────────────── */
-        .rsl-waiter-wrap {
-          position: relative; display: flex; align-items: center; justify-content: center;
-        }
-        .rsl-canvas-bg {
-          position: absolute; inset: -20%; border-radius: 50%;
-          background: radial-gradient(ellipse, rgba(192,57,43,0.1) 0%, transparent 65%);
-          filter: blur(30px);
-        }
-        .rsl-waiter-canvas {
-          width: 100%; max-width: 520px; height: 600px;
-          position: relative; z-index: 1;
-        }
-        .rsl-waiter-badge {
-          position: absolute; bottom: 60px; right: 5%;
-          background: var(--glass);
-          backdrop-filter: blur(20px);
-          border: 1px solid var(--glass-border);
-          border-radius: 12px; padding: 0.9rem 1.2rem;
-          display: flex; align-items: center; gap: 0.8rem;
-          animation: float 3s ease-in-out infinite;
-        }
-        @keyframes float {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-8px); }
-        }
-        .rsl-waiter-badge-icon { font-size: 1.4rem; }
-        .rsl-waiter-badge-text { font-size: 0.72rem; font-weight: 600; color: var(--cream2); }
-        .rsl-waiter-badge-sub { font-size: 0.64rem; color: var(--muted); }
-
-        /* ── MARQUEE ──────────────────────────────────────────────────────── */
-        .rsl-marquee-wrap {
-          overflow: hidden; border-top: 1px solid var(--glass-border);
-          border-bottom: 1px solid var(--glass-border);
-          padding: 1rem 0; background: rgba(212,168,67,0.03);
-        }
-        .rsl-marquee {
-          display: flex; gap: 4rem; animation: marquee 22s linear infinite;
-          width: max-content;
-        }
-        @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-        .rsl-marquee-item {
-          display: flex; align-items: center; gap: 1rem; white-space: nowrap;
-          font-size: 0.72rem; letter-spacing: 0.15em; text-transform: uppercase;
-          color: var(--muted); font-weight: 600;
-        }
-        .rsl-marquee-dot { color: var(--gold); font-size: 1.2rem; line-height: 1; }
-
-        /* ── STATS ────────────────────────────────────────────────────────── */
-        .rsl-stats { padding: 100px 5vw; }
-        .rsl-stats-grid {
-          display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px;
-          border: 1px solid var(--glass-border);
-          border-radius: 4px; overflow: hidden;
-        }
-        .stat-card {
-          background: var(--glass); padding: 3rem 2rem;
-          border-right: 1px solid var(--glass-border);
-          transition: background 0.3s;
-          cursor: default;
-        }
-        .stat-card:last-child { border-right: none; }
-        .stat-card:hover { background: rgba(212,168,67,0.06); }
-        .stat-value {
-          font-family: var(--font-display);
-          font-size: clamp(2.4rem, 3.5vw, 3.6rem);
-          font-weight: 700; color: var(--gold);
-          line-height: 1; margin-bottom: 0.6rem;
-        }
-        .stat-label {
-          font-size: 0.75rem; letter-spacing: 0.12em;
-          text-transform: uppercase; color: var(--muted); font-weight: 500;
-        }
-
-        /* ── FEATURES ─────────────────────────────────────────────────────── */
-        .rsl-features { padding: 100px 5vw; }
-        .section-heading {
-          font-family: var(--font-display);
-          font-size: clamp(2.4rem, 4vw, 4rem);
-          font-weight: 700; color: var(--cream);
-          margin-bottom: 0.8rem; line-height: 1.1;
-        }
-        .section-sub {
-          font-size: 0.95rem; color: var(--muted); max-width: 560px;
-          margin-bottom: 3.5rem; line-height: 1.7;
-        }
-        .section-eyebrow {
-          font-size: 0.7rem; letter-spacing: 0.2em;
-          text-transform: uppercase; color: var(--gold);
-          font-weight: 600; margin-bottom: 0.8rem;
-          display: block;
-        }
-        .rsl-features-grid {
-          display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5px;
-          background: var(--glass-border);
-        }
-        .feature-card {
-          background: var(--bg2); padding: 2.5rem 2rem;
-          position: relative; overflow: hidden;
-          transition: background 0.3s, transform 0.3s;
-          cursor: default;
-        }
-        .feature-card::after {
-          content: ''; position: absolute; inset: 0;
-          background: linear-gradient(135deg, rgba(212,168,67,0.05), transparent);
-          opacity: 0; transition: opacity 0.3s;
-        }
-        .feature-card:hover { background: var(--bg3); transform: translateY(-3px); }
-        .feature-card:hover::after { opacity: 1; }
-        .feature-card:hover .feature-icon { transform: scale(1.15) rotate(-5deg); }
-
-        .feature-icon { font-size: 2rem; margin-bottom: 1rem; display: block; transition: transform 0.3s; }
-        .feature-title {
-          font-family: var(--font-display);
-          font-size: 1.3rem; font-weight: 700;
-          color: var(--cream); margin-bottom: 0.8rem;
-        }
-        .feature-desc { font-size: 0.82rem; color: var(--muted); line-height: 1.7; }
-        .feature-arrow {
-          display: inline-block; margin-top: 1.2rem;
-          font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase;
-          color: var(--gold); font-weight: 600;
-          opacity: 0; transition: opacity 0.25s;
-        }
-        .feature-card:hover .feature-arrow { opacity: 1; }
-
-        /* ── TESTIMONIALS ─────────────────────────────────────────────────── */
-        .rsl-testimonials { padding: 100px 5vw; }
-        .rsl-testimonials-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
-        .testimonial-card {
-          background: var(--glass);
-          border: 1px solid var(--glass-border); border-radius: 8px;
-          padding: 2.2rem; transition: border-color 0.3s, transform 0.3s;
-          cursor: default;
-        }
-        .testimonial-card:hover {
-          border-color: rgba(212,168,67,0.35); transform: translateY(-4px);
-        }
-        .testimonial-quote {
-          font-family: var(--font-display);
-          font-size: 1.15rem; font-style: italic;
-          color: var(--cream2); line-height: 1.65; margin-bottom: 1.5rem;
-        }
-        .testimonial-avatar {
-          width: 42px; height: 42px; border-radius: 50%;
-          background: linear-gradient(135deg, var(--red), var(--gold));
-          display: flex; align-items: center; justify-content: center;
-          font-weight: 700; font-size: 1rem; color: #050200;
-          margin-right: 1rem; flex-shrink: 0;
-        }
-        .testimonial-name { font-size: 0.85rem; font-weight: 600; color: var(--cream); }
-        .testimonial-role { font-size: 0.72rem; color: var(--muted); margin-top: 0.2rem; }
-
-        /* ── CTA ──────────────────────────────────────────────────────────── */
-        .rsl-cta {
-          padding: 120px 5vw; text-align: center;
-          background: radial-gradient(ellipse 80% 60% at 50% 100%, rgba(192,57,43,0.12) 0%, transparent 70%);
-          border-top: 1px solid var(--glass-border);
-          position: relative; overflow: hidden;
-        }
-        .rsl-cta-title {
-          font-family: var(--font-display);
-          font-size: clamp(3rem, 6vw, 6.5rem);
-          font-weight: 700; line-height: 1.0;
-          margin-bottom: 1.5rem;
-          background: linear-gradient(135deg, var(--cream), var(--gold));
-          -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-        }
-        .rsl-cta-sub {
-          font-size: 1rem; color: var(--muted); max-width: 520px;
-          margin: 0 auto 2.5rem; line-height: 1.7;
-        }
-        .rsl-cta-actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
-        .rsl-cta-badge {
-          margin-top: 2rem; font-size: 0.7rem; color: var(--muted);
-          letter-spacing: 0.1em; text-transform: uppercase;
-        }
-        .rsl-cta-badge span { color: var(--gold); }
-
-        /* ── FOOTER ───────────────────────────────────────────────────────── */
-        .rsl-footer {
-          padding: 3rem 5vw; display: flex; align-items: center;
-          justify-content: space-between; border-top: 1px solid var(--glass-border);
-          flex-wrap: wrap; gap: 1rem;
-        }
-        .rsl-footer-copy { font-size: 0.72rem; color: var(--muted); }
-        .rsl-footer-links { display: flex; gap: 2rem; }
-        .rsl-footer-links a {
-          font-size: 0.72rem; color: var(--muted); text-decoration: none;
-          transition: color 0.2s; letter-spacing: 0.05em;
-        }
-        .rsl-footer-links a:hover { color: var(--gold); }
-
-        /* ── CUSTOM CURSOR ────────────────────────────────────────────────── */
-        * { cursor: none !important; }
-
-        .rsl-cursor {
-          position: fixed; top: 0; left: 0; z-index: 9999;
-          width: 40px; height: 40px; border-radius: 50%;
-          border: 1.5px solid rgba(212,168,67,0.6);
-          pointer-events: none;
-          transition: width 0.25s, height 0.25s, border-color 0.25s, background 0.25s, opacity 0.3s;
-          mix-blend-mode: difference;
-          will-change: transform;
-        }
-        .rsl-cursor-dot {
-          position: fixed; top: 0; left: 0; z-index: 10000;
-          width: 8px; height: 8px; border-radius: 50%;
-          background: var(--gold);
-          pointer-events: none;
-          transition: opacity 0.3s;
-          will-change: transform;
-        }
-
-        /* ── PARALLAX LAYERS ─────────────────────────────────────────────── */
-        .parallax-slow, .parallax-mid, .parallax-bg {
-          transition: transform 0.12s ease-out;
-          will-change: transform;
-        }
-
-        /* ── MAGNETIC HOVER (CSS only helper) ────────────────────────────── */
-        .rsl-btn-primary, .rsl-btn-ghost, .rsl-nav-cta {
-          transition: transform 0.2s cubic-bezier(0.23, 1, 0.32, 1),
-                      box-shadow 0.2s, background 0.25s, border-color 0.25s, color 0.25s;
-        }
-
-        /* ── SPOTLIGHT TRAIL ─────────────────────────────────────────────── */
-        .rsl-spotlight {
-          position: fixed; pointer-events: none; z-index: 1;
-          width: 500px; height: 500px; border-radius: 50%;
-          background: radial-gradient(circle, rgba(212,168,67,0.04) 0%, transparent 65%);
-          transform: translate(-50%, -50%);
-          transition: opacity 0.5s;
-          will-change: left, top;
-        }
-
-
-        @media (max-width: 900px) {
-          .rsl-hero { grid-template-columns: 1fr; padding-top: 100px; }
-          .rsl-waiter-wrap { display: none; }
-          .rsl-stats-grid { grid-template-columns: repeat(2, 1fr); }
-          .rsl-features-grid { grid-template-columns: 1fr 1fr; }
-          .rsl-testimonials-grid { grid-template-columns: 1fr; }
-          .rsl-nav-links { display: none; }
-        }
-        @media (max-width: 600px) {
-          .rsl-features-grid { grid-template-columns: 1fr; }
-          .rsl-stats-grid { grid-template-columns: 1fr 1fr; }
-        }
-      `}</style>
-
-      <div className="rsl-root">
-        {/* ── CUSTOM CURSOR ─────────────────────────────────────────────────── */}
-        <div className="rsl-cursor" ref={cursorRef} />
-        <div className="rsl-cursor-dot" ref={cursorDotRef} />
-
-        {/* ── MOUSE SPOTLIGHT ───────────────────────────────────────────────── */}
-        <SpotlightTrail />
-        {/* ── NAV ──────────────────────────────────────────────────────────── */}
-        <nav className="rsl-nav" ref={navRef}>
-          <div className="rsl-logo">
-            Table<span>OS</span>
-          </div>
-          <ul className="rsl-nav-links">
-            {["Product", "Features", "Pricing", "Blog"].map((l) => (
-              <li key={l}>
-                <a href="#">{l}</a>
-              </li>
-            ))}
-          </ul>
-          <Link href="/register" className="rsl-nav-cta">
-            Start Free Trial
-          </Link>
-        </nav>
-
-        {/* ── HERO ─────────────────────────────────────────────────────────── */}
-        <section className="rsl-hero" ref={heroRef}>
-          <div>
-            <div className="rsl-hero-eyebrow hero-anim parallax-slow">
-              Restaurant Operating System
-            </div>
-            <h1 className="rsl-hero-title hero-anim parallax-slow">
-              Run Your <em>Restaurant</em> Like a{" "}
-              <span className="rsl-red">Star.</span>
-            </h1>
-            <p className="rsl-hero-sub hero-anim parallax-mid">
-              TableOS is the all-in-one SaaS platform for modern restaurants —
-              from tableside ordering to kitchen intelligence, seamlessly
-              unified.
-            </p>
-            <div className="rsl-hero-actions hero-anim parallax-mid">
-              <Link href="/register" className="rsl-btn-primary">
-                Get Started Free
-              </Link>
-              <a href="#" className="rsl-play-btn">
-                <span className="rsl-play-icon">▶</span> Watch Demo
-              </a>
-            </div>
-          </div>
-
-          <div className="rsl-waiter-wrap" ref={waiterRef}>
-            <div className="rsl-canvas-bg" />
-            <canvas ref={canvasRef} className="rsl-waiter-canvas" />
-            <div className="rsl-waiter-badge">
-              <span className="rsl-waiter-badge-icon">⭐</span>
-              <div>
-                <div className="rsl-waiter-badge-text">Order Placed</div>
-                <div className="rsl-waiter-badge-sub">Table 7 · 2 min ago</div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ── MARQUEE ──────────────────────────────────────────────────────── */}
-        <div className="rsl-marquee-wrap">
-          <div className="rsl-marquee">
-            {[...Array(2)].map((_, ri) =>
-              [
-                "Smart POS",
-                "Menu Management",
-                "Kitchen Display",
-                "Table Reservations",
-                "Loyalty Programs",
-                "Real-Time Analytics",
-                "QR Ordering",
-                "Multi-Location",
-              ].map((t, i) => (
-                <span className="rsl-marquee-item" key={`${ri}-${i}`}>
-                  <span className="rsl-marquee-dot">✦</span> {t}
-                </span>
-              )),
-            )}
-          </div>
-        </div>
-
-        {/* ── STATS ────────────────────────────────────────────────────────── */}
-        <section className="rsl-stats" ref={statsRef}>
-          <div className="rsl-stats-grid">
-            {stats.map((s) => (
-              <div className="stat-card" key={s.label}>
-                <div className="stat-value">{s.value}</div>
-                <div className="stat-label">{s.label}</div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* ── FEATURES ─────────────────────────────────────────────────────── */}
-        <section className="rsl-features" ref={featuresRef}>
-          <span className="section-eyebrow section-heading">
-            Platform Features
-          </span>
-          <h2 className="section-heading">
-            Everything your team needs,
-            <br />
-            <em
+      {/* ── NAV ──────────────────────────────────────────── */}
+      <nav
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          zIndex: 200,
+          background: "rgba(10,15,13,0.85)",
+          backdropFilter: "blur(20px)",
+          borderBottom: "1px solid var(--border)",
+          transition: "all 0.3s ease",
+        }}
+      >
+        <div
+          style={{
+            maxWidth: 1200,
+            margin: "0 auto",
+            padding: "16px 24px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div
               style={{
-                fontFamily: "Cormorant Garamond, serif",
-                fontStyle: "italic",
-                color: "var(--gold)",
+                width: 38,
+                height: 38,
+                borderRadius: 10,
+                background:
+                  "linear-gradient(135deg, var(--green-dark), var(--blue-mid))",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                boxShadow: "0 0 20px rgba(0,232,122,0.3)",
+                animation: "glowPulse 3s ease-in-out infinite",
               }}
             >
-              nothing they don't.
-            </em>
-          </h2>
-          <p className="section-sub">
-            Built for the pace of professional kitchens and the expectations of
-            modern guests.
-          </p>
-          <div className="rsl-features-grid">
-            {features.map((f) => (
-              <div className="feature-card" key={f.title}>
-                <span className="feature-icon">{f.icon}</span>
-                <div className="feature-title">{f.title}</div>
-                <p className="feature-desc">{f.desc}</p>
-                <span className="feature-arrow">Learn more →</span>
-              </div>
+              <ChefHat size={20} color="#fff" />
+            </div>
+            <span
+              className="syne"
+              style={{ fontSize: 18, fontWeight: 700, letterSpacing: -0.5 }}
+            >
+              RestaurantOS
+            </span>
+          </div>
+
+          <div
+            style={{ display: "flex", gap: 32, alignItems: "center" }}
+            className="hidden-mobile"
+          >
+            {["features", "pricing", "testimonials"].map((s) => (
+              <a
+                key={s}
+                href={`#${s}`}
+                className="nav-link"
+                style={{
+                  color: "var(--text-dim)",
+                  fontSize: 14,
+                  fontWeight: 500,
+                  textDecoration: "none",
+                  textTransform: "capitalize",
+                  transition: "color 0.2s",
+                }}
+                onMouseEnter={(e) => (e.target.style.color = "var(--text)")}
+                onMouseLeave={(e) => (e.target.style.color = "var(--text-dim)")}
+              >
+                {s}
+              </a>
             ))}
           </div>
-        </section>
 
-        {/* ── TESTIMONIALS ─────────────────────────────────────────────────── */}
-        <section className="rsl-testimonials">
-          <span className="section-eyebrow section-heading">
-            Trusted by Teams Worldwide
-          </span>
-          <h2 className="section-heading" style={{ marginBottom: "3rem" }}>
-            What restaurateurs say
-          </h2>
-          <div className="rsl-testimonials-grid">
-            {testimonials.map((t) => (
-              <div className="testimonial-card" key={t.name}>
-                <p className="testimonial-quote">"{t.text}"</p>
-                <div style={{ display: "flex", alignItems: "center" }}>
-                  <div className="testimonial-avatar">{t.avatar}</div>
-                  <div>
-                    <div className="testimonial-name">{t.name}</div>
-                    <div className="testimonial-role">{t.role}</div>
+          <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+            <Link href="/login">
+              <MagBtn
+                className="hidden-mobile"
+                style={{
+                  background: "transparent",
+                  border: "1px solid var(--border)",
+                  color: "var(--text)",
+                  padding: "8px 18px",
+                  borderRadius: 8,
+                  fontSize: 14,
+                  fontWeight: 500,
+                  cursor: "pointer",
+                }}
+              >
+                Sign In
+              </MagBtn>
+            </Link>
+            <Link href="/register">
+              <MagBtn
+                style={{
+                  background:
+                    "linear-gradient(135deg, var(--green-dark), var(--green-mid))",
+                  color: "#000",
+                  padding: "9px 20px",
+                  borderRadius: 8,
+                  fontSize: 14,
+                  fontWeight: 600,
+                  border: "none",
+                  cursor: "pointer",
+                  boxShadow: "0 0 20px rgba(0,232,122,0.25)",
+                }}
+              >
+                Get Started
+              </MagBtn>
+            </Link>
+            <button
+              onClick={() => setMobileOpen(!mobileOpen)}
+              style={{
+                background: "none",
+                border: "none",
+                color: "var(--text)",
+                cursor: "pointer",
+                padding: 4,
+              }}
+              className="mobile-only"
+            >
+              {mobileOpen ? <X size={22} /> : <Menu size={22} />}
+            </button>
+          </div>
+        </div>
+        {mobileOpen && (
+          <div
+            style={{
+              background: "var(--surface2)",
+              padding: "16px 24px",
+              borderTop: "1px solid var(--border)",
+            }}
+          >
+            {["features", "pricing", "testimonials"].map((s) => (
+              <a
+                key={s}
+                href={`#${s}`}
+                onClick={() => setMobileOpen(false)}
+                style={{
+                  display: "block",
+                  padding: "12px 0",
+                  color: "var(--text)",
+                  textDecoration: "none",
+                  textTransform: "capitalize",
+                  fontSize: 15,
+                  borderBottom: "1px solid var(--border)",
+                }}
+              >
+                {s}
+              </a>
+            ))}
+          </div>
+        )}
+      </nav>
+
+      {/* ── HERO ─────────────────────────────────────────── */}
+      <section
+        style={{
+          position: "relative",
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          paddingTop: 80,
+          overflow: "hidden",
+        }}
+      >
+        <ParticleField />
+        <FloatingOrb
+          size={500}
+          x="-10%"
+          y="-5%"
+          color="rgba(0,232,122,0.07)"
+          blur={100}
+          delay={0}
+        />
+        <FloatingOrb
+          size={350}
+          x="60%"
+          y="30%"
+          color="rgba(0,128,255,0.06)"
+          blur={80}
+          delay={1}
+        />
+        <FloatingOrb
+          size={250}
+          x="80%"
+          y="70%"
+          color="rgba(255,209,102,0.05)"
+          blur={60}
+          delay={2}
+        />
+
+        <div
+          style={{
+            maxWidth: 1400,
+            margin: "0 auto",
+            padding: "60px 24px",
+            width: "100%",
+            position: "relative",
+            zIndex: 2,
+          }}
+        >
+          <div className="hero-grid">
+            {/* ── Left: Hero Text ── */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+              <div
+                style={{
+                  animation: "slideInLeft 0.6s 0.05s ease both",
+                  marginBottom: 20,
+                }}
+              >
+                <div
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 10,
+                    background: "rgba(255,209,102,0.07)",
+                    border: "1px solid rgba(255,209,102,0.2)",
+                    borderRadius: 100,
+                    padding: "7px 16px 7px 10px",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center" }}>
+                    {["🧑‍🍳", "👨‍🍳", "👩‍🍳"].map((e, i) => (
+                      <div
+                        key={i}
+                        style={{
+                          width: 22,
+                          height: 22,
+                          borderRadius: "50%",
+                          background: `hsl(${i * 40 + 20},60%,50%)`,
+                          border: "2px solid var(--surface)",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: 11,
+                          marginLeft: i === 0 ? 0 : -6,
+                        }}
+                      >
+                        {e}
+                      </div>
+                    ))}
                   </div>
+                  <span
+                    style={{
+                      fontSize: 12,
+                      color: "var(--gold)",
+                      fontWeight: 600,
+                    }}
+                  >
+                    Trusted by <strong>12,000+</strong> restaurant owners
+                  </span>
+                </div>
+              </div>
+
+              {/* Main headline — clear, human benefit-first */}
+              <h1
+                className="syne"
+                style={{
+                  fontSize: "clamp(32px, 3.8vw, 62px)",
+                  fontWeight: 800,
+                  lineHeight: 1.1,
+                  letterSpacing: -2,
+                  marginBottom: 16,
+                  animation: "slideInLeft 0.8s 0.15s ease both",
+                }}
+              >
+                Run your restaurant{" "}
+                <span
+                  style={{
+                    position: "relative",
+                    display: "inline-block",
+                    background:
+                      "linear-gradient(135deg, var(--green), #a8ffcd)",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                  }}
+                >
+                  smarter,
+                </span>
+                <br />
+                not harder.
+              </h1>
+
+              {/* Typewriter sub-role line */}
+              <div
+                style={{
+                  fontSize: 15,
+                  color: "var(--text-dim)",
+                  marginBottom: 18,
+                  animation: "slideInLeft 0.8s 0.22s ease both",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                }}
+              >
+                <span>Perfect for</span>
+                <span style={{ color: "var(--green)", fontWeight: 600 }}>
+                  <TypeWriter
+                    words={[
+                      "cafés & bistros",
+                      "fast food chains",
+                      "fine dining",
+                      "cloud kitchens",
+                      "food trucks",
+                    ]}
+                    speed={65}
+                  />
+                </span>
+              </div>
+
+              {/* Human-readable description */}
+              <p
+                style={{
+                  fontSize: 15,
+                  color: "var(--text-dim)",
+                  lineHeight: 1.8,
+                  marginBottom: 28,
+                  animation: "slideInLeft 0.8s 0.3s ease both",
+                  borderLeft: "2px solid rgba(0,232,122,0.25)",
+                  paddingLeft: 14,
+                }}
+              >
+                From taking orders to tracking revenue — RestaurantOS handles
+                the heavy lifting so you can focus on what you love:{" "}
+                <em
+                  style={{
+                    color: "var(--text)",
+                    fontStyle: "normal",
+                    fontWeight: 500,
+                  }}
+                >
+                  great food and happy guests.
+                </em>
+              </p>
+
+              {/* Key benefit pills */}
+              <div
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: 8,
+                  marginBottom: 28,
+                  animation: "slideInLeft 0.8s 0.38s ease both",
+                }}
+              >
+                {[
+                  { icon: "⚡", label: "Setup in 5 mins" },
+                  { icon: "📊", label: "Live sales data" },
+                  { icon: "🍽️", label: "QR ordering" },
+                  { icon: "💬", label: "24/7 support" },
+                ].map(({ icon, label }) => (
+                  <div
+                    key={label}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      background: "var(--surface2)",
+                      border: "1px solid var(--border)",
+                      borderRadius: 8,
+                      padding: "6px 12px",
+                      fontSize: 12,
+                      fontWeight: 500,
+                      color: "var(--text)",
+                      transition: "all 0.2s",
+                      cursor: "default",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = "var(--green)";
+                      e.currentTarget.style.background = "rgba(0,232,122,0.06)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = "var(--border)";
+                      e.currentTarget.style.background = "var(--surface2)";
+                    }}
+                  >
+                    <span>{icon}</span> {label}
+                  </div>
+                ))}
+              </div>
+
+              {/* CTA buttons */}
+              <div
+                style={{
+                  display: "flex",
+                  gap: 12,
+                  flexWrap: "wrap",
+                  marginBottom: 22,
+                  animation: "slideInLeft 0.8s 0.46s ease both",
+                }}
+              >
+                <MagBtn
+                  style={{
+                    background:
+                      "linear-gradient(135deg, var(--green-dark), var(--green))",
+                    color: "#000",
+                    padding: "14px 26px",
+                    borderRadius: 12,
+                    fontSize: 15,
+                    fontWeight: 700,
+                    border: "none",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    boxShadow:
+                      "0 0 30px rgba(0,232,122,0.35), 0 8px 24px rgba(0,0,0,0.3)",
+                  }}
+                >
+                  🚀 Start for Free <ArrowRight size={15} />
+                </MagBtn>
+                <MagBtn
+                  style={{
+                    background: "rgba(255,255,255,0.04)",
+                    border: "1px solid rgba(255,255,255,0.12)",
+                    color: "var(--text)",
+                    padding: "14px 20px",
+                    borderRadius: 12,
+                    fontSize: 15,
+                    fontWeight: 500,
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    backdropFilter: "blur(10px)",
+                  }}
+                >
+                  <Play size={13} /> Watch 2-min demo
+                </MagBtn>
+              </div>
+
+              {/* Trust micro-copy */}
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  animation: "slideInLeft 0.8s 0.54s ease both",
+                }}
+              >
+                <div style={{ display: "flex", gap: 1 }}>
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} size={12} fill="#ffd166" color="#ffd166" />
+                  ))}
+                </div>
+                <span style={{ fontSize: 12, color: "var(--text-dim)" }}>
+                  <strong style={{ color: "var(--text)" }}>4.9/5</strong> from
+                  2,400+ reviews · No credit card · Cancel anytime
+                </span>
+              </div>
+            </div>
+
+            {/* Right — 3D Scene */}
+            <div
+              style={{
+                animation: "slideInRight 1s 0.2s ease both",
+                position: "relative",
+              }}
+            >
+              <div
+                style={{
+                  borderRadius: 20,
+                  overflow: "hidden",
+                  border: "1px solid var(--border)",
+                  boxShadow:
+                    "0 40px 80px rgba(0,0,0,0.6), 0 0 60px rgba(0,232,122,0.1)",
+                  background: "linear-gradient(135deg, #091510, #0d2018)",
+                  position: "relative",
+                }}
+              >
+                {/* Status bar */}
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: "12px 16px",
+                    borderBottom: "1px solid var(--border)",
+                  }}
+                >
+                  <div style={{ display: "flex", gap: 6 }}>
+                    {["#ff5f57", "#ffbd2e", "#28c840"].map((c) => (
+                      <div
+                        key={c}
+                        style={{
+                          width: 10,
+                          height: 10,
+                          borderRadius: "50%",
+                          background: c,
+                        }}
+                      />
+                    ))}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 11,
+                      color: "var(--text-dim)",
+                      fontFamily: "monospace",
+                    }}
+                  >
+                    restaurant_scene.3d
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 11,
+                      color: "var(--green)",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 4,
+                    }}
+                  >
+                    <span
+                      style={{
+                        width: 6,
+                        height: 6,
+                        background: "var(--green)",
+                        borderRadius: "50%",
+                        animation: "glowPulse 1s infinite",
+                      }}
+                    />{" "}
+                    LIVE
+                  </div>
+                </div>
+                <div style={{ height: 380 }}>
+                  <RestaurantScene />
+                </div>
+              </div>
+
+              {/* Floating chips */}
+              <div
+                style={{
+                  position: "absolute",
+                  top: -16,
+                  right: -20,
+                  background: "var(--surface2)",
+                  border: "1px solid var(--border)",
+                  borderRadius: 12,
+                  padding: "10px 14px",
+                  animation: "floatY 3s 0s ease-in-out infinite",
+                  boxShadow: "0 10px 30px rgba(0,0,0,0.5)",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: 10,
+                    color: "var(--text-dim)",
+                    marginBottom: 2,
+                  }}
+                >
+                  Today's Revenue
+                </div>
+                <div
+                  className="syne"
+                  style={{
+                    fontSize: 20,
+                    fontWeight: 700,
+                    color: "var(--green)",
+                  }}
+                >
+                  $12,847
+                </div>
+                <div style={{ fontSize: 10, color: "#4ade80" }}>
+                  ↑ 23.4% vs yesterday
+                </div>
+              </div>
+              <div
+                style={{
+                  position: "absolute",
+                  bottom: 30,
+                  left: -24,
+                  background: "var(--surface2)",
+                  border: "1px solid var(--border)",
+                  borderRadius: 12,
+                  padding: "10px 14px",
+                  animation: "floatY 3.5s 0.5s ease-in-out infinite",
+                  boxShadow: "0 10px 30px rgba(0,0,0,0.5)",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: 10,
+                    color: "var(--text-dim)",
+                    marginBottom: 2,
+                  }}
+                >
+                  Tables Active
+                </div>
+                <div
+                  className="syne"
+                  style={{ fontSize: 20, fontWeight: 700, color: "#0080ff" }}
+                >
+                  24/30
+                </div>
+                <div style={{ fontSize: 10, color: "var(--text-dim)" }}>
+                  80% occupancy
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── STATS ────────────────────────────────────────── */}
+      <section
+        className="stats-section"
+        style={{
+          padding: "80px 24px",
+          background: "var(--surface2)",
+          borderTop: "1px solid var(--border)",
+          borderBottom: "1px solid var(--border)",
+        }}
+      >
+        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+          <div className="stats-grid">
+            {stats.map((s, i) => (
+              <div
+                key={i}
+                className="card-reveal"
+                style={{ transitionDelay: `${i * 0.1}s`, textAlign: "center" }}
+              >
+                <div
+                  className="syne"
+                  style={{
+                    fontSize: "clamp(32px,4vw,52px)",
+                    fontWeight: 800,
+                    color: "var(--green)",
+                    lineHeight: 1,
+                  }}
+                >
+                  <AnimatedCounter target={s.value} suffix={s.suffix} />
+                </div>
+                <div
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: "var(--text)",
+                    marginTop: 6,
+                    marginBottom: 2,
+                  }}
+                >
+                  {s.label}
+                </div>
+                <div style={{ fontSize: 11, color: "var(--text-dim)" }}>
+                  {s.desc}
+                </div>
+                <div className="progress-bar" style={{ marginTop: 10 }}>
+                  <div
+                    className="progress-fill"
+                    style={{ width: `${s.progress * 100}%` }}
+                  />
                 </div>
               </div>
             ))}
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* ── CTA ──────────────────────────────────────────────────────────── */}
-        <section className="rsl-cta">
-          <h2 className="rsl-cta-title section-heading">
-            Ready to elevate your restaurant?
-          </h2>
-          <p className="rsl-cta-sub">
-            Join over 12,000 restaurants already running smarter with TableOS.
-            Setup takes minutes, results come fast.
-          </p>
-          <div className="rsl-cta-actions">
-            <a href="#" className="rsl-btn-primary">
-              Start Your Free Trial
-            </a>
-            <a href="#" className="rsl-btn-ghost">
-              Book a Demo
-            </a>
+      {/* ── FEATURES ─────────────────────────────────────── */}
+      <section
+        id="features"
+        style={{
+          padding: "100px 24px",
+          position: "relative",
+          overflow: "hidden",
+        }}
+      >
+        <FloatingOrb
+          size={400}
+          x="50%"
+          y="0%"
+          color="rgba(0,128,255,0.05)"
+          blur={100}
+        />
+        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+          <div style={{ textAlign: "center", marginBottom: 64 }}>
+            <div
+              style={{
+                display: "inline-block",
+                fontSize: 11,
+                fontWeight: 700,
+                letterSpacing: 3,
+                color: "var(--green)",
+                textTransform: "uppercase",
+                marginBottom: 16,
+                background: "rgba(0,232,122,0.08)",
+                padding: "5px 14px",
+                borderRadius: 100,
+              }}
+            >
+              Platform Features
+            </div>
+            <h2
+              className="syne card-reveal"
+              style={{
+                fontSize: "clamp(28px,4vw,52px)",
+                fontWeight: 800,
+                letterSpacing: -1.5,
+                marginBottom: 16,
+              }}
+            >
+              Everything you need to grow
+            </h2>
+            <p
+              className="card-reveal"
+              style={{
+                fontSize: 16,
+                color: "var(--text-dim)",
+                maxWidth: 480,
+                margin: "0 auto",
+              }}
+            >
+              Powerful tools designed specifically for modern restaurants
+            </p>
           </div>
-          <p className="rsl-cta-badge">
-            No credit card required · <span>14-day free trial</span> · Cancel
-            anytime
-          </p>
-        </section>
 
-        {/* ── FOOTER ───────────────────────────────────────────────────────── */}
-        <footer className="rsl-footer">
-          <div className="rsl-logo">
-            Table<span style={{ color: "var(--red2)" }}>OS</span>
+          {/* Interactive Feature Tabs */}
+          <div className="feat-tabs" style={{ marginBottom: 60 }}>
+            {/* Tab list */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {features.map((f, i) => (
+                <div
+                  key={i}
+                  onClick={() => setActiveFeature(i)}
+                  style={{
+                    padding: "16px 20px",
+                    borderRadius: 12,
+                    cursor: "pointer",
+                    border: `1px solid ${activeFeature === i ? f.color + "40" : "var(--border)"}`,
+                    background:
+                      activeFeature === i ? `${f.color}08` : "transparent",
+                    transition: "all 0.3s cubic-bezier(0.34,1.2,0.64,1)",
+                    transform:
+                      activeFeature === i ? "translateX(6px)" : "translateX(0)",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 14,
+                  }}
+                >
+                  <div
+                    style={{
+                      width: 38,
+                      height: 38,
+                      borderRadius: 9,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      background:
+                        activeFeature === i
+                          ? `${f.color}20`
+                          : "var(--surface3)",
+                      color: activeFeature === i ? f.color : "var(--text-dim)",
+                      transition: "all 0.3s ease",
+                      flexShrink: 0,
+                    }}
+                  >
+                    {f.icon}
+                  </div>
+                  <div>
+                    <div
+                      style={{
+                        fontSize: 14,
+                        fontWeight: 600,
+                        color:
+                          activeFeature === i
+                            ? "var(--text)"
+                            : "var(--text-dim)",
+                        transition: "color 0.2s",
+                      }}
+                    >
+                      {f.title}
+                    </div>
+                    {activeFeature === i && (
+                      <div
+                        style={{
+                          fontSize: 12,
+                          color: f.color,
+                          marginTop: 2,
+                          fontWeight: 600,
+                        }}
+                      >
+                        {f.stat}
+                      </div>
+                    )}
+                  </div>
+                  {activeFeature === i && (
+                    <div
+                      style={{
+                        marginLeft: "auto",
+                        width: 6,
+                        height: 6,
+                        borderRadius: "50%",
+                        background: f.color,
+                        boxShadow: `0 0 10px ${f.color}`,
+                      }}
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Feature detail */}
+            <TiltCard
+              style={{
+                background: `linear-gradient(135deg, ${features[activeFeature].color}08, var(--surface2))`,
+                border: `1px solid ${features[activeFeature].color}25`,
+                borderRadius: 20,
+                padding: 40,
+                minHeight: 340,
+                transition: "background 0.5s ease, border-color 0.5s ease",
+              }}
+            >
+              <div
+                style={{
+                  width: 56,
+                  height: 56,
+                  borderRadius: 14,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  background: `${features[activeFeature].color}20`,
+                  color: features[activeFeature].color,
+                  marginBottom: 20,
+                  fontSize: 28,
+                  boxShadow: `0 0 30px ${features[activeFeature].color}30`,
+                }}
+              >
+                {features[activeFeature].icon}
+              </div>
+              <h3
+                className="syne"
+                style={{ fontSize: 26, fontWeight: 700, marginBottom: 12 }}
+              >
+                {features[activeFeature].title}
+              </h3>
+              <p
+                style={{
+                  fontSize: 15,
+                  color: "var(--text-dim)",
+                  lineHeight: 1.7,
+                  marginBottom: 24,
+                }}
+              >
+                {features[activeFeature].description}
+              </p>
+              <div
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 8,
+                  background: `${features[activeFeature].color}15`,
+                  border: `1px solid ${features[activeFeature].color}30`,
+                  borderRadius: 8,
+                  padding: "8px 14px",
+                }}
+              >
+                <TrendingUp size={14} color={features[activeFeature].color} />
+                <span
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 700,
+                    color: features[activeFeature].color,
+                  }}
+                >
+                  {features[activeFeature].stat}
+                </span>
+              </div>
+            </TiltCard>
           </div>
-          <div className="rsl-footer-copy">
-            © 2025 TableOS Inc. All rights reserved.
-          </div>
-          <div className="rsl-footer-links">
-            {["Privacy", "Terms", "Support", "Status"].map((l) => (
-              <a href="#" key={l}>
-                {l}
-              </a>
+
+          {/* Grid cards */}
+          <div className="feat-grid">
+            {features.map((f, i) => (
+              <TiltCard
+                key={i}
+                className="card-reveal feat-card hover-lift"
+                style={{
+                  background: "var(--surface2)",
+                  border: "1px solid var(--border)",
+                  borderRadius: 16,
+                  padding: "28px 24px",
+                  transitionDelay: `${i * 0.08}s`,
+                  cursor: "pointer",
+                }}
+              >
+                <div
+                  className="feat-icon-wrap"
+                  style={{
+                    width: 44,
+                    height: 44,
+                    borderRadius: 11,
+                    background: `${f.color}15`,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: f.color,
+                    marginBottom: 16,
+                  }}
+                >
+                  {f.icon}
+                </div>
+                <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 8 }}>
+                  {f.title}
+                </h3>
+                <p
+                  style={{
+                    fontSize: 13,
+                    color: "var(--text-dim)",
+                    lineHeight: 1.6,
+                  }}
+                >
+                  {f.description}
+                </p>
+                <div
+                  style={{
+                    marginTop: 14,
+                    fontSize: 12,
+                    fontWeight: 600,
+                    color: f.color,
+                  }}
+                >
+                  {f.stat}
+                </div>
+              </TiltCard>
             ))}
           </div>
-        </footer>
-      </div>
-    </>
+        </div>
+      </section>
+
+      {/* ── PRICING ──────────────────────────────────────── */}
+      <section
+        id="pricing"
+        style={{
+          padding: "100px 24px",
+          background: "var(--surface2)",
+          position: "relative",
+          overflow: "hidden",
+        }}
+      >
+        <FloatingOrb
+          size={450}
+          x="-10%"
+          y="20%"
+          color="rgba(0,232,122,0.06)"
+          blur={120}
+        />
+        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+          <div style={{ textAlign: "center", marginBottom: 64 }}>
+            <div
+              style={{
+                display: "inline-block",
+                fontSize: 11,
+                fontWeight: 700,
+                letterSpacing: 3,
+                color: "var(--blue)",
+                textTransform: "uppercase",
+                marginBottom: 16,
+                background: "rgba(0,128,255,0.08)",
+                padding: "5px 14px",
+                borderRadius: 100,
+              }}
+            >
+              Pricing
+            </div>
+            <h2
+              className="syne card-reveal"
+              style={{
+                fontSize: "clamp(28px,4vw,52px)",
+                fontWeight: 800,
+                letterSpacing: -1.5,
+                marginBottom: 16,
+              }}
+            >
+              Simple, transparent pricing
+            </h2>
+            <p
+              className="card-reveal"
+              style={{
+                color: "var(--text-dim)",
+                fontSize: 16,
+                maxWidth: 420,
+                margin: "0 auto",
+              }}
+            >
+              Choose the perfect plan and scale as you grow
+            </p>
+          </div>
+
+          <div className="pricing-grid">
+            {plans.map((plan, i) => (
+              <div
+                key={i}
+                className={`card-reveal ripple-container ${plan.highlight ? "pricing-popular" : ""}`}
+                onMouseEnter={() => setHoveredPlan(i)}
+                onMouseLeave={() => setHoveredPlan(null)}
+                onClick={(e) => addRipple(e, e.currentTarget)}
+                style={{
+                  borderRadius: 16,
+                  padding: "36px 30px",
+                  border: plan.highlight ? "none" : "1px solid var(--border)",
+                  background: plan.highlight
+                    ? "linear-gradient(135deg, #0a1a0f, #0f2018)"
+                    : "var(--surface)",
+                  transform: `${plan.highlight ? "scale(1.04)" : "scale(1)"} ${hoveredPlan === i ? "translateY(-8px)" : "translateY(0)"}`,
+                  transition:
+                    "transform 0.4s cubic-bezier(0.34,1.3,0.64,1), box-shadow 0.4s ease",
+                  boxShadow:
+                    hoveredPlan === i
+                      ? `0 30px 60px rgba(0,0,0,0.5), 0 0 40px ${plan.highlight ? "rgba(0,232,122,0.2)" : "rgba(0,0,0,0.1)"}`
+                      : plan.highlight
+                        ? "0 20px 40px rgba(0,0,0,0.4)"
+                        : "none",
+                  transitionDelay: `${i * 0.1}s`,
+                  cursor: "pointer",
+                  position: "relative",
+                  overflow: "hidden",
+                }}
+              >
+                {plan.highlight && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: 16,
+                      right: 16,
+                      background:
+                        "linear-gradient(135deg, var(--green-dark), var(--green))",
+                      color: "#000",
+                      fontSize: 10,
+                      fontWeight: 800,
+                      padding: "4px 10px",
+                      borderRadius: 100,
+                      letterSpacing: 1,
+                    }}
+                  >
+                    MOST POPULAR
+                  </div>
+                )}
+                <div
+                  style={{
+                    marginBottom: 6,
+                    fontSize: 11,
+                    fontWeight: 700,
+                    letterSpacing: 2,
+                    color: plan.highlight ? "var(--green)" : "var(--text-dim)",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  {plan.name}
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "baseline",
+                    gap: 4,
+                    marginBottom: 6,
+                  }}
+                >
+                  <span
+                    className="syne"
+                    style={{ fontSize: 44, fontWeight: 800, letterSpacing: -2 }}
+                  >
+                    {plan.price}
+                  </span>
+                  <span style={{ fontSize: 14, color: "var(--text-dim)" }}>
+                    {plan.period}
+                  </span>
+                </div>
+                <p
+                  style={{
+                    fontSize: 13,
+                    color: "var(--text-dim)",
+                    marginBottom: 28,
+                  }}
+                >
+                  {plan.description}
+                </p>
+                <MagBtn
+                  style={{
+                    width: "100%",
+                    padding: "13px",
+                    borderRadius: 10,
+                    fontSize: 14,
+                    fontWeight: 700,
+                    background: plan.highlight
+                      ? "linear-gradient(135deg, var(--green-dark), var(--green))"
+                      : "var(--surface3)",
+                    color: plan.highlight ? "#000" : "var(--text)",
+                    border: plan.highlight ? "none" : "1px solid var(--border)",
+                    cursor: "pointer",
+                    marginBottom: 28,
+                    boxShadow: plan.highlight
+                      ? "0 0 20px rgba(0,232,122,0.3)"
+                      : "none",
+                  }}
+                >
+                  {plan.cta}
+                </MagBtn>
+                <div
+                  style={{ display: "flex", flexDirection: "column", gap: 12 }}
+                >
+                  {plan.features.map((f, j) => (
+                    <div
+                      key={j}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 10,
+                        fontSize: 13,
+                        color: "var(--text-dim)",
+                      }}
+                    >
+                      <Check
+                        size={14}
+                        color={plan.highlight ? "var(--green)" : "#4ade80"}
+                        style={{ flexShrink: 0 }}
+                      />{" "}
+                      {f}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── TESTIMONIALS ─────────────────────────────────── */}
+      <section
+        id="testimonials"
+        style={{
+          padding: "100px 24px",
+          position: "relative",
+          overflow: "hidden",
+        }}
+      >
+        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+          <div style={{ textAlign: "center", marginBottom: 64 }}>
+            <div
+              style={{
+                display: "inline-block",
+                fontSize: 11,
+                fontWeight: 700,
+                letterSpacing: 3,
+                color: "var(--gold)",
+                textTransform: "uppercase",
+                marginBottom: 16,
+                background: "rgba(255,209,102,0.08)",
+                padding: "5px 14px",
+                borderRadius: 100,
+              }}
+            >
+              Testimonials
+            </div>
+            <h2
+              className="syne card-reveal"
+              style={{
+                fontSize: "clamp(28px,4vw,52px)",
+                fontWeight: 800,
+                letterSpacing: -1.5,
+                marginBottom: 16,
+              }}
+            >
+              Loved by restaurant teams
+            </h2>
+          </div>
+
+          <div className="testi-grid">
+            {testimonials.map((t, i) => (
+              <TiltCard
+                key={i}
+                className="card-reveal hover-lift"
+                style={{
+                  background: "var(--surface2)",
+                  border: "1px solid var(--border)",
+                  borderRadius: 20,
+                  padding: 32,
+                  transitionDelay: `${i * 0.1}s`,
+                }}
+              >
+                {/* Stars */}
+                <div style={{ display: "flex", gap: 4, marginBottom: 20 }}>
+                  {[...Array(t.stars)].map((_, j) => (
+                    <Star key={j} size={14} fill="#ffd166" color="#ffd166" />
+                  ))}
+                </div>
+
+                {/* Highlight pill */}
+                <div
+                  style={{
+                    display: "inline-block",
+                    background: "rgba(0,232,122,0.08)",
+                    border: "1px solid rgba(0,232,122,0.15)",
+                    color: "var(--green)",
+                    fontSize: 11,
+                    fontWeight: 700,
+                    padding: "3px 10px",
+                    borderRadius: 100,
+                    marginBottom: 14,
+                  }}
+                >
+                  {t.highlight}
+                </div>
+
+                <p
+                  style={{
+                    fontSize: 14,
+                    color: "var(--text-dim)",
+                    lineHeight: 1.75,
+                    marginBottom: 24,
+                    fontStyle: "italic",
+                  }}
+                >
+                  "{t.text}"
+                </p>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 12,
+                    borderTop: "1px solid var(--border)",
+                    paddingTop: 20,
+                  }}
+                >
+                  <div style={{ fontSize: 28 }}>{t.flag}</div>
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: 14 }}>
+                      {t.name}
+                    </div>
+                    <div style={{ fontSize: 12, color: "var(--text-dim)" }}>
+                      {t.role}
+                    </div>
+                  </div>
+                </div>
+              </TiltCard>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── CTA ──────────────────────────────────────────── */}
+      <section
+        style={{
+          padding: "100px 24px",
+          position: "relative",
+          overflow: "hidden",
+        }}
+      >
+        <FloatingOrb
+          size={600}
+          x="50%"
+          y="50%"
+          color="rgba(0,232,122,0.06)"
+          blur={150}
+        />
+        <div
+          style={{
+            maxWidth: 680,
+            margin: "0 auto",
+            textAlign: "center",
+            position: "relative",
+            zIndex: 2,
+          }}
+        >
+          <div
+            style={{
+              background: "var(--surface2)",
+              border: "1px solid var(--border)",
+              borderRadius: 24,
+              padding: "60px 48px",
+              boxShadow: "0 40px 80px rgba(0,0,0,0.4)",
+            }}
+          >
+            <div
+              className="animate-shimmer"
+              style={{
+                display: "inline-block",
+                fontSize: 11,
+                fontWeight: 700,
+                letterSpacing: 3,
+                color: "var(--green)",
+                textTransform: "uppercase",
+                marginBottom: 20,
+                padding: "5px 16px",
+                borderRadius: 100,
+                border: "1px solid rgba(0,232,122,0.2)",
+              }}
+            >
+              Get Started Today
+            </div>
+            <h2
+              className="syne"
+              style={{
+                fontSize: "clamp(28px,4vw,48px)",
+                fontWeight: 800,
+                letterSpacing: -1.5,
+                marginBottom: 16,
+              }}
+            >
+              Ready to transform your restaurant?
+            </h2>
+            <p
+              style={{
+                color: "var(--text-dim)",
+                fontSize: 16,
+                marginBottom: 36,
+                lineHeight: 1.7,
+              }}
+            >
+              Join 12,000+ restaurants already growing with RestaurantOS. Start
+              your free 14-day trial today.
+            </p>
+
+            {!submitted ? (
+              <div
+                style={{
+                  display: "flex",
+                  gap: 10,
+                  maxWidth: 420,
+                  margin: "0 auto 20px",
+                }}
+              >
+                <input
+                  type="email"
+                  placeholder="Enter your email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleSubmit(e)}
+                  style={{
+                    flex: 1,
+                    padding: "13px 16px",
+                    borderRadius: 10,
+                    fontSize: 14,
+                    background: "var(--surface)",
+                    border: "1px solid var(--border)",
+                    color: "var(--text)",
+                    outline: "none",
+                    transition: "border-color 0.2s",
+                  }}
+                  onFocus={(e) =>
+                    (e.target.style.borderColor = "rgba(0,232,122,0.5)")
+                  }
+                  onBlur={(e) => (e.target.style.borderColor = "var(--border)")}
+                />
+                <MagBtn
+                  onClick={handleSubmit}
+                  style={{
+                    padding: "13px 20px",
+                    borderRadius: 10,
+                    fontSize: 14,
+                    fontWeight: 700,
+                    background:
+                      "linear-gradient(135deg, var(--green-dark), var(--green))",
+                    color: "#000",
+                    border: "none",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                    whiteSpace: "nowrap",
+                    boxShadow: "0 0 20px rgba(0,232,122,0.3)",
+                  }}
+                >
+                  <Send size={14} /> Get Started
+                </MagBtn>
+              </div>
+            ) : (
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 10,
+                  padding: "16px 24px",
+                  background: "rgba(0,232,122,0.08)",
+                  border: "1px solid rgba(0,232,122,0.2)",
+                  borderRadius: 12,
+                  marginBottom: 20,
+                  animation: "scaleIn 0.4s ease",
+                }}
+              >
+                <Check size={18} color="var(--green)" />
+                <span style={{ color: "var(--green)", fontWeight: 600 }}>
+                  You're on the list! We'll be in touch shortly.
+                </span>
+              </div>
+            )}
+
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                gap: 24,
+                flexWrap: "wrap",
+              }}
+            >
+              {["No credit card", "Setup in minutes", "Cancel anytime"].map(
+                (t) => (
+                  <div
+                    key={t}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      fontSize: 12,
+                      color: "var(--text-dim)",
+                    }}
+                  >
+                    <Check size={11} color="var(--green)" /> {t}
+                  </div>
+                ),
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── FOOTER ───────────────────────────────────────── */}
+      <footer
+        style={{
+          background: "var(--surface)",
+          borderTop: "1px solid var(--border)",
+          padding: "60px 24px 32px",
+        }}
+      >
+        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+          <div className="footer-grid">
+            <div>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  marginBottom: 16,
+                }}
+              >
+                <div
+                  style={{
+                    width: 34,
+                    height: 34,
+                    borderRadius: 8,
+                    background:
+                      "linear-gradient(135deg, var(--green-dark), var(--blue-mid))",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <ChefHat size={18} color="#fff" />
+                </div>
+                <span
+                  className="syne"
+                  style={{ fontSize: 16, fontWeight: 700 }}
+                >
+                  RestaurantOS
+                </span>
+              </div>
+              <p
+                style={{
+                  fontSize: 13,
+                  color: "var(--text-dim)",
+                  lineHeight: 1.7,
+                  maxWidth: 240,
+                }}
+              >
+                The all-in-one platform for modern restaurants to thrive in a
+                competitive world.
+              </p>
+            </div>
+            {[
+              {
+                label: "Product",
+                links: ["Features", "Pricing", "Security", "Changelog"],
+              },
+              {
+                label: "Company",
+                links: ["About", "Blog", "Careers", "Press"],
+              },
+              {
+                label: "Legal",
+                links: ["Privacy", "Terms", "Cookies", "Contact"],
+              },
+            ].map((col) => (
+              <div key={col.label}>
+                <div
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 700,
+                    letterSpacing: 2,
+                    textTransform: "uppercase",
+                    color: "var(--text-dim)",
+                    marginBottom: 16,
+                  }}
+                >
+                  {col.label}
+                </div>
+                {col.links.map((l) => (
+                  <a
+                    key={l}
+                    href="#"
+                    style={{
+                      display: "block",
+                      fontSize: 13,
+                      color: "var(--text-dim)",
+                      textDecoration: "none",
+                      marginBottom: 10,
+                      transition: "color 0.2s",
+                    }}
+                    onMouseEnter={(e) =>
+                      (e.target.style.color = "var(--green)")
+                    }
+                    onMouseLeave={(e) =>
+                      (e.target.style.color = "var(--text-dim)")
+                    }
+                  >
+                    {l}
+                  </a>
+                ))}
+              </div>
+            ))}
+          </div>
+          <div
+            style={{
+              borderTop: "1px solid var(--border)",
+              paddingTop: 24,
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <p style={{ fontSize: 12, color: "var(--text-dim)" }}>
+              © 2026 RestaurantOS. All rights reserved.
+            </p>
+            <div style={{ display: "flex", gap: 20 }}>
+              {["Twitter", "LinkedIn", "GitHub"].map((s) => (
+                <a
+                  key={s}
+                  href="#"
+                  style={{
+                    fontSize: 12,
+                    color: "var(--text-dim)",
+                    textDecoration: "none",
+                    transition: "color 0.2s",
+                  }}
+                  onMouseEnter={(e) => (e.target.style.color = "var(--green)")}
+                  onMouseLeave={(e) =>
+                    (e.target.style.color = "var(--text-dim)")
+                  }
+                >
+                  {s}
+                </a>
+              ))}
+            </div>
+          </div>
+        </div>
+      </footer>
+
+      {/* ── RESPONSIVE ───────────────────────────────────── */}
+      <style>{`
+        /* ── Hero 2-column grid ── */
+        .hero-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 48px;
+          align-items: center;
+          width: 100%;
+        }
+
+        /* ── Other section grids ── */
+        .stats-grid   { display: grid; grid-template-columns: repeat(4,1fr); gap: 40px; }
+        .feat-tabs    { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
+        .feat-grid    { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; }
+        .pricing-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 24px; align-items: start; }
+        .testi-grid   { display: grid; grid-template-columns: repeat(3,1fr); gap: 24px; }
+        .footer-grid  { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 48px; margin-bottom: 48px; }
+
+        /* ── 1024px ── */
+        @media (max-width: 1024px) {
+          .feat-grid    { grid-template-columns: repeat(2,1fr); }
+          .footer-grid  { grid-template-columns: 1fr 1fr; gap: 32px; }
+        }
+
+        /* ── 768px: single column ── */
+        @media (max-width: 768px) {
+          .hero-grid    { grid-template-columns: 1fr; gap: 32px; }
+          .stats-grid   { grid-template-columns: repeat(2,1fr); gap: 24px; }
+          .feat-tabs    { grid-template-columns: 1fr; }
+          .feat-grid    { grid-template-columns: 1fr; }
+          .pricing-grid { grid-template-columns: 1fr; }
+          .testi-grid   { grid-template-columns: 1fr; }
+          .footer-grid  { grid-template-columns: 1fr 1fr; gap: 28px; }
+          .hidden-mobile { display: none !important; }
+          .mobile-only   { display: block !important; }
+        }
+
+        @media (max-width: 480px) {
+          .stats-grid  { grid-template-columns: 1fr 1fr; }
+          .footer-grid { grid-template-columns: 1fr; }
+        }
+
+        @media (min-width: 769px) {
+          .mobile-only { display: none !important; }
+        }
+      `}</style>
+    </div>
   );
 }
