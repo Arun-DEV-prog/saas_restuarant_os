@@ -60,7 +60,9 @@ export default function LoginPage() {
             <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition">
               <span className="text-white font-black text-sm">MI</span>
             </div>
-            <span className="font-bold text-gray-900 text-lg">MallInsight</span>
+            <span className="font-bold text-gray-900 text-lg">
+              Restaurant SaaS
+            </span>
           </Link>
           <span className="text-sm text-gray-700">
             New here?{" "}
@@ -217,7 +219,7 @@ export default function LoginPage() {
 
           {/* Footer Text */}
           <p className="text-center text-xs text-gray-600 mt-6">
-            © 2026 MallInsight · Safe & Secure · All rights reserved
+            © 2026 Restaurant SaaS · Safe & Secure · All rights reserved
           </p>
         </div>
       </main>

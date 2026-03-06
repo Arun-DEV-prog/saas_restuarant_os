@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState, useEffect, useRef, useCallback } from "react";
+import { usePlatformSettings } from "@/hooks/usePlatformSettings";
 import {
   ChefHat,
   Zap,
@@ -1350,6 +1351,7 @@ function useScrollReveal() {
 
 /* ─── Main Component ─────────────────────────────────────── */
 export default function RestaurantLanding() {
+  const { settings: platformSettings } = usePlatformSettings();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
@@ -1603,27 +1605,48 @@ export default function RestaurantLanding() {
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div
-              style={{
-                width: 38,
-                height: 38,
-                borderRadius: 10,
-                background:
-                  "linear-gradient(135deg, var(--green-dark), var(--blue-mid))",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                boxShadow: "0 0 20px rgba(0,232,122,0.3)",
-                animation: "glowPulse 3s ease-in-out infinite",
-              }}
-            >
-              <ChefHat size={20} color="#fff" />
-            </div>
+            {platformSettings.platformLogo ? (
+              <div
+                style={{
+                  width: 38,
+                  height: 38,
+                  borderRadius: 10,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  boxShadow: "0 0 20px rgba(0,232,122,0.3)",
+                  overflow: "hidden",
+                }}
+              >
+                <img
+                  src={platformSettings.platformLogo}
+                  alt="Platform logo"
+                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                />
+              </div>
+            ) : (
+              <div
+                style={{
+                  width: 38,
+                  height: 38,
+                  borderRadius: 10,
+                  background:
+                    "linear-gradient(135deg, var(--green-dark), var(--blue-mid))",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  boxShadow: "0 0 20px rgba(0,232,122,0.3)",
+                  animation: "glowPulse 3s ease-in-out infinite",
+                }}
+              >
+                <ChefHat size={20} color="#fff" />
+              </div>
+            )}
             <span
               className="syne"
               style={{ fontSize: 18, fontWeight: 700, letterSpacing: -0.5 }}
             >
-              RestaurantOS
+              {platformSettings.platformName}
             </span>
           </div>
 
@@ -3025,13 +3048,26 @@ export default function RestaurantLanding() {
                     justifyContent: "center",
                   }}
                 >
-                  <ChefHat size={18} color="#fff" />
+                  {platformSettings.platformLogo ? (
+                    <img
+                      src={platformSettings.platformLogo}
+                      alt="Platform logo"
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                        borderRadius: 6,
+                      }}
+                    />
+                  ) : (
+                    <ChefHat size={18} color="#fff" />
+                  )}
                 </div>
                 <span
                   className="syne"
                   style={{ fontSize: 16, fontWeight: 700 }}
                 >
-                  RestaurantOS
+                  {platformSettings.platformName}
                 </span>
               </div>
               <p
@@ -3108,7 +3144,7 @@ export default function RestaurantLanding() {
             }}
           >
             <p style={{ fontSize: 12, color: "var(--text-dim)" }}>
-              © 2026 RestaurantOS. All rights reserved.
+              © 2026 {platformSettings.platformName}. All rights reserved.
             </p>
             <div style={{ display: "flex", gap: 20 }}>
               {["Twitter", "LinkedIn", "GitHub"].map((s) => (

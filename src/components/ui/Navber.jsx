@@ -1,20 +1,36 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import DarkModeToggle from "@/components/DarkModeToggle";
+import { usePlatformSettings } from "@/hooks/usePlatformSettings";
 
 export default function Navbar() {
+  const { settings } = usePlatformSettings();
+
   return (
     <nav className="w-full fixed top-0 z-50 backdrop-blur-md bg-white/70 dark:bg-slate-950/70 border-b border-zinc-200 dark:border-slate-800 transition-colors">
       <div className="max-w-7xl mx-auto flex items-center justify-between h-16 px-6">
         {/* Logo */}
-        <div className="flex items-center gap-3 cursor-pointer">
-          <div className="w-9 h-9 bg-gradient-to-tr from-indigo-500 to-violet-500 rounded-xl flex items-center justify-center text-white font-bold shadow-md">
-            M
-          </div>
+        <Link
+          href="/"
+          className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
+        >
+          {settings.platformLogo ? (
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-md overflow-hidden">
+              <img
+                src={settings.platformLogo}
+                alt="Platform logo"
+                className="w-full h-full object-cover"
+              />
+            </div>
+          ) : (
+            <div className="w-9 h-9 bg-gradient-to-tr from-indigo-500 to-violet-500 rounded-xl flex items-center justify-center text-white font-bold shadow-md">
+              {settings.platformName?.charAt(0) || "R"}
+            </div>
+          )}
           <span className="font-semibold text-lg tracking-tight text-zinc-800 dark:text-zinc-100">
-            MallInsight
+            {settings.platformName}
           </span>
-        </div>
+        </Link>
 
         {/* Links */}
         <div className="hidden md:flex items-center gap-8">

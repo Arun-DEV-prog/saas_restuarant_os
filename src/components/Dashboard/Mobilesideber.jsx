@@ -46,7 +46,7 @@ export default function MobileSidebar({ open, setOpen }) {
       <aside className="absolute left-0 top-0 h-full w-64 bg-white dark:bg-slate-800 shadow-lg">
         <div className="h-16 flex items-center justify-between px-6 font-bold border-b border-gray-200 dark:border-slate-700">
           <span className="text-gray-900 dark:text-stone-100">
-            🐯 MallInsight
+            🐯 Restaurant SaaS
           </span>
           <button
             onClick={() => setOpen(false)}

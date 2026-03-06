@@ -1272,7 +1272,7 @@ export default function RegisterPage() {
 
         {/* Footer */}
         <footer className="rp-footer">
-          <span>© 2026 RestaurantOS · All rights reserved</span>
+          <span>© 2026 Restaurant SaaS · All rights reserved</span>
           <span>Privacy Policy · Terms of Service</span>
         </footer>
 
