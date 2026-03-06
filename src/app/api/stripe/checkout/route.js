@@ -37,14 +37,14 @@ export async function POST(req) {
           price_data: {
             currency: "usd",
             unit_amount: amount,
-            product_data: { name: "Order" },
+            product_data: { name: "Restaurant Order" },
           },
           quantity: 1,
         },
       ],
       mode: "payment",
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?success=true`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?canceled=true`,
+      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/payment?success=true&orderId=${orderId}`,
+      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/payment?canceled=true&orderId=${orderId}`,
       payment_intent_data: {
         application_fee_amount: Math.floor(
           amount *

@@ -399,6 +399,7 @@ export default function MenuItemModal({
     setOrdering(true);
     setError("");
     try {
+      // Step 1: Create the order
       const res = await fetch("/api/orders/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -421,10 +422,34 @@ export default function MenuItemModal({
         } else throw new Error(data.error);
         return;
       }
-      onOrderSuccess(data.order);
+
+      // Step 2: Create Stripe checkout session for payment
+      const order = data.order;
+      const orderTotal = Math.round(order.total * 100); // Convert to cents for Stripe
+
+      const stripeRes = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          restaurantId,
+          amount: orderTotal,
+          orderId: order._id,
+        }),
+      });
+
+      const stripeData = await stripeRes.json();
+      if (!stripeRes.ok) {
+        throw new Error(stripeData.error || "Failed to initiate payment");
+      }
+
+      // Step 3: Redirect to Stripe payment page
+      if (stripeData.url) {
+        window.location.href = stripeData.url;
+      } else {
+        throw new Error("Payment URL not received");
+      }
     } catch (e) {
       setError(e.message);
-    } finally {
       setOrdering(false);
     }
   }

@@ -43,7 +43,7 @@ export async function POST(req) {
         break;
 
       case "checkout.session.completed":
-        // Fulfill order
+        // Fulfill order - Mark as paid and move to confirmed status
         const orderId = event.data.object.metadata?.orderId;
         if (orderId) {
           await orders.updateOne(
@@ -53,9 +53,12 @@ export async function POST(req) {
                 stripeSessionId: event.data.object.id,
                 paymentStatus: "completed",
                 paidAt: new Date(),
+                status: "confirmed", // Move order to confirmed status after payment
+                updatedAt: new Date(),
               },
             },
           );
+          console.log(`[Webhook] Order ${orderId} payment completed and confirmed`);
         }
         break;
 
