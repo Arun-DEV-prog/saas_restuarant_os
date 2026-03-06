@@ -5,8 +5,12 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
 export default function OnboardingSuccess() {
-  const { data: session, status } = useSession();
+  const sessionResult = useSession();
+  const session = sessionResult?.data;
+  const status = sessionResult?.status;
   const router = useRouter();
   const [stripeStatus, setStripeStatus] = useState(null);
   const [loading, setLoading] = useState(true);
