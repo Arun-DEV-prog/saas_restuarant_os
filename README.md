@@ -15,6 +15,7 @@ Start here! Choose your role:
 | **👤 Initial Setup**              | [OWNER_SETUP.md](OWNER_SETUP.md)                       | 5 min  | Creating owner/admin account |
 | **🔌 Real-time Features**         | [SOCKET_SERVER_SETUP.md](SOCKET_SERVER_SETUP.md)       | 20 min | Socket.IO server setup       |
 | **🚀 Production Deployment**      | [VERCEL_ENV_SETUP.md](VERCEL_ENV_SETUP.md)             | 15 min | Deploy to Vercel             |
+| **📱 Marketing & Social Media**   | [MARKETING_SOCIAL_MEDIA.md](MARKETING_SOCIAL_MEDIA.md) | 20 min | Facebook/LinkedIn strategies |
 
 ---
 
