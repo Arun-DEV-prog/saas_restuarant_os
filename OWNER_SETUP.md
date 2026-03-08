@@ -1,5 +1,7 @@
 # Owner Setup Guide
 
+> 📖 **Main Documentation**: See [README.md](README.md) for complete documentation hub
+
 ## Quick Start - 3 Ways to Setup Owner Account
 
 ---

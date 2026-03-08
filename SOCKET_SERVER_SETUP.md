@@ -1,5 +1,7 @@
 # MenuTiger - Socket.IO Server Deployment Guide
 
+> 📖 **Main Documentation**: See [README.md](README.md) for complete documentation hub
+
 ## 📋 Overview
 
 Your MenuTiger frontend now uses an **external Socket.IO server** for real-time updates instead of relying on a server.js in Vercel (which doesn't work there).

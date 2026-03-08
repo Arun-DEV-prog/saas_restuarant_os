@@ -1,5 +1,7 @@
 # Admin Route Protection System
 
+> 📖 **Main Documentation**: See [README.md](README.md) for complete documentation hub
+
 Complete admin/owner protected routes system for your SaaS product.
 
 ## 📁 Files Created

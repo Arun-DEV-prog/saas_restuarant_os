@@ -1,5 +1,8 @@
 # Vercel Environment Variables Setup
 
+> 📖 **Main Documentation**: See [README.md](README.md) for complete documentation hub  
+> 🚀 **Deployment**: See [PROJECT_SETUP_GUIDE.md](PROJECT_SETUP_GUIDE.md#deployment) for deployment options
+
 The build is failing on Vercel because the following environment variables need to be set in your Vercel project settings.
 
 ## Required Environment Variables for Vercel
