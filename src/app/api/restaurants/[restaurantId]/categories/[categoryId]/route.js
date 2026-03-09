@@ -13,19 +13,59 @@ export async function DELETE(req, ctx) {
     );
   }
 
-  const db = await getDb();
+  try {
+    const db = await getDb();
 
-  // Delete the category
-  const result = await db.collection("categories").deleteOne({
-    _id: new ObjectId(categoryId),
-    restaurantId: new ObjectId(restaurantId),
-  });
+    console.log(
+      `[DELETE Category] Attempting to delete category: ${categoryId}`,
+    );
 
-  if (result.deletedCount === 0) {
-    return NextResponse.json({ error: "Category not found" }, { status: 404 });
+    // First, delete all foods in this category
+    const foodsDeleteResult = await db.collection("foods").deleteMany({
+      categoryId: new ObjectId(categoryId),
+      restaurantId: new ObjectId(restaurantId),
+    });
+
+    console.log(
+      `[DELETE Category] Deleted ${foodsDeleteResult.deletedCount} foods from category`,
+    );
+
+    // Then delete the category itself
+    const categoryDeleteResult = await db.collection("categories").deleteOne({
+      _id: new ObjectId(categoryId),
+      restaurantId: new ObjectId(restaurantId),
+    });
+
+    console.log(
+      `[DELETE Category] Category delete result:`,
+      categoryDeleteResult,
+    );
+
+    if (categoryDeleteResult.deletedCount === 0) {
+      console.warn(`[DELETE Category] Category not found: ${categoryId}`);
+      return NextResponse.json(
+        { error: "Category not found" },
+        { status: 404 },
+      );
+    }
+
+    console.log(
+      `[DELETE Category] Successfully deleted category ${categoryId} and ${foodsDeleteResult.deletedCount} foods`,
+    );
+
+    return NextResponse.json({
+      success: true,
+      message: "Category deleted",
+      foodsDeleted: foodsDeleteResult.deletedCount,
+      categoryDeleted: categoryDeleteResult.deletedCount,
+    });
+  } catch (error) {
+    console.error("[DELETE Category] Error:", error);
+    return NextResponse.json(
+      { error: error.message || "Failed to delete category" },
+      { status: 500 },
+    );
   }
-
-  return NextResponse.json({ success: true, message: "Category deleted" });
 }
 
 // GET a specific category

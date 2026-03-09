@@ -622,6 +622,8 @@ export default function OrdersPage() {
   const [search, setSearch] = useState("");
   const [selectedOrder, setSelected] = useState(null);
   const [updatingOrder, setUpdatingOrder] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
 
   // ── Notification state ──
   const [notifications, setNotifications] = useState([]);
@@ -754,6 +756,11 @@ export default function OrdersPage() {
       .catch(() => setOrders([]))
       .finally(() => setLoading(false));
   }, [restaurantId]);
+
+  // Reset to page 1 when tab or search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [tab, search]);
 
   // Auto-open detail panel if highlight param
   useEffect(() => {
@@ -894,6 +901,12 @@ export default function OrdersPage() {
         o.items?.some((i) => i.name?.toLowerCase().includes(q))
       );
     });
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const paginatedOrders = filtered.slice(startIndex, endIndex);
 
   if (!restaurantId) {
     return (
@@ -1133,7 +1146,7 @@ export default function OrdersPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((order) => (
+                  {paginatedOrders.map((order) => (
                     <tr
                       key={order._id}
                       onClick={() => setSelected(order)}
@@ -1159,10 +1172,63 @@ export default function OrdersPage() {
           )}
         </div>
 
+        {/* Pagination Controls */}
+        {filtered.length > 0 && (
+          <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="text-xs text-stone-400 dark:text-slate-500">
+              Showing <span className="font-bold">{startIndex + 1}</span> to{" "}
+              <span className="font-bold">
+                {Math.min(endIndex, filtered.length)}
+              </span>{" "}
+              of <span className="font-bold">{filtered.length}</span> orders
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className="px-3 py-2 text-xs font-bold rounded-lg bg-stone-100 dark:bg-slate-700 text-stone-700 dark:text-slate-300 hover:bg-stone-200 dark:hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed transition"
+              >
+                Previous
+              </button>
+
+              <div className="flex items-center gap-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .slice(
+                    Math.max(0, currentPage - 2),
+                    Math.min(totalPages, currentPage + 1),
+                  )
+                  .map((page) => (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`w-8 h-8 text-xs font-bold rounded-lg transition ${
+                        page === currentPage
+                          ? "bg-orange-500 text-white"
+                          : "bg-stone-100 dark:bg-slate-700 text-stone-700 dark:text-slate-300 hover:bg-stone-200 dark:hover:bg-slate-600"
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+              </div>
+
+              <button
+                onClick={() =>
+                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                }
+                disabled={currentPage === totalPages}
+                className="px-3 py-2 text-xs font-bold rounded-lg bg-stone-100 dark:bg-slate-700 text-stone-700 dark:text-slate-300 hover:bg-stone-200 dark:hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed transition"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
+
         {filtered.length > 0 && (
           <p className="text-center text-xs text-stone-400 dark:text-slate-500 mt-4">
-            Showing {filtered.length} of {orders.length} orders · Click any row
-            for details
+            Click any row for details
           </p>
         )}
       </div>

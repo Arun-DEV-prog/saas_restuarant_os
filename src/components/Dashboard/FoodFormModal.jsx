@@ -62,6 +62,16 @@ export default function FoodFormModal({
   async function handleSubmit(e) {
     e.preventDefault();
 
+    if (!form.name.trim()) {
+      alert("Food name is required");
+      return;
+    }
+
+    if (!form.price || parseFloat(form.price) < 0) {
+      alert("Valid price is required");
+      return;
+    }
+
     setSubmitting(true);
 
     try {
@@ -71,6 +81,7 @@ export default function FoodFormModal({
 
       console.log("Submitting to URL:", url);
       console.log("CategoryId in submit:", categoryId);
+      console.log("Form data:", form);
 
       const method = isEdit ? "PATCH" : "POST";
 
@@ -89,17 +100,33 @@ export default function FoodFormModal({
       }
 
       const data = await res.json();
+      console.log("API Response:", data);
 
       // Handle both response formats:
       // 1. API returns complete object: { _id, name, price, categoryId, ... }
       // 2. API returns just insertedId: { insertedId: "..." }
-      const savedFood = isEdit
-        ? { ...form, _id: initialData._id, categoryId: initialData.categoryId }
-        : data._id
-          ? { ...data, categoryId } // API returned complete object
-          : { ...form, _id: data.insertedId, categoryId }; // API returned just insertedId
+      let savedFood;
+      if (isEdit) {
+        savedFood = {
+          ...form,
+          _id: initialData._id,
+          categoryId: initialData.categoryId,
+        };
+      } else {
+        if (data._id) {
+          // API returned complete object
+          savedFood = { ...data, categoryId };
+        } else if (data.insertedId) {
+          // API returned just insertedId
+          savedFood = { ...form, _id: data.insertedId, categoryId };
+        } else {
+          throw new Error("No ID in response from create food API");
+        }
+      }
 
+      console.log("Food saved successfully:", savedFood);
       onSaved(savedFood, isEdit ? "update" : "create");
+      setSubmitting(false);
     } catch (error) {
       console.error("Submit error:", error);
       alert(`Error: ${error.message}`);

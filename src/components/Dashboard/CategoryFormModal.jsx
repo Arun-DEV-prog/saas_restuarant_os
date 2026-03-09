@@ -59,8 +59,10 @@ export default function CategoryFormModal({
         ? { ...initialData, name: name.trim(), description: description.trim() }
         : data;
 
+      console.log("Category saved successfully:", category);
       onCreated(category);
       onClose();
+      setSubmitting(false);
     } catch (error) {
       console.error("Submit error:", error);
       alert(`Error: ${error.message}`);

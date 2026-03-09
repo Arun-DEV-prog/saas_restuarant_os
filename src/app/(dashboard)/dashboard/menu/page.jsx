@@ -173,36 +173,154 @@ export default function MenuPage() {
   }
 
   async function deleteCategory(categoryId) {
+    if (!categoryId) {
+      console.error("Cannot delete category: categoryId is missing");
+      alert("Error: Cannot delete this category. Please try again.");
+      return;
+    }
     const foodCount = (foods[categoryId] || []).length;
     if (
       !confirm(
         foodCount > 0
-          ? `Delete category with ${foodCount} items?`
+          ? `Delete category with ${foodCount} items? This will permanently delete all items in this category.`
           : "Delete category?",
       )
     )
       return;
+
+    // Store original state in case we need to revert
+    const originalCategories = categories;
+    const originalFoods = foods;
+
     try {
       const res = await fetch(
         `/api/restaurants/${restaurant._id}/categories/${categoryId}`,
-        { method: "DELETE" },
+        {
+          method: "DELETE",
+          headers: {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            Pragma: "no-cache",
+            Expires: "0",
+          },
+        },
       );
+
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
         throw new Error(errorData.message || "Failed to delete category");
       }
+
+      const result = await res.json();
+      console.log(
+        `[Frontend] Category deleted successfully: ${categoryId}`,
+        result,
+      );
+      console.log(`[Frontend] Foods deleted: ${result.foodsDeleted || 0}`);
+
+      // Remove from state immediately for UI feedback
       setCategories((prev) => prev.filter((c) => c._id !== categoryId));
       setFoods((prev) => {
         const newFoods = { ...prev };
         delete newFoods[categoryId];
         return newFoods;
       });
+
+      // Wait a bit then reload all categories and foods to verify deletion
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      try {
+        const timestamp = Date.now();
+        const categoriesRes = await fetch(
+          `/api/restaurants/${restaurant._id}/categories?t=${timestamp}`,
+          {
+            method: "GET",
+            cache: "no-store",
+            headers: {
+              "Cache-Control": "no-cache, no-store, must-revalidate",
+              Pragma: "no-cache",
+              Expires: "0",
+            },
+          },
+        );
+        if (categoriesRes.ok) {
+          const categoriesData = await categoriesRes.json();
+          const categoriesList = Array.isArray(categoriesData)
+            ? categoriesData
+            : [];
+
+          // Verify category is actually deleted
+          const categoryStillExists = categoriesList.some(
+            (c) => c._id === categoryId,
+          );
+          if (categoryStillExists) {
+            console.error(
+              `[Frontend] ❌ DELETION FAILED - Category ${categoryId} still exists!`,
+            );
+            setCategories(originalCategories);
+            setFoods(originalFoods);
+            alert(
+              "Error: Failed to permanently delete the category. Please try again.",
+            );
+            return;
+          }
+
+          setCategories(categoriesList);
+          console.log(
+            `✅ [Frontend] Category deletion VERIFIED - Remaining: ${categoriesList.length} categories`,
+          );
+
+          // Also reload all foods to verify foods were deleted
+          const foodMap = {};
+          await Promise.all(
+            categoriesList.map(async (category) => {
+              try {
+                const foodsRes = await fetch(
+                  `/api/restaurants/${restaurant._id}/categories/${category._id}/foods?t=${timestamp}`,
+                  {
+                    cache: "no-store",
+                    headers: {
+                      "Cache-Control": "no-cache, no-store, must-revalidate",
+                    },
+                  },
+                );
+                if (foodsRes.ok) {
+                  const foodsData = await foodsRes.json();
+                  foodMap[category._id] = Array.isArray(foodsData)
+                    ? foodsData
+                    : [];
+                } else {
+                  foodMap[category._id] = [];
+                }
+              } catch (err) {
+                console.warn(
+                  `Failed to load foods for category ${category._id}`,
+                );
+                foodMap[category._id] = [];
+              }
+            }),
+          );
+          setFoods(foodMap);
+        }
+      } catch (reloadErr) {
+        console.error(
+          "[Frontend] Error reloading categories after delete:",
+          reloadErr,
+        );
+      }
     } catch (err) {
+      console.error("Delete category error:", err);
       alert(`Error: ${err.message}`);
     }
   }
 
   async function duplicateCategory(category) {
+    if (!category || !category._id) {
+      console.error(
+        "Cannot duplicate category: category or categoryId is missing",
+      );
+      alert("Error: Cannot duplicate this category. Please try again.");
+      return;
+    }
     try {
       const newCategoryRes = await fetch(
         `/api/restaurants/${restaurant._id}/categories`,
@@ -220,6 +338,10 @@ export default function MenuPage() {
         throw new Error(errorData.message || "Failed to duplicate category");
       }
       const newCategory = await newCategoryRes.json();
+      if (!newCategory || !newCategory._id) {
+        throw new Error("Duplicated category was not created properly");
+      }
+
       const categoryFoods = foods[category._id] || [];
       const newFoods = [];
       for (const food of categoryFoods) {
@@ -237,11 +359,20 @@ export default function MenuPage() {
             }),
           },
         );
-        if (foodRes.ok) newFoods.push(await foodRes.json());
+        if (foodRes.ok) {
+          const newFood = await foodRes.json();
+          if (newFood && newFood._id) {
+            newFoods.push(newFood);
+          }
+        }
       }
+      console.log(
+        `Category duplicated: ${category._id} -> ${newCategory._id} with ${newFoods.length} items`,
+      );
       setCategories((prev) => [...prev, newCategory]);
       setFoods((prev) => ({ ...prev, [newCategory._id]: newFoods }));
     } catch (err) {
+      console.error("Duplicate category error:", err);
       alert(`Error: ${err.message}`);
     }
   }
@@ -272,51 +403,149 @@ export default function MenuPage() {
   }
 
   async function toggleFoodAvailability(food, categoryId) {
+    if (!food || !food._id || !categoryId) {
+      console.error(
+        "Cannot toggle availability: food or categoryId is missing",
+      );
+      alert("Error: Cannot update availability. Please try again.");
+      return;
+    }
     try {
+      const newStatus = !food.isAvailable;
       const res = await fetch(
         `/api/restaurants/${restaurant._id}/foods/${food._id}`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ isAvailable: !food.isAvailable }),
+          body: JSON.stringify({ isAvailable: newStatus }),
         },
       );
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
         throw new Error(errorData.message || "Failed to update availability");
       }
+      console.log(`Food availability toggled: ${food._id} -> ${newStatus}`);
       setFoods((prev) => ({
         ...prev,
         [categoryId]: (prev[categoryId] || []).map((f) =>
-          f._id === food._id ? { ...f, isAvailable: !f.isAvailable } : f,
+          f._id === food._id ? { ...f, isAvailable: newStatus } : f,
         ),
       }));
     } catch (err) {
+      console.error("Availability toggle error:", err);
       alert(`Error: ${err.message}`);
     }
   }
 
   async function deleteFood(foodId, categoryId) {
     if (!confirm("Delete this item?")) return;
+    if (!foodId || !categoryId) {
+      console.error("Cannot delete food: foodId or categoryId is missing");
+      alert("Error: Cannot delete this item. Please try again.");
+      return;
+    }
+
+    // Store original foods in case we need to revert
+    const originalFoods = foods[categoryId] || [];
+
     try {
+      console.log(`[Frontend] Deleting food: ${foodId}`);
+
       const res = await fetch(
         `/api/restaurants/${restaurant._id}/foods/${foodId}`,
-        { method: "DELETE" },
+        {
+          method: "DELETE",
+          headers: {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            Pragma: "no-cache",
+            Expires: "0",
+          },
+        },
       );
+
+      const result = await res.json();
+      console.log(`[Frontend] Delete API response:`, result);
+
       if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.message || "Failed to delete food");
+        throw new Error(result.error || "Failed to delete food");
       }
+
+      console.log(`[Frontend] Food deletion confirmed by API: ${foodId}`);
+
+      // Update state immediately for UI feedback
       setFoods((prev) => ({
         ...prev,
         [categoryId]: (prev[categoryId] || []).filter((f) => f._id !== foodId),
       }));
+
+      // Wait a bit then reload foods for verification (with cache busting)
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      try {
+        const timestamp = Date.now();
+        const foodsRes = await fetch(
+          `/api/restaurants/${restaurant._id}/categories/${categoryId}/foods?t=${timestamp}`,
+          {
+            method: "GET",
+            cache: "no-store",
+            headers: {
+              "Cache-Control": "no-cache, no-store, must-revalidate",
+              Pragma: "no-cache",
+              Expires: "0",
+            },
+          },
+        );
+
+        if (foodsRes.ok) {
+          const foodsData = await foodsRes.json();
+          const updatedFoods = Array.isArray(foodsData) ? foodsData : [];
+
+          // Check if item was actually deleted
+          const itemStillExists = updatedFoods.some((f) => f._id === foodId);
+
+          if (itemStillExists) {
+            console.error(
+              `[Frontend] ❌ DELETION FAILED - Item ${foodId} still exists in database!`,
+            );
+            // Revert the UI change
+            setFoods((prev) => ({
+              ...prev,
+              [categoryId]: originalFoods,
+            }));
+            alert(
+              "Error: Failed to permanently delete the item. It still exists in the database. Please try again.",
+            );
+            return;
+          }
+
+          setFoods((prev) => ({
+            ...prev,
+            [categoryId]: updatedFoods,
+          }));
+          console.log(
+            `✅ [Frontend] Deletion VERIFIED - Item removed from database. Remaining: ${updatedFoods.length}`,
+          );
+        } else {
+          console.warn("[Frontend] Could not fetch foods for verification");
+        }
+      } catch (reloadErr) {
+        console.error(
+          "[Frontend] Error reloading foods for verification:",
+          reloadErr,
+        );
+      }
     } catch (err) {
+      console.error("[Frontend] Delete error:", err);
       alert(`Error: ${err.message}`);
     }
   }
 
   async function duplicateFood(food, categoryId) {
+    if (!food || !food._id || !categoryId) {
+      console.error("Cannot duplicate food: food or categoryId is missing");
+      alert("Error: Cannot duplicate this item. Please try again.");
+      return;
+    }
     try {
       const res = await fetch(
         `/api/restaurants/${restaurant._id}/categories/${categoryId}/foods`,
@@ -337,11 +566,16 @@ export default function MenuPage() {
         throw new Error(errorData.message || "Failed to duplicate food");
       }
       const newFood = await res.json();
+      if (!newFood || !newFood._id) {
+        throw new Error("Duplicated food item was not created properly");
+      }
+      console.log(`Food duplicated: ${food._id} -> ${newFood._id}`);
       setFoods((prev) => ({
         ...prev,
         [categoryId]: [newFood, ...(prev[categoryId] || [])],
       }));
     } catch (err) {
+      console.error("Duplicate error:", err);
       alert(`Error: ${err.message}`);
     }
   }
@@ -356,14 +590,34 @@ export default function MenuPage() {
       return;
     }
 
+    if (!savedFood || !savedFood._id) {
+      console.error(
+        "Cannot save food: food object or _id is missing",
+        savedFood,
+      );
+      alert("Error: Food was not saved properly. Please try again.");
+      return;
+    }
+
+    console.log(
+      `Saving food in mode: ${mode}, foodId: ${savedFood._id}, categoryId: ${cid}`,
+    );
+
     setFoods((prev) => {
       const list = prev[cid] || [];
+      const updatedList =
+        mode === "create"
+          ? [savedFood, ...list]
+          : list.map((f) => (f._id === savedFood._id ? savedFood : f));
+
+      console.log(
+        `Updated foods list for category ${cid}:`,
+        updatedList.length,
+        "items",
+      );
       return {
         ...prev,
-        [cid]:
-          mode === "create"
-            ? [savedFood, ...list]
-            : list.map((f) => (f._id === savedFood._id ? savedFood : f)),
+        [cid]: updatedList,
       };
     });
     setOpenFoodForm(false);
@@ -372,6 +626,19 @@ export default function MenuPage() {
   }
 
   function onCategoryCreated(newCategory) {
+    if (!newCategory || !newCategory._id) {
+      console.error(
+        "Cannot create category: category object or _id is missing",
+        newCategory,
+      );
+      alert("Error: Category was not created properly. Please try again.");
+      return;
+    }
+
+    console.log(
+      `Category ${editingCategory ? "updated" : "created"}: ${newCategory._id}`,
+    );
+
     if (editingCategory) {
       setCategories((prev) =>
         prev.map((c) => (c._id === newCategory._id ? newCategory : c)),
