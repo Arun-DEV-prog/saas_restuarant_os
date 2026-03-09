@@ -5,10 +5,12 @@ import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useState } from "react";
 import { ChevronDown, Settings, HelpCircle, LogOut, Menu } from "lucide-react";
+import { usePlatformSettings } from "@/hooks/usePlatformSettings";
 
 export default function Sidebar() {
   const pathname = usePathname();
   const { data: session } = useSession();
+  const { settings } = usePlatformSettings();
   const [expandedItems, setExpandedItems] = useState({});
 
   const restaurantId = session?.user?.restaurantId;
@@ -236,9 +238,17 @@ export default function Sidebar() {
         {isOwner ? (
           <>
             <div className="flex items-center gap-2.5 mb-1">
-              <span className="text-2xl">👑</span>
+              {settings?.platformLogo ? (
+                <img
+                  src={settings.platformLogo}
+                  alt="Platform Logo"
+                  className="w-7 h-7 rounded"
+                />
+              ) : (
+                <span className="text-2xl">👑</span>
+              )}
               <h1 className="text-xl font-bold bg-gradient-to-r from-yellow-600 to-yellow-500 bg-clip-text text-transparent">
-                Owner Panel
+                {settings?.platformName || "Owner Panel"}
               </h1>
             </div>
             <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -248,9 +258,17 @@ export default function Sidebar() {
         ) : (
           <>
             <div className="flex items-center gap-2.5 mb-1">
-              <span className="text-2xl">🐯</span>
+              {settings?.platformLogo ? (
+                <img
+                  src={settings.platformLogo}
+                  alt="Platform Logo"
+                  className="w-7 h-7 rounded"
+                />
+              ) : (
+                <span className="text-2xl">🐯</span>
+              )}
               <h1 className="text-xl font-bold bg-gradient-to-r from-emerald-600 to-emerald-500 bg-clip-text text-transparent">
-                MenuTiger
+                {settings?.platformName || "MenuTiger"}
               </h1>
             </div>
             <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
