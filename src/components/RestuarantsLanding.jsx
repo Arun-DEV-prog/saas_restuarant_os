@@ -412,7 +412,8 @@ function MagBtn({
 
 /* ─── Tilt Card ──────────────────────────────────────────── */
 function TiltCard({ children, className = "", style = {}, cardRef }) {
-  const ref = cardRef || useRef(null);
+  const fallbackRef = useRef(null);
+  const ref = cardRef || fallbackRef;
   const handleMove = useCallback((e) => {
     const el = ref.current;
     if (!el) return;
@@ -2151,7 +2152,7 @@ export default function RestaurantLanding() {
                     marginBottom: 2,
                   }}
                 >
-                  Today's Revenue
+                  Today&apos;s Revenue
                 </div>
                 <div
                   className="syne"
@@ -2813,7 +2814,7 @@ export default function RestaurantLanding() {
                     fontStyle: "italic",
                   }}
                 >
-                  "{t.text}"
+                  &quot;{t.text}&quot;
                 </p>
                 <div
                   style={{
@@ -2983,7 +2984,7 @@ export default function RestaurantLanding() {
               >
                 <Check size={18} color="var(--green)" />
                 <span style={{ color: "var(--green)", fontWeight: 600 }}>
-                  You're on the list! We'll be in touch shortly.
+                  You&apos;re on the list! We&apos;ll be in touch shortly.
                 </span>
               </div>
             )}

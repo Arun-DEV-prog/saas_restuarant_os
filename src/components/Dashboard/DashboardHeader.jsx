@@ -46,8 +46,6 @@ export default function DashboardHeader({ restaurant, user }) {
     subtitle: "Welcome to Menu Tiger",
   };
 
-  if (!restaurant) return null;
-
   // ── Handlers ───────────────────────────────────────────────────────────────
   const handleCopy = async () => {
     await navigator.clipboard.writeText(restaurant.publicUrl);
@@ -67,6 +65,8 @@ export default function DashboardHeader({ restaurant, user }) {
     setShowNotif(false);
     router.push(`/dashboard/${restaurant._id}/orders`);
   };
+
+  if (!restaurant) return null;
 
   return (
     <>

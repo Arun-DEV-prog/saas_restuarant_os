@@ -19,7 +19,7 @@ export default function UnauthorizedPage() {
 
         {/* Description */}
         <p className="text-gray-600 dark:text-gray-300 mb-6">
-          You don't have permission to access this resource. Only project owners
+          You don&apos;t have permission to access this resource. Only project owners
           and admins can view this page.
         </p>
 

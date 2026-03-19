@@ -570,7 +570,7 @@ export default function TableRequestsPanel({ restaurantId }) {
                     </div>
 
                     {req.guestNote && (
-                      <div className="trp-item-note">"{req.guestNote}"</div>
+                      <div className="trp-item-note">&quot;{req.guestNote}&quot;</div>
                     )}
 
                     {/* Action buttons */}
