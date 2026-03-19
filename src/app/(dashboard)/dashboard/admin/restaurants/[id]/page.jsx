@@ -99,7 +99,7 @@ export default function AdminRestaurantDetailPage() {
                 {restaurantId}
               </code>
               <p className="text-gray-600 dark:text-gray-400 mb-6">
-                This restaurant doesn't exist in the database. This ID may be
+                This restaurant doesn&apos;t exist in the database. This ID may be
                 invalid or the restaurant may have been deleted.
               </p>
               <Link

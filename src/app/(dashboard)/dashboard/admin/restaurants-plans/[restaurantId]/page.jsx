@@ -3,6 +3,7 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { getCollection } from "@/lib/db";
 import { ObjectId } from "mongodb";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 
 export default async function RestaurantPlanDetailsPage({
   params: paramsPromise,
@@ -39,12 +40,12 @@ export default async function RestaurantPlanDetailsPage({
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <a
+          <Link
             href="/dashboard/admin/restaurants-plans"
             className="text-blue-600 hover:text-blue-700 mb-4 inline-block"
           >
             ← Back to Restaurant Plans
-          </a>
+          </Link>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
             {restaurant.name}
           </h1>

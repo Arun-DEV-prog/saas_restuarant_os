@@ -329,7 +329,7 @@ export default function PricingPage() {
                 What happens if I exceed my plan limits?
               </h3>
               <p className="text-gray-600 dark:text-gray-400">
-                We'll notify you when you're approaching your limits. You can
+                We&apos;ll notify you when you&apos;re approaching your limits. You can
                 upgrade your plan anytime to get more resources.
               </p>
             </div>

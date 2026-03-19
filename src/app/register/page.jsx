@@ -837,7 +837,7 @@ export default function RegisterPage() {
                 className="rp-side-stat"
                 style={{ color: "#1a1a1a", fontSize: 24 }}
               >
-                "Changed how we operate"
+                &quot;Changed how we operate&quot;
               </div>
               <div className="rp-side-label" style={{ marginTop: 6 }}>
                 — Marco R., Bella Italia

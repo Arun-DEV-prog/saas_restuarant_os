@@ -195,7 +195,7 @@ export default function IntegrationsPage() {
               Need More Integrations?
             </h3>
             <p className="text-sm text-blue-800 dark:text-blue-200">
-              We're constantly adding new integrations. Contact support to
+              We&apos;re constantly adding new integrations. Contact support to
               request a specific integration for your restaurant.
             </p>
           </div>
