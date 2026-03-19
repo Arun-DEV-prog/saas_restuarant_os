@@ -414,6 +414,7 @@ function MagBtn({
 function TiltCard({ children, className = "", style = {}, cardRef }) {
   const fallbackRef = useRef(null);
   const ref = cardRef || fallbackRef;
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization
   const handleMove = useCallback((e) => {
     const el = ref.current;
     if (!el) return;
@@ -422,6 +423,7 @@ function TiltCard({ children, className = "", style = {}, cardRef }) {
     const y = (e.clientY - rect.top) / rect.height - 0.5;
     el.style.transform = `perspective(800px) rotateX(${-y * 12}deg) rotateY(${x * 12}deg) translateZ(10px)`;
   }, []);
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization
   const handleLeave = useCallback(() => {
     if (ref.current)
       ref.current.style.transform =

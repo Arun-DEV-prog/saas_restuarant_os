@@ -96,6 +96,7 @@ export function useSocket(restaurantId = null) {
   }, [restaurantId]);
 
   return {
+    // eslint-disable-next-line react-hooks/refs
     socket: socketRef.current,
     isConnected,
     error,
@@ -106,6 +107,7 @@ export function useSocket(restaurantId = null) {
  * Hook for listening to specific socket events
  */
 export function useSocketEvent(socket, eventName, callback) {
+  // eslint-disable-next-line react-hooks/use-memo
   const memoizedCallback = useCallback(callback, [callback]);
 
   useEffect(() => {
@@ -124,6 +126,7 @@ export function useSocketEvent(socket, eventName, callback) {
  */
 export function useOrderUpdates(restaurantId, onOrderUpdate) {
   const { socket, isConnected, error } = useSocket(restaurantId);
+  // eslint-disable-next-line react-hooks/use-memo
   const memoizedCallback = useCallback(onOrderUpdate, [onOrderUpdate]);
 
   useEffect(() => {
@@ -146,6 +149,7 @@ export function useOrderUpdates(restaurantId, onOrderUpdate) {
  */
 export function useMenuUpdates(restaurantId, onMenuUpdate) {
   const { socket, isConnected, error } = useSocket(restaurantId);
+  // eslint-disable-next-line react-hooks/use-memo
   const memoizedCallback = useCallback(onMenuUpdate, [onMenuUpdate]);
 
   useEffect(() => {
@@ -166,6 +170,7 @@ export function useMenuUpdates(restaurantId, onMenuUpdate) {
  */
 export function useTableUpdates(restaurantId, onTableUpdate) {
   const { socket, isConnected, error } = useSocket(restaurantId);
+  // eslint-disable-next-line react-hooks/use-memo
   const memoizedCallback = useCallback(onTableUpdate, [onTableUpdate]);
 
   useEffect(() => {

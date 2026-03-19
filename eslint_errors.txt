@@ -1,0 +1,193 @@
+D:\saas_frontend\src\app\(dashboard)\dashboard\admin\restaurants-plans\[restaurantId]\page.jsx:103 [react-hooks/purity] Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+  101 |                 <p className="text-gray-900 dark:text-white mt-1">
+  102 |                   {new Date(
+> 103 |                     restaurant.createdAt || Date.now(),
+      |                                             ^^^^^^^^^^ Cannot call impure function
+  104 |                   ).toLocaleDateString()}
+  105 |                 </p>
+  106 |               </div>
+D:\saas_frontend\src\app\[slug]\PublicMenuPage.jsx:182 [react-hooks/set-state-in-effect] Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  180 |
+  181 |   useEffect(() => {
+> 182 |     load();
+      |     ^^^^ Avoid calling setState() directly within an effect
+  183 |     const iv = setInterval(load, 8000);
+  184 |     return () => clearInterval(iv);
+  185 |   }, [load]);
+D:\saas_frontend\src\app\onboarding\success\page.jsx:26 [react-hooks/set-state-in-effect] Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  24 |
+  25 |     if (!restaurantId) {
+> 26 |       setLoading(false);
+     |       ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  27 |       return;
+  28 |     }
+  29 |
+D:\saas_frontend\src\app\onboarding\success\page.jsx:108 [react/no-unescaped-entities] `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.
+D:\saas_frontend\src\components\Dashboard\theme-provider.jsx:16 [react-hooks/set-state-in-effect] Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  14 |       : "light";
+  15 |     const active = saved || system;
+> 16 |     setTheme(active);
+     |     ^^^^^^^^ Avoid calling setState() directly within an effect
+  17 |     document.documentElement.classList.toggle("dark", active === "dark");
+  18 |   }, []);
+  19 |
+D:\saas_frontend\src\components\ProtectedAdminRoute.jsx:50 [react-hooks/set-state-in-effect] Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  48 |         );
+  49 |         router.push("/unauthorized");
+> 50 |         setIsLoading(false);
+     |         ^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  51 |         return;
+  52 |       }
+  53 |
+D:\saas_frontend\src\components\RestuarantsLanding.jsx:417 [react-hooks/preserve-manual-memoization] Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `ref.current`, but the source dependencies were []. Inferred dependency not present in source.
+
+  415 |   const fallbackRef = useRef(null);
+  416 |   const ref = cardRef || fallbackRef;
+> 417 |   const handleMove = useCallback((e) => {
+      |                                  ^^^^^^^^
+> 418 |     const el = ref.current;
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 419 |     if (!el) return;
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 420 |     const rect = el.getBoundingClientRect();
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 421 |     const x = (e.clientX - rect.left) / rect.width - 0.5;
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 422 |     const y = (e.clientY - rect.top) / rect.height - 0.5;
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 423 |     el.style.transform = `perspective(800px) rotateX(${-y * 12}deg) rotateY(${x * 12}deg) translateZ(10px)`;
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 424 |   }, []);
+      | ^^^^ Could not preserve existing manual memoization
+  425 |   const handleLeave = useCallback(() => {
+  426 |     if (ref.current)
+  427 |       ref.current.style.transform =
+D:\saas_frontend\src\components\RestuarantsLanding.jsx:425 [react-hooks/preserve-manual-memoization] Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `ref.current`, but the source dependencies were []. Inferred dependency not present in source.
+
+  423 |     el.style.transform = `perspective(800px) rotateX(${-y * 12}deg) rotateY(${x * 12}deg) translateZ(10px)`;
+  424 |   }, []);
+> 425 |   const handleLeave = useCallback(() => {
+      |                                   ^^^^^^^
+> 426 |     if (ref.current)
+      | ^^^^^^^^^^^^^^^^^^^^
+> 427 |       ref.current.style.transform =
+      | ^^^^^^^^^^^^^^^^^^^^
+> 428 |         "perspective(800px) rotateX(0) rotateY(0) translateZ(0)";
+      | ^^^^^^^^^^^^^^^^^^^^
+> 429 |   }, []);
+      | ^^^^ Could not preserve existing manual memoization
+  430 |   return (
+  431 |     <div
+  432 |       ref={ref}
+D:\saas_frontend\src\components\ui\sidebar.jsx:576 [react-hooks/purity] Error: Cannot call impure function during render
+
+`Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+  574 |   // Random width between 50 to 90%.
+  575 |   const width = React.useMemo(() => {
+> 576 |     return `${Math.floor(Math.random() * 40) + 50}%`;
+      |                          ^^^^^^^^^^^^^ Cannot call impure function
+  577 |   }, [])
+  578 |
+  579 |   return (
+D:\saas_frontend\src\hooks\useSocket.js:99 [react-hooks/refs] Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+   97 |
+   98 |   return {
+>  99 |     socket: socketRef.current,
+      |             ^^^^^^^^^^^^^^^^^ Cannot access ref value during render
+  100 |     isConnected,
+  101 |     error,
+  102 |   };
+D:\saas_frontend\src\hooks\useSocket.js:99 [react-hooks/refs] Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+   97 |
+   98 |   return {
+>  99 |     socket: socketRef.current,
+      |             ^^^^^^^^^^^^^^^^^ Cannot access ref value during render
+  100 |     isConnected,
+  101 |     error,
+  102 |   };
+D:\saas_frontend\src\hooks\useSocket.js:109 [react-hooks/use-memo] Error: Expected the first argument to be an inline function expression
+
+Expected the first argument to be an inline function expression.
+
+  107 |  */
+  108 | export function useSocketEvent(socket, eventName, callback) {
+> 109 |   const memoizedCallback = useCallback(callback, [callback]);
+      |                                        ^^^^^^^^ Expected the first argument to be an inline function expression
+  110 |
+  111 |   useEffect(() => {
+  112 |     if (!socket) return;
+D:\saas_frontend\src\hooks\useSocket.js:127 [react-hooks/use-memo] Error: Expected the first argument to be an inline function expression
+
+Expected the first argument to be an inline function expression.
+
+  125 | export function useOrderUpdates(restaurantId, onOrderUpdate) {
+  126 |   const { socket, isConnected, error } = useSocket(restaurantId);
+> 127 |   const memoizedCallback = useCallback(onOrderUpdate, [onOrderUpdate]);
+      |                                        ^^^^^^^^^^^^^ Expected the first argument to be an inline function expression
+  128 |
+  129 |   useEffect(() => {
+  130 |     if (!socket || !isConnected) return;
+D:\saas_frontend\src\hooks\useSocket.js:149 [react-hooks/use-memo] Error: Expected the first argument to be an inline function expression
+
+Expected the first argument to be an inline function expression.
+
+  147 | export function useMenuUpdates(restaurantId, onMenuUpdate) {
+  148 |   const { socket, isConnected, error } = useSocket(restaurantId);
+> 149 |   const memoizedCallback = useCallback(onMenuUpdate, [onMenuUpdate]);
+      |                                        ^^^^^^^^^^^^ Expected the first argument to be an inline function expression
+  150 |
+  151 |   useEffect(() => {
+  152 |     if (!socket || !isConnected) return;
+D:\saas_frontend\src\hooks\useSocket.js:169 [react-hooks/use-memo] Error: Expected the first argument to be an inline function expression
+
+Expected the first argument to be an inline function expression.
+
+  167 | export function useTableUpdates(restaurantId, onTableUpdate) {
+  168 |   const { socket, isConnected, error } = useSocket(restaurantId);
+> 169 |   const memoizedCallback = useCallback(onTableUpdate, [onTableUpdate]);
+      |                                        ^^^^^^^^^^^^^ Expected the first argument to be an inline function expression
+  170 |
+  171 |   useEffect(() => {
+  172 |     if (!socket || !isConnected) return;

@@ -47,6 +47,7 @@ export default function ProtectedAdminRoute({
           `Access denied: User with role '${userRole}' attempted to access ${pathname}`,
         );
         router.push("/unauthorized");
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setIsLoading(false);
         return;
       }

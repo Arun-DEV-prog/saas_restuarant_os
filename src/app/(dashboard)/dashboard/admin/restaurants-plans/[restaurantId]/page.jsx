@@ -99,9 +99,9 @@ export default async function RestaurantPlanDetailsPage({
                   Created Date
                 </label>
                 <p className="text-gray-900 dark:text-white mt-1">
-                  {new Date(
-                    restaurant.createdAt || Date.now(),
-                  ).toLocaleDateString()}
+                  {restaurant.createdAt ? new Date(
+                    restaurant.createdAt
+                  ).toLocaleDateString() : "N/A"}
                 </p>
               </div>
             </div>

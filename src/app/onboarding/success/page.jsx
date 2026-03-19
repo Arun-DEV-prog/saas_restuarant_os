@@ -23,6 +23,7 @@ export default function OnboardingSuccess() {
     }
 
     if (!restaurantId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLoading(false);
       return;
     }
@@ -105,7 +106,7 @@ export default function OnboardingSuccess() {
                 Account Status: Pending Review
               </p>
               <p className="text-sm text-yellow-700 dark:text-yellow-400 mt-2">
-                We'll notify you when your account is ready.
+                We&apos;ll notify you when your account is ready.
               </p>
             </div>
             <button

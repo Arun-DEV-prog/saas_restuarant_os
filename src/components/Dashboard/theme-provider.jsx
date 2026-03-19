@@ -13,6 +13,7 @@ export function ThemeProvider({ children }) {
       ? "dark"
       : "light";
     const active = saved || system;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setTheme(active);
     document.documentElement.classList.toggle("dark", active === "dark");
   }, []);

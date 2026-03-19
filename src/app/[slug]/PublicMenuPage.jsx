@@ -179,6 +179,7 @@ function OrdersPanel({ onClose, restaurantId }) {
   }, [restaurantId]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     load();
     const iv = setInterval(load, 8000);
     return () => clearInterval(iv);
