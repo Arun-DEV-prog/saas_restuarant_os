@@ -8,6 +8,7 @@ import { Copy, QrCode, ShoppingBag, Zap } from "lucide-react";
 import DashboardHeader from "@/components/Dashboard/DashboardHeader";
 import { useSocket } from "@/hooks/useSocket";
 import { playOrderSound, playHotActionSound } from "@/hooks/useNotifications";
+import ChatbotPanel from "@/components/ChatbotPanel";
 
 export default function DashboardClient({ restaurant, user }) {
   const [showQR, setShowQR] = useState(false);
@@ -532,6 +533,9 @@ export default function DashboardClient({ restaurant, user }) {
           </div>
         </div>
       )}
+
+      {/* AI Chatbot */}
+      <ChatbotPanel />
     </div>
   );
 }
