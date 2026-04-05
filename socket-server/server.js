@@ -200,34 +200,17 @@ io.on("connection", (socket) => {
   });
 });
 
-// Health check endpoint
-const app = require("http").createServer();
-app.on("request", (req, res) => {
-  if (req.url === "/health") {
-    res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(
-      JSON.stringify({ status: "ok", timestamp: new Date().toISOString() }),
-    );
-  } else {
-    res.writeHead(404);
-    res.end();
-  }
-});
-
 // Start server
 server.listen(PORT, "0.0.0.0", () => {
-  console.log(`
-╔═══════════════════════════════════════════════════════════╗
-║   🚀 Socket.IO Server Ready for Production!               ║
-╠═══════════════════════════════════════════════════════════╣
-║   ➜ Port:              ${PORT.toString().padEnd(35)}║
-║   ➜ Environment:       ${NODE_ENV.toString().padEnd(35)}║
-║   ➜ Frontend URL:      ${FRONTEND_URL.slice(0, 30).padEnd(35)}║
-║   ➜ CORS Origins:      ${ALLOWED_ORIGINS.length} allowed       ║
-╚═══════════════════════════════════════════════════════════╝
-  `);
-  console.log("✅ Ready to accept WebSocket connections from:");
-  ALLOWED_ORIGINS.forEach((origin) => console.log(`   • ${origin}`));
+  console.log("🚀 Socket.IO Server Started");
+  console.log(`   Port: ${PORT}`);
+  console.log(`   Environment: ${NODE_ENV}`);
+  console.log(`   Frontend URL: ${FRONTEND_URL}`);
+  console.log(`   CORS Origins: ${ALLOWED_ORIGINS.length} allowed`);
+  console.log("✅ Ready to accept WebSocket connections");
+  ALLOWED_ORIGINS.forEach((origin) => {
+    console.log(`   • ${origin}`);
+  });
 });
 
 // Graceful shutdown

@@ -1,15 +1,15 @@
 {
   "build": {
-    "builder": "nixpacks",
-    "buildCommand": "npm install"
+    "builder": "nixpacks"
   },
   "deploy": {
     "startCommand": "npm start",
     "restartPolicyType": "on_failure",
-    "restartPolicyMaxRetries": 5
+    "restartPolicyMaxRetries": 5,
+    "healthcheckPath": "/health",
+    "healthcheckTimeout": 10
   },
   "variables": {
-    "PORT": "3001",
     "NODE_ENV": "production",
     "FRONTEND_URL": "https://saas-frontend-gules.vercel.app"
   }
