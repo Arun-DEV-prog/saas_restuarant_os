@@ -9,6 +9,7 @@ import { io } from "socket.io-client";
 export function useSocket(restaurantId = null) {
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState(null);
+  const [socket, setSocket] = useState(null);
   const socketRef = useRef(null);
 
   useEffect(() => {
@@ -19,10 +20,10 @@ export function useSocket(restaurantId = null) {
     }
 
     // Initialize socket connection with correct path
-    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || "";
+    const socketUrl =
+      process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:3001";
 
     socketRef.current = io(socketUrl, {
-      path: "/api/socket",
       transports: ["websocket", "polling"],
       reconnection: true,
       reconnectionAttempts: 5,
@@ -31,73 +32,74 @@ export function useSocket(restaurantId = null) {
       autoConnect: true,
     });
 
-    const socket = socketRef.current;
+    const socketInstance = socketRef.current;
+    setSocket(socketInstance);
 
     // Connection events
-    socket.on("connect", () => {
-      console.log("✅ Socket connected:", socket.id);
+    socketInstance.on("connect", () => {
+      console.log("✅ Socket connected:", socketInstance.id);
       setIsConnected(true);
       setError(null);
 
       // Join restaurant room if provided
       if (restaurantId) {
-        socket.emit("join-restaurant", restaurantId);
+        socketInstance.emit("join-restaurant", restaurantId);
       }
     });
 
-    socket.on("joined-restaurant", (data) => {
+    socketInstance.on("joined-restaurant", (data) => {
       console.log("✅ Joined restaurant room:", data.restaurantId);
     });
 
-    socket.on("disconnect", (reason) => {
+    socketInstance.on("disconnect", (reason) => {
       console.log("❌ Socket disconnected:", reason);
       setIsConnected(false);
 
       // Auto-reconnect for certain reasons
       if (reason === "io server disconnect") {
-        socket.connect();
+        socketInstance.connect();
       }
     });
 
-    socket.on("connect_error", (err) => {
+    socketInstance.on("connect_error", (err) => {
       console.error("Socket connection error:", err.message);
       setError(err.message);
       setIsConnected(false);
     });
 
-    socket.on("reconnect", (attemptNumber) => {
+    socketInstance.on("reconnect", (attemptNumber) => {
       console.log("🔄 Socket reconnected after", attemptNumber, "attempts");
       setIsConnected(true);
       setError(null);
 
       if (restaurantId) {
-        socket.emit("join-restaurant", restaurantId);
+        socketInstance.emit("join-restaurant", restaurantId);
       }
     });
 
-    socket.on("reconnect_attempt", (attemptNumber) => {
+    socketInstance.on("reconnect_attempt", (attemptNumber) => {
       console.log("🔄 Reconnection attempt:", attemptNumber);
     });
 
-    socket.on("reconnect_failed", () => {
+    socketInstance.on("reconnect_failed", () => {
       console.error("❌ Socket reconnection failed");
       setError("Failed to reconnect");
     });
 
     // Cleanup
     return () => {
-      if (restaurantId && socket.connected) {
-        socket.emit("leave-restaurant", restaurantId);
+      if (restaurantId && socketInstance.connected) {
+        socketInstance.emit("leave-restaurant", restaurantId);
       }
-      socket.disconnect();
-      socket.removeAllListeners();
+      socketInstance.disconnect();
+      socketInstance.removeAllListeners();
       socketRef.current = null;
+      setSocket(null);
     };
   }, [restaurantId]);
 
   return {
-    // eslint-disable-next-line react-hooks/refs
-    socket: socketRef.current,
+    socket,
     isConnected,
     error,
   };
@@ -107,7 +109,6 @@ export function useSocket(restaurantId = null) {
  * Hook for listening to specific socket events
  */
 export function useSocketEvent(socket, eventName, callback) {
-  // eslint-disable-next-line react-hooks/use-memo
   const memoizedCallback = useCallback(callback, [callback]);
 
   useEffect(() => {
@@ -126,7 +127,6 @@ export function useSocketEvent(socket, eventName, callback) {
  */
 export function useOrderUpdates(restaurantId, onOrderUpdate) {
   const { socket, isConnected, error } = useSocket(restaurantId);
-  // eslint-disable-next-line react-hooks/use-memo
   const memoizedCallback = useCallback(onOrderUpdate, [onOrderUpdate]);
 
   useEffect(() => {
@@ -149,7 +149,6 @@ export function useOrderUpdates(restaurantId, onOrderUpdate) {
  */
 export function useMenuUpdates(restaurantId, onMenuUpdate) {
   const { socket, isConnected, error } = useSocket(restaurantId);
-  // eslint-disable-next-line react-hooks/use-memo
   const memoizedCallback = useCallback(onMenuUpdate, [onMenuUpdate]);
 
   useEffect(() => {
@@ -170,7 +169,6 @@ export function useMenuUpdates(restaurantId, onMenuUpdate) {
  */
 export function useTableUpdates(restaurantId, onTableUpdate) {
   const { socket, isConnected, error } = useSocket(restaurantId);
-  // eslint-disable-next-line react-hooks/use-memo
   const memoizedCallback = useCallback(onTableUpdate, [onTableUpdate]);
 
   useEffect(() => {

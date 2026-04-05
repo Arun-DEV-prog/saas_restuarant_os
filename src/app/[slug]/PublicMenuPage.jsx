@@ -165,7 +165,8 @@ function OrdersPanel({ onClose, restaurantId }) {
   const [expanded, setExpanded] = useState(null);
   const socketRef = useRef(null);
 
-  const load = useCallback(() => {
+  // Load orders from localStorage
+  const loadOrders = useCallback(() => {
     try {
       const all = JSON.parse(localStorage.getItem("mi_orders") || "[]");
       const filtered = all
@@ -178,13 +179,14 @@ function OrdersPanel({ onClose, restaurantId }) {
     }
   }, [restaurantId]);
 
+  // Setup periodic load
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    load();
-    const iv = setInterval(load, 8000);
+    loadOrders();
+    const iv = setInterval(loadOrders, 8000);
     return () => clearInterval(iv);
-  }, [load]);
+  }, [loadOrders]);
 
+  // Setup socket connection
   useEffect(() => {
     if (!restaurantId) return;
     const SOCKET_SERVER =
@@ -198,8 +200,9 @@ function OrdersPanel({ onClose, restaurantId }) {
     socket.on("connect", () => {
       socket.emit("join-restaurant", restaurantId);
     });
-    socket.on("joined-restaurant", (data) => {});
-    socket.onAny((eventName, ...args) => {});
+    socket.on("joined-restaurant", (data) => {
+      // Restaurant joined
+    });
     socket.on("order-updated", (data) => {
       const id = data.orderId || data._id;
       const orderNumber =
@@ -246,11 +249,17 @@ function OrdersPanel({ onClose, restaurantId }) {
               return o;
             }),
           );
-        } catch (e) {}
+        } catch (e) {
+          // Error handling
+        }
       }
     });
-    socket.on("disconnect", () => {});
-    socket.on("error", (error) => {});
+    socket.on("disconnect", () => {
+      // Socket disconnected
+    });
+    socket.on("error", (error) => {
+      console.error("Socket error:", error);
+    });
     socketRef.current = socket;
     return () => {
       socket.emit("leave-restaurant", restaurantId);
@@ -843,16 +852,34 @@ export default function PublicMenuPage({ params }) {
               <span>MALLINSIGHT</span>
             </div>
             <div className="mi-nav-links">
-              <a href="#menu" className="mi-nav-link">Menu</a>
-              <a href="#info" className="mi-nav-link">Info</a>
-              <button className="mi-nav-link" onClick={() => setShowQRCode(true)}>Share</button>
+              <a href="#menu" className="mi-nav-link">
+                Menu
+              </a>
+              <a href="#info" className="mi-nav-link">
+                Info
+              </a>
+              <button
+                className="mi-nav-link"
+                onClick={() => setShowQRCode(true)}
+              >
+                Share
+              </button>
             </div>
             <div className="mi-nav-r">
-              <button className="mi-nav-share" onClick={() => setShowQRCode(true)}>Share QR</button>
+              <button
+                className="mi-nav-share"
+                onClick={() => setShowQRCode(true)}
+              >
+                Share QR
+              </button>
               <button className="mi-nav-cart" onClick={() => setCartOpen(true)}>
                 <ShoppingCart size={19} />
                 {cartCount > 0 && (
-                  <span key={cartCount} className="mi-nav-cart-n" style={{ animation: "miPopIn 0.3s ease-out" }}>
+                  <span
+                    key={cartCount}
+                    className="mi-nav-cart-n"
+                    style={{ animation: "miPopIn 0.3s ease-out" }}
+                  >
                     {cartCount}
                   </span>
                 )}
@@ -903,11 +930,17 @@ export default function PublicMenuPage({ params }) {
             <a href="#menu" className="mi-hero-cta">
               View Menu <ChevronRight size={16} />
             </a>
-            <button className="mi-hero-cta-sec" onClick={() => setCartOpen(true)}>
+            <button
+              className="mi-hero-cta-sec"
+              onClick={() => setCartOpen(true)}
+            >
               <ShoppingCart size={16} />
               {cartCount > 0 ? `Cart (${cartCount})` : "Cart"}
             </button>
-            <button className="mi-hero-qr-btn" onClick={() => setShowQRCode(true)}>
+            <button
+              className="mi-hero-qr-btn"
+              onClick={() => setShowQRCode(true)}
+            >
               Share QR
             </button>
           </div>

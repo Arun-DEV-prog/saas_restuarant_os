@@ -7,13 +7,32 @@ dotenv.config();
 
 const PORT = process.env.PORT || 3001;
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
+const NODE_ENV = process.env.NODE_ENV || "development";
+
+// Allowed origins for CORS - flexible for Railway/Vercel deployments
+const ALLOWED_ORIGINS = [
+  "http://localhost:3000",
+  "http://localhost:3001",
+  "http://127.0.0.1:3000",
+  FRONTEND_URL,
+  "https://saas-frontend-gules.vercel.app",
+  // Allow Railway deployments dynamically
+  ...(process.env.NEXT_PUBLIC_FRONTEND_URL
+    ? [process.env.NEXT_PUBLIC_FRONTEND_URL]
+    : []),
+];
 
 // Create HTTP server
 const server = createServer(async (req, res) => {
+  const origin = req.headers.origin || "*";
+  const isAllowed =
+    ALLOWED_ORIGINS.includes(origin) || NODE_ENV === "development";
+
   // Enable CORS
-  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Origin", isAllowed ? origin : "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.setHeader("Access-Control-Allow-Credentials", "true");
 
   if (req.method === "OPTIONS") {
     res.writeHead(200);
@@ -27,7 +46,12 @@ const server = createServer(async (req, res) => {
   if (req.method === "GET" && parsedUrl.pathname === "/health") {
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(
-      JSON.stringify({ status: "ok", timestamp: new Date().toISOString() }),
+      JSON.stringify({
+        status: "ok",
+        timestamp: new Date().toISOString(),
+        environment: NODE_ENV,
+        port: PORT,
+      }),
     );
     return;
   }
@@ -85,21 +109,16 @@ const server = createServer(async (req, res) => {
   res.end(JSON.stringify({ error: "Not found" }));
 });
 
-// Initialize Socket.IO with CORS
+// Initialize Socket.IO with dynamic CORS
 const io = new Server(server, {
   cors: {
-    origin: [
-      "http://localhost:3000",
-      "http://localhost:3001",
-      "http://127.0.0.1:3000",
-      FRONTEND_URL,
-      "https://saas-frontend-gules.vercel.app", // Your Vercel URL
-    ],
+    origin: NODE_ENV === "production" ? ALLOWED_ORIGINS : true,
     methods: ["GET", "POST"],
     credentials: true,
   },
   transports: ["websocket", "polling"],
   addTrailingSlash: false,
+  maxHttpBufferSize: 1e6,
 });
 
 // Socket.IO connection handler
@@ -196,15 +215,19 @@ app.on("request", (req, res) => {
 });
 
 // Start server
-server.listen(PORT, () => {
+server.listen(PORT, "0.0.0.0", () => {
   console.log(`
-╔═══════════════════════════════════════╗
-║   🚀 Socket.IO Server Ready!          ║
-╠═══════════════════════════════════════╣
-║   ➜ Port:     ${PORT.toString().padEnd(24)}║
-║   ➜ CORS:     ${FRONTEND_URL.slice(0, 20).padEnd(24)}║
-╚═══════════════════════════════════════╝
+╔═══════════════════════════════════════════════════════════╗
+║   🚀 Socket.IO Server Ready for Production!               ║
+╠═══════════════════════════════════════════════════════════╣
+║   ➜ Port:              ${PORT.toString().padEnd(35)}║
+║   ➜ Environment:       ${NODE_ENV.toString().padEnd(35)}║
+║   ➜ Frontend URL:      ${FRONTEND_URL.slice(0, 30).padEnd(35)}║
+║   ➜ CORS Origins:      ${ALLOWED_ORIGINS.length} allowed       ║
+╚═══════════════════════════════════════════════════════════╝
   `);
+  console.log("✅ Ready to accept WebSocket connections from:");
+  ALLOWED_ORIGINS.forEach((origin) => console.log(`   • ${origin}`));
 });
 
 // Graceful shutdown
