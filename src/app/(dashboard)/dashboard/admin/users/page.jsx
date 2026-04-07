@@ -3,6 +3,7 @@
 import ProtectedAdminRoute from "@/components/ProtectedAdminRoute";
 import DashboardHeader from "@/components/Dashboard/DashboardHeader";
 import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import {
   Search,
   RefreshCw,
@@ -39,6 +40,7 @@ const ROLE_CONFIG = {
 };
 
 export default function AdminUsersPage() {
+  const { data: session } = useSession();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -108,7 +110,7 @@ export default function AdminUsersPage() {
   return (
     <ProtectedAdminRoute requiredRole="admin">
       <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
-        <DashboardHeader />
+        <DashboardHeader user={session?.user} />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Header */}

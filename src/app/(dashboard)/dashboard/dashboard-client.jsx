@@ -1,10 +1,31 @@
 "use client";
 
 import { useState, useEffect } from "react";
-
+import {
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+} from "recharts";
 import StatCard from "@/components/Dashboard/stat-card";
 import { toast } from "sonner";
-import { Copy, QrCode, ShoppingBag, Zap } from "lucide-react";
+import {
+  Copy,
+  QrCode,
+  ShoppingBag,
+  Zap,
+  TrendingUp,
+  Calendar,
+} from "lucide-react";
 import DashboardHeader from "@/components/Dashboard/DashboardHeader";
 import { useSocket } from "@/hooks/useSocket";
 import { playOrderSound, playHotActionSound } from "@/hooks/useNotifications";
@@ -273,123 +294,239 @@ export default function DashboardClient({ restaurant, user }) {
       <DashboardHeader restaurant={restaurant} user={user} />
 
       {/* Date Range Filter */}
-      <div className="bg-white dark:bg-[#091f3c] rounded-xl p-6 shadow-sm">
-        <div className="flex flex-col gap-4">
-          <h3 className="text-lg font-semibold">Date Range</h3>
-          <div className="flex flex-wrap gap-3">
-            <button
-              onClick={() => handleTimeRangeChange("day")}
-              className={`px-4 py-2 rounded-lg font-medium transition ${
-                timeRange === "day"
-                  ? "bg-emerald-500 text-white"
-                  : "bg-gray-100 dark:bg-[#0a1020] text-gray-700 dark:text-gray-300 hover:bg-gray-200"
-              }`}
-            >
-              Last 24 Hours
-            </button>
-            <button
-              onClick={() => handleTimeRangeChange("week")}
-              className={`px-4 py-2 rounded-lg font-medium transition ${
-                timeRange === "week"
-                  ? "bg-emerald-500 text-white"
-                  : "bg-gray-100 dark:bg-[#0a1020] text-gray-700 dark:text-gray-300 hover:bg-gray-200"
-              }`}
-            >
-              Last 7 Days
-            </button>
-            <button
-              onClick={() => handleTimeRangeChange("month")}
-              className={`px-4 py-2 rounded-lg font-medium transition ${
-                timeRange === "month"
-                  ? "bg-emerald-500 text-white"
-                  : "bg-gray-100 dark:bg-[#0a1020] text-gray-700 dark:text-gray-300 hover:bg-gray-200"
-              }`}
-            >
-              Last 30 Days
-            </button>
-            <button
-              onClick={() => handleTimeRangeChange("custom")}
-              className={`px-4 py-2 rounded-lg font-medium transition ${
-                timeRange === "custom"
-                  ? "bg-emerald-500 text-white"
-                  : "bg-gray-100 dark:bg-[#0a1020] text-gray-700 dark:text-gray-300 hover:bg-gray-200"
-              }`}
-            >
-              Custom Date Range
-            </button>
+      <div className="bg-gradient-to-r from-white to-gray-50 dark:from-[#0f1f35] dark:to-[#091f3c] rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-800">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Calendar
+              size={20}
+              className="text-emerald-600 dark:text-emerald-400"
+            />
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+              Analytics Period
+            </h3>
           </div>
+          <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 px-3 py-1 bg-gray-100 dark:bg-gray-800 rounded-full">
+            {getDateRangeDisplay()}
+          </span>
+        </div>
 
-          {timeRange === "custom" && (
-            <div className="flex gap-4 mt-2">
+        <div className="flex flex-wrap gap-2">
+          {[
+            { label: "Last 24h", value: "day" },
+            { label: "Last 7 days", value: "week" },
+            { label: "Last 30 days", value: "month" },
+            { label: "Custom", value: "custom" },
+          ].map((btn) => (
+            <button
+              key={btn.value}
+              onClick={() => handleTimeRangeChange(btn.value)}
+              className={`px-4 py-2.5 rounded-lg font-medium transition-all duration-200 ${
+                timeRange === btn.value
+                  ? "bg-emerald-600 text-white shadow-lg shadow-emerald-600/30 scale-105"
+                  : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700"
+              }`}
+            >
+              {btn.label}
+            </button>
+          ))}
+        </div>
+
+        {timeRange === "custom" && (
+          <div className="flex flex-col sm:flex-row gap-3 mt-4">
+            <div className="flex-1">
+              <label className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1 block">
+                From
+              </label>
               <input
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="px-4 py-2 border rounded-lg dark:bg-[#0a1020] dark:border-gray-600"
-                placeholder="Start Date"
+                className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
               />
+            </div>
+            <div className="flex-1">
+              <label className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1 block">
+                To
+              </label>
               <input
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                className="px-4 py-2 border rounded-lg dark:bg-[#0a1020] dark:border-gray-600"
-                placeholder="End Date"
+                className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
               />
             </div>
-          )}
-
-          <p className="text-sm text-gray-500">
-            Viewing data from:{" "}
-            <span className="font-semibold">{getDateRangeDisplay()}</span>
-          </p>
-        </div>
+          </div>
+        )}
       </div>
 
+      {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Total Orders"
           value={loading ? "..." : stats.totalOrders}
           icon="🛒"
-          bg="bg-[#0b1f3b]"
+          bg="bg-gradient-to-br from-blue-500 to-blue-600"
         />
         <StatCard
-          title="Revenue"
+          title="Total Revenue"
           value={loading ? "..." : `$${stats.totalRevenue.toFixed(2)}`}
           icon="💰"
-          bg="bg-emerald-500"
+          bg="bg-gradient-to-br from-emerald-500 to-emerald-600"
         />
         <StatCard
-          title="Customers"
+          title="Total Customers"
           value={loading ? "..." : stats.customersCount}
           icon="👥"
-          bg="bg-[#0b1f3b]"
+          bg="bg-gradient-to-br from-purple-500 to-purple-600"
         />
         <StatCard
           title="QR Scans"
           value={loading ? "..." : qrScans}
           icon="📱"
-          bg="bg-[#f7f3df] text-black"
+          bg="bg-gradient-to-br from-orange-500 to-orange-600"
         />
       </div>
 
+      {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white dark:bg-[#091f3c] rounded-xl p-6 shadow-sm h-[300px] flex flex-col">
-          <h3 className="text-lg font-semibold mb-4">Orders by Date</h3>
-          <p className="text-sm text-gray-500 mb-3">
-            Click on a date to view details
-          </p>
+        {/* Revenue Trend Chart */}
+        <div className="bg-white dark:bg-[#0f1f35] rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-800 hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                Revenue Trend
+              </h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                Daily revenue over selected period
+              </p>
+            </div>
+            <TrendingUp
+              size={20}
+              className="text-emerald-600 dark:text-emerald-400"
+            />
+          </div>
+
           {loading ? (
-            <div className="flex items-center justify-center flex-1">
-              Loading...
+            <div className="h-[300px] flex items-center justify-center">
+              <div className="text-gray-500">Loading chart...</div>
             </div>
           ) : chartData.length > 0 ? (
-            <div className="flex-1 overflow-x-auto">
-              <table className="w-full text-sm">
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={chartData}>
+                <defs>
+                  <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                <XAxis dataKey="_id" stroke="#9ca3af" />
+                <YAxis stroke="#9ca3af" />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "#1f2937",
+                    border: "none",
+                    borderRadius: "8px",
+                    color: "#fff",
+                  }}
+                  formatter={(value) => `$${Number(value).toFixed(2)}`}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="revenue"
+                  stroke="#10b981"
+                  strokeWidth={3}
+                  dot={{ fill: "#10b981", r: 4 }}
+                  activeDot={{ r: 6 }}
+                  fill="url(#colorRevenue)"
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-[300px] flex items-center justify-center text-gray-500">
+              No data available
+            </div>
+          )}
+        </div>
+
+        {/* Orders by Date Chart */}
+        <div className="bg-white dark:bg-[#0f1f35] rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-800 hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                Orders Summary
+              </h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                Order count by date
+              </p>
+            </div>
+            <ShoppingBag
+              size={20}
+              className="text-blue-600 dark:text-blue-400"
+            />
+          </div>
+
+          {loading ? (
+            <div className="h-[300px] flex items-center justify-center">
+              <div className="text-gray-500">Loading chart...</div>
+            </div>
+          ) : chartData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                <XAxis dataKey="_id" stroke="#9ca3af" />
+                <YAxis stroke="#9ca3af" />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "#1f2937",
+                    border: "none",
+                    borderRadius: "8px",
+                    color: "#fff",
+                  }}
+                  cursor={{ fill: "rgba(16, 185, 129, 0.1)" }}
+                />
+                <Bar
+                  dataKey="orderCount"
+                  fill="#3b82f6"
+                  radius={[8, 8, 0, 0]}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-[300px] flex items-center justify-center text-gray-500">
+              No data available
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Data Table and QR Scans */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Orders Table */}
+        <div className="lg:col-span-2 bg-white dark:bg-[#0f1f35] rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-800 hover:shadow-md transition-shadow">
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
+            Orders by Date
+          </h3>
+
+          {loading ? (
+            <div className="py-8 text-center text-gray-500">Loading...</div>
+          ) : chartData.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full">
                 <thead>
-                  <tr className="border-b">
-                    <th className="text-left">Date</th>
-                    <th className="text-right">Orders</th>
-                    <th className="text-right">Revenue</th>
+                  <tr className="border-b border-gray-200 dark:border-gray-700">
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600 dark:text-gray-400">
+                      Date
+                    </th>
+                    <th className="px-4 py-3 text-right text-sm font-semibold text-gray-600 dark:text-gray-400">
+                      Orders
+                    </th>
+                    <th className="px-4 py-3 text-right text-sm font-semibold text-gray-600 dark:text-gray-400">
+                      Revenue
+                    </th>
+                    <th className="px-4 py-3 text-right text-sm font-semibold text-gray-600 dark:text-gray-400">
+                      Avg Order
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -397,32 +534,54 @@ export default function DashboardClient({ restaurant, user }) {
                     <tr
                       key={data._id}
                       onClick={() => handleDateClick(data)}
-                      className="border-b hover:bg-emerald-50 dark:hover:bg-[#0a3020] cursor-pointer transition"
+                      className="border-b border-gray-100 dark:border-gray-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/10 cursor-pointer transition-colors"
                     >
-                      <td>{data._id}</td>
-                      <td className="text-right">{data.orderCount}</td>
-                      <td className="text-right">${data.revenue.toFixed(2)}</td>
+                      <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
+                        {data._id}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-right font-semibold text-blue-600 dark:text-blue-400">
+                        {data.orderCount}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-right font-semibold text-emerald-600 dark:text-emerald-400">
+                        ${data.revenue.toFixed(2)}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-right text-gray-600 dark:text-gray-400">
+                        ${(data.revenue / data.orderCount).toFixed(2)}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
           ) : (
-            <div className="flex items-center justify-center flex-1">
+            <div className="py-8 text-center text-gray-500">
               No orders found in this date range
             </div>
           )}
         </div>
 
-        <div className="bg-white dark:bg-[#091f3c] rounded-xl p-6 shadow-sm h-[300px] flex flex-col items-center justify-center">
-          <div className="text-center">
-            <div className="text-5xl font-bold text-emerald-500 mb-2">
+        {/* QR Scans Card */}
+        <div className="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/10 rounded-2xl p-6 border border-orange-200 dark:border-orange-800 shadow-sm hover:shadow-md transition-shadow">
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6">
+            Menu Reach
+          </h3>
+          <div className="flex flex-col items-center justify-center py-8">
+            <div className="text-6xl font-black bg-gradient-to-r from-orange-500 to-orange-600 bg-clip-text text-transparent mb-3">
               {loading ? "..." : qrScans}
             </div>
-            <p className="text-gray-500">Total QR Scans</p>
-            <p className="text-sm text-gray-400 mt-2">
-              Unique menu views via QR code
+            <p className="text-gray-700 dark:text-gray-300 font-semibold text-center">
+              QR Code Scans
             </p>
+            <p className="text-sm text-gray-600 dark:text-gray-400 text-center mt-2">
+              Unique public menu views
+            </p>
+            <div className="w-full mt-6 pt-6 border-t border-orange-200 dark:border-orange-800">
+              <div className="text-xs text-gray-600 dark:text-gray-400 text-center">
+                <span className="block mb-2">
+                  📱 Share your menu QR code to increase reach
+                </span>
+              </div>
+            </div>
           </div>
         </div>
       </div>

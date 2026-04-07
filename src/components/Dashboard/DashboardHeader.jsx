@@ -5,6 +5,7 @@ import { useCallback, useState } from "react";
 import { Copy, QrCode, Bell, ShoppingBag, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { usePathname, useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { useNotifications } from "@/hooks/useNotifications";
 import NotificationPanel from "@/components/NotificationPanel";
 
@@ -13,23 +14,35 @@ export default function DashboardHeader({ restaurant, user }) {
   const [showNotif, setShowNotif] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
+  const { data: session } = useSession();
 
-  // ── Notifications (no model changes — reads existing APIs + localStorage) ──
+  // Fallback to session data if props not provided
+  const restaurantData = restaurant || session?.user?.restaurant;
+  const userData = user || session?.user;
+
+  // Get notifications and handlers from hook - MUST be called unconditionally
+  // (before any guard checks, to follow React's Rules of Hooks)
   const {
-    notifications,
-    unreadCount,
-    orderCount,
-    hotActionCount,
-    markAllRead,
-    markRead,
-    refresh,
-  } = useNotifications(restaurant?._id ?? null);
+    notifications = [],
+    unreadCount = 0,
+    orderCount = 0,
+    hotActionCount = 0,
+    markRead = () => {},
+    markAllRead = () => {},
+    refresh = () => {},
+  } = useNotifications(restaurantData?._id) || {};
+
+  // Dismiss handler - MUST be declared before guard check (Rules of Hooks)
+  const handleDismiss = useCallback((id) => markRead(id), [markRead]);
+
+  // Guard: Return early if no restaurant data available
+  if (!restaurantData) return null;
 
   // ── Page titles ────────────────────────────────────────────────────────────
   const titles = {
     "/dashboard": {
       title: "Dashboard",
-      subtitle: `Hi ${user?.name || "User"}, Welcome to Menu Tiger Dashboard!`,
+      subtitle: `Hi ${userData?.name || "User"}, Welcome to Menu Tiger Dashboard!`,
     },
     "/dashboard/menu": { title: "Menu", subtitle: "Craft your digital menu" },
     "/dashboard/orders": {
@@ -48,7 +61,11 @@ export default function DashboardHeader({ restaurant, user }) {
 
   // ── Handlers ───────────────────────────────────────────────────────────────
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(restaurant.publicUrl);
+    if (!restaurantData?.publicUrl) {
+      toast.error("Restaurant URL not available");
+      return;
+    }
+    await navigator.clipboard.writeText(restaurantData.publicUrl);
     toast.success("Link copied!");
   };
 
@@ -58,15 +75,10 @@ export default function DashboardHeader({ restaurant, user }) {
     if (opening) refresh(); // fresh pull on open
   };
 
-  // Dismiss = mark that single notification read (localStorage only)
-  const handleDismiss = useCallback((id) => markRead(id), [markRead]);
-
   const handleViewOrders = () => {
     setShowNotif(false);
-    router.push(`/dashboard/${restaurant._id}/orders`);
+    router.push(`/dashboard/${restaurantData._id}/orders`);
   };
-
-  if (!restaurant) return null;
 
   return (
     <>
@@ -173,14 +185,25 @@ export default function DashboardHeader({ restaurant, user }) {
           </button>
 
           {/* ── Open app ── */}
-          <a
-            href={restaurant.publicUrl}
-            target="_blank"
-            className="bg-emerald-500 text-white px-4 py-2 rounded-lg shadow
-                       flex items-center gap-2 hover:bg-emerald-600 transition"
-          >
-            👁 <span className="hidden sm:inline">Open App</span>
-          </a>
+          {restaurantData?.publicUrl ? (
+            <a
+              href={restaurantData.publicUrl}
+              target="_blank"
+              className="bg-emerald-500 text-white px-4 py-2 rounded-lg shadow
+                         flex items-center gap-2 hover:bg-emerald-600 transition"
+            >
+              👁 <span className="hidden sm:inline">Open App</span>
+            </a>
+          ) : (
+            <button
+              disabled
+              className="bg-gray-300 text-gray-500 px-4 py-2 rounded-lg shadow
+                         flex items-center gap-2 cursor-not-allowed"
+              title="Restaurant URL not available"
+            >
+              👁 <span className="hidden sm:inline">Open App</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -198,23 +221,39 @@ export default function DashboardHeader({ restaurant, user }) {
               Restaurant QR Code
             </h2>
             {/* NOTE: Remove stray * that was in original file */}
-            <img
-              src={restaurant.qrCodeBase64}
-              alt="QR Code"
-              className="w-48 h-48 mx-auto border rounded-xl"
-            />
+            {restaurantData?.qrCodeBase64 ? (
+              <img
+                src={restaurantData.qrCodeBase64}
+                alt="QR Code"
+                className="w-48 h-48 mx-auto border rounded-xl"
+              />
+            ) : (
+              <div className="w-48 h-48 mx-auto border rounded-xl bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-500">
+                No QR Code Available
+              </div>
+            )}
             <div className="text-center text-sm text-gray-600 dark:text-gray-400 break-all">
-              {restaurant.publicUrl}
+              {restaurantData?.publicUrl || "URL not available"}
             </div>
             <div className="flex gap-3">
-              <a
-                href={restaurant.qrCodeBase64}
-                download={`${restaurant.slug}-qr.png`}
-                className="flex-1 border dark:border-white/10 rounded-lg py-2 text-center flex items-center
-                           justify-center gap-2 hover:bg-gray-50 dark:hover:bg-white/5 dark:text-gray-300 transition"
-              >
-                ⬇ Download
-              </a>
+              {restaurantData?.qrCodeBase64 ? (
+                <a
+                  href={restaurantData.qrCodeBase64}
+                  download={`${restaurantData.slug}-qr.png`}
+                  className="flex-1 border dark:border-white/10 rounded-lg py-2 text-center flex items-center
+                             justify-center gap-2 hover:bg-gray-50 dark:hover:bg-white/5 dark:text-gray-300 transition"
+                >
+                  ⬇ Download
+                </a>
+              ) : (
+                <button
+                  disabled
+                  className="flex-1 border dark:border-white/10 rounded-lg py-2 text-center flex items-center
+                             justify-center gap-2 bg-gray-100 dark:bg-gray-800 text-gray-500 cursor-not-allowed"
+                >
+                  ⬇ Download
+                </button>
+              )}
               <button
                 onClick={handleCopy}
                 className="flex-1 border dark:border-white/10 rounded-lg py-2 flex items-center
@@ -223,13 +262,22 @@ export default function DashboardHeader({ restaurant, user }) {
                 📋 Copy Link
               </button>
             </div>
-            <a
-              href={restaurant.publicUrl}
-              target="_blank"
-              className="block text-center bg-emerald-500 text-white py-2 rounded-lg mt-2 hover:bg-emerald-600 transition"
-            >
-              👁 Open Menu
-            </a>
+            {restaurantData?.publicUrl ? (
+              <a
+                href={restaurantData.publicUrl}
+                target="_blank"
+                className="block text-center bg-emerald-500 text-white py-2 rounded-lg mt-2 hover:bg-emerald-600 transition"
+              >
+                👁 Open Menu
+              </a>
+            ) : (
+              <button
+                disabled
+                className="block w-full text-center bg-gray-300 text-gray-500 py-2 rounded-lg mt-2 cursor-not-allowed"
+              >
+                👁 Open Menu (URL not available)
+              </button>
+            )}
           </div>
         </div>
       )}

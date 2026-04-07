@@ -1,7 +1,6 @@
 import { getDb } from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { ObjectId } from "mongodb";
 
 export async function GET(request) {
   try {
@@ -29,7 +28,7 @@ export async function GET(request) {
     const startDate = searchParams.get("startDate");
     const endDate = searchParams.get("endDate");
 
-    const matchStage = { restaurantId: restaurantId };
+    const matchStage = { restaurantId }; // Query by restaurantId as string
 
     if (startDate || endDate) {
       matchStage.createdAt = {};

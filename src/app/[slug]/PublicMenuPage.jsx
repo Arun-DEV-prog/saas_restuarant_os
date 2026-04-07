@@ -1357,7 +1357,7 @@ export default function PublicMenuPage({ params }) {
         .mi-nav-cart-n {
           position: absolute;
           top: -5px;
-          right: -5px;
+          right: -10px;
           min-width: 18px;
           height: 18px;
           border-radius: 9px;
@@ -2416,15 +2416,26 @@ export default function PublicMenuPage({ params }) {
           .mi-hero { height: 320px; }
           .mi-nav-links { display: none; }
           .mi-nav-share { display: flex !important; }
-          .mi-nav-inner { padding: 0 16px; height: 56px; }
+          .mi-nav-r { gap: 6px; }
+          .mi-nav-share { padding: 0.35rem 0.7rem; font-size: 0.65rem; }
+          .mi-nav-cart { width: 36px; height: 36px; }
+          .mi-nav-inner { padding: 0 12px; height: 56px; }
           .mi-filter-inner { padding: 12px 16px; }
-          .mi-main { padding: 28px 16px 32px; }
-          .mi-hero-content { padding: 68px 18px 22px; }
+          .mi-main { padding: 20px 16px 32px; }
+          .mi-hero-content { padding: 60px 16px 20px; }
           .mi-hero-title { font-size: clamp(1.5rem, 8vw, 2.2rem); }
           .mi-hero-desc { display: none; }
           .mi-hero-qr-btn { display: none !important; }
           .mi-bnav { width: calc(100% - 24px); bottom: 12px; border-radius: 18px; }
           .mi-section-hdr { flex-direction: column; align-items: flex-start; gap: 8px; }
+        }
+        @media (max-width: 480px) {
+          .mi-nav-r { gap: 4px; }
+          .mi-nav-share { padding: 0.3rem 0.6rem; font-size: 0.6rem; }
+          .mi-nav-cart { width: 34px; height: 34px; }
+          .mi-nav-inner { padding: 0 10px; }
+          .mi-nav-logo { gap: 6px; }
+          .mi-nav-logo-icon { font-size: 0.9rem; }
         }
         @media (min-width: 641px) { .mi-nav-share { display: flex; } .mi-nav-links { display: none; } }
         @media (min-width: 900px) { 

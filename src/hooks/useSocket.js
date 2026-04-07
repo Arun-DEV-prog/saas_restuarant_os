@@ -19,17 +19,28 @@ export function useSocket(restaurantId = null) {
       return;
     }
 
-    // Initialize socket connection with correct path
-    const socketUrl =
-      process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:3001";
+    // Socket server is on the same host as frontend with custom path
+    // In development: http://localhost:3000/api/socket
+    // In production: https://yourdomain.com/api/socket
+    const baseUrl =
+      process.env.NEXT_PUBLIC_API_URL ||
+      (typeof window !== "undefined" ? window.location.origin : "");
+
+    const socketUrl = baseUrl; // Use same origin, let Socket.IO use /api/socket path
+
+    console.log("🔌 Initializing Socket with base URL:", socketUrl);
+    console.log("🔌 NODE_ENV:", process.env.NODE_ENV);
 
     socketRef.current = io(socketUrl, {
+      path: "/api/socket",
       transports: ["websocket", "polling"],
       reconnection: true,
-      reconnectionAttempts: 5,
+      reconnectionAttempts: 10,
       reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
       timeout: 10000,
       autoConnect: true,
+      forceNew: false,
     });
 
     const socketInstance = socketRef.current;
@@ -62,9 +73,14 @@ export function useSocket(restaurantId = null) {
     });
 
     socketInstance.on("connect_error", (err) => {
-      console.error("Socket connection error:", err.message);
-      setError(err.message);
+      console.error("❌ Socket connection error:", err.message || err);
+      setError(err.message || String(err));
       setIsConnected(false);
+    });
+
+    socketInstance.on("error", (err) => {
+      console.error("❌ Socket error:", err);
+      setError(err?.message || String(err));
     });
 
     socketInstance.on("reconnect", (attemptNumber) => {
@@ -109,17 +125,15 @@ export function useSocket(restaurantId = null) {
  * Hook for listening to specific socket events
  */
 export function useSocketEvent(socket, eventName, callback) {
-  const memoizedCallback = useCallback(callback, [callback]);
-
   useEffect(() => {
     if (!socket) return;
 
-    socket.on(eventName, memoizedCallback);
+    socket.on(eventName, callback);
 
     return () => {
-      socket.off(eventName, memoizedCallback);
+      socket.off(eventName, callback);
     };
-  }, [socket, eventName, memoizedCallback]);
+  }, [socket, eventName, callback]);
 }
 
 /**
@@ -127,19 +141,18 @@ export function useSocketEvent(socket, eventName, callback) {
  */
 export function useOrderUpdates(restaurantId, onOrderUpdate) {
   const { socket, isConnected, error } = useSocket(restaurantId);
-  const memoizedCallback = useCallback(onOrderUpdate, [onOrderUpdate]);
 
   useEffect(() => {
     if (!socket || !isConnected) return;
 
-    socket.on("order-updated", memoizedCallback);
-    socket.on("order-created", memoizedCallback);
+    socket.on("order-updated", onOrderUpdate);
+    socket.on("order-created", onOrderUpdate);
 
     return () => {
-      socket.off("order-updated", memoizedCallback);
-      socket.off("order-created", memoizedCallback);
+      socket.off("order-updated", onOrderUpdate);
+      socket.off("order-created", onOrderUpdate);
     };
-  }, [socket, isConnected, memoizedCallback]);
+  }, [socket, isConnected, onOrderUpdate]);
 
   return { socket, isConnected, error };
 }
@@ -149,17 +162,16 @@ export function useOrderUpdates(restaurantId, onOrderUpdate) {
  */
 export function useMenuUpdates(restaurantId, onMenuUpdate) {
   const { socket, isConnected, error } = useSocket(restaurantId);
-  const memoizedCallback = useCallback(onMenuUpdate, [onMenuUpdate]);
 
   useEffect(() => {
     if (!socket || !isConnected) return;
 
-    socket.on("menu-updated", memoizedCallback);
+    socket.on("menu-updated", onMenuUpdate);
 
     return () => {
-      socket.off("menu-updated", memoizedCallback);
+      socket.off("menu-updated", onMenuUpdate);
     };
-  }, [socket, isConnected, memoizedCallback]);
+  }, [socket, isConnected, onMenuUpdate]);
 
   return { socket, isConnected, error };
 }
@@ -169,17 +181,16 @@ export function useMenuUpdates(restaurantId, onMenuUpdate) {
  */
 export function useTableUpdates(restaurantId, onTableUpdate) {
   const { socket, isConnected, error } = useSocket(restaurantId);
-  const memoizedCallback = useCallback(onTableUpdate, [onTableUpdate]);
 
   useEffect(() => {
     if (!socket || !isConnected) return;
 
-    socket.on("table-updated", memoizedCallback);
+    socket.on("table-updated", onTableUpdate);
 
     return () => {
-      socket.off("table-updated", memoizedCallback);
+      socket.off("table-updated", onTableUpdate);
     };
-  }, [socket, isConnected, memoizedCallback]);
+  }, [socket, isConnected, onTableUpdate]);
 
   return { socket, isConnected, error };
 }

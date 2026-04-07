@@ -1,17 +1,94 @@
 "use client";
 
+import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useState } from "react";
-import { ChevronDown, Settings, HelpCircle, LogOut, Menu } from "lucide-react";
+import {
+  ChevronDown,
+  Settings,
+  HelpCircle,
+  LogOut,
+  Menu,
+  BarChart3,
+  ShoppingCart,
+  BookOpen,
+  Layers,
+  Zap,
+  Store,
+  Megaphone,
+  TrendingUp,
+  Plug,
+  CreditCard,
+  Flame,
+  Bot,
+  LayoutDashboard,
+  Users,
+  Building2,
+  Package,
+  Activity,
+} from "lucide-react";
 import { usePlatformSettings } from "@/hooks/usePlatformSettings";
+
+// Icon config map
+const ICON_MAP = {
+  LayoutDashboard,
+  Users,
+  Building2,
+  Package,
+  BarChart3,
+  Activity,
+  Settings,
+  ShoppingCart,
+  BookOpen,
+  Layers,
+  Zap,
+  Store,
+  Megaphone,
+  TrendingUp,
+  Plug,
+  CreditCard,
+  Flame,
+  Bot,
+  HelpCircle,
+  LogOut,
+  Menu,
+};
+
+// Icon Wrapper Component
+const IconWrapper = ({ Icon, size = 20 }) => {
+  if (!Icon) return null;
+  if (typeof Icon !== "function") return null;
+  return <Icon size={size} />;
+};
 
 export default function Sidebar() {
   const pathname = usePathname();
   const { data: session } = useSession();
   const { settings } = usePlatformSettings();
   const [expandedItems, setExpandedItems] = useState({});
+
+  // Helper function to render icons safely
+  const renderIcon = (iconKey) => {
+    if (!iconKey) return null;
+
+    // If it's a string, look it up in the map
+    if (typeof iconKey === "string") {
+      const IconComponent = ICON_MAP[iconKey];
+      if (IconComponent) {
+        return <IconWrapper Icon={IconComponent} size={20} />;
+      }
+      return <span className="text-lg">{iconKey}</span>;
+    }
+
+    // If it's already a function, use it directly
+    if (typeof iconKey === "function") {
+      return <IconWrapper Icon={iconKey} size={20} />;
+    }
+
+    return null;
+  };
 
   const restaurantId = session?.user?.restaurantId;
   const restaurantName = session?.user?.restaurantName || "Restaurant";
@@ -29,34 +106,34 @@ export default function Sidebar() {
               {
                 name: "Admin Dashboard",
                 href: `/dashboard/admin`,
-                icon: "📊",
+                icon: LayoutDashboard,
                 badge: "Admin",
               },
-              { name: "Users", href: `/dashboard/admin/users`, icon: "👥" },
+              { name: "Users", href: `/dashboard/admin/users`, icon: Users },
               {
                 name: "Restaurants",
                 href: `/dashboard/admin/restaurants`,
-                icon: "🏢",
+                icon: Building2,
               },
               {
                 name: "Restaurant Plans",
                 href: `/dashboard/admin/restaurants-plans`,
-                icon: "💳",
+                icon: Package,
               },
               {
                 name: "Platform Analytics",
                 href: `/dashboard/admin/analytics`,
-                icon: "📈",
+                icon: BarChart3,
               },
               {
                 name: "Activity Logs",
                 href: `/dashboard/admin/activity`,
-                icon: "📋",
+                icon: Activity,
               },
               {
                 name: "System Settings",
                 href: `/dashboard/admin/settings`,
-                icon: "⚙️",
+                icon: Settings,
               },
             ],
           },
@@ -68,27 +145,31 @@ export default function Sidebar() {
           {
             section: "Admin",
             items: [
-              { name: "Admin Dashboard", href: `/dashboard/admin`, icon: "👑" },
-              { name: "Users", href: `/dashboard/admin/users`, icon: "👥" },
+              {
+                name: "Admin Dashboard",
+                href: `/dashboard/admin`,
+                icon: LayoutDashboard,
+              },
+              { name: "Users", href: `/dashboard/admin/users`, icon: Users },
               {
                 name: "Restaurants",
                 href: `/dashboard/admin/restaurants`,
-                icon: "🏢",
+                icon: Building2,
               },
               {
                 name: "Restaurant Plans",
                 href: `/dashboard/admin/restaurants-plans`,
-                icon: "💳",
+                icon: Package,
               },
               {
                 name: "Analytics",
                 href: `/dashboard/admin/analytics`,
-                icon: "📊",
+                icon: BarChart3,
               },
               {
                 name: "Activity Log",
                 href: `/dashboard/admin/activity`,
-                icon: "📋",
+                icon: Activity,
               },
             ],
           },
@@ -100,27 +181,27 @@ export default function Sidebar() {
           {
             section: "Main",
             items: [
-              { name: "Dashboard", href: `/dashboard`, icon: "📊" },
+              { name: "Dashboard", href: `/dashboard`, icon: LayoutDashboard },
               {
                 name: "Orders",
                 href: `/dashboard/${restaurantId}/orders`,
-                icon: "🛒",
+                icon: ShoppingCart,
               },
             ],
           },
           {
             section: "Management",
             items: [
-              { name: "Menus", href: `/dashboard/menu`, icon: "📋" },
+              { name: "Menus", href: `/dashboard/menu`, icon: BookOpen },
               {
                 name: "Table Management",
                 href: `/dashboard/${restaurantId}/tables`,
-                icon: "🪑",
+                icon: Layers,
               },
               {
                 name: "Kitchen Display",
                 href: `/dashboard/${restaurantId}/kitchen`,
-                icon: "🍳",
+                icon: Zap,
                 badge: "Beta",
               },
             ],
@@ -130,7 +211,7 @@ export default function Sidebar() {
             items: [
               {
                 name: "Stores",
-                icon: "🏪",
+                icon: Store,
                 children: [
                   {
                     name: "All Stores",
@@ -144,7 +225,7 @@ export default function Sidebar() {
               },
               {
                 name: "Marketing",
-                icon: "📣",
+                icon: Megaphone,
                 children: [
                   {
                     name: "Campaigns",
@@ -159,7 +240,13 @@ export default function Sidebar() {
               {
                 name: "Reports",
                 href: `/dashboard/${restaurantId}/reports`,
-                icon: "📈",
+                icon: TrendingUp,
+              },
+              {
+                name: "AI Automation",
+                href: `/dashboard/ai-assistant`,
+                icon: Bot,
+                badge: "New",
               },
             ],
           },
@@ -169,7 +256,7 @@ export default function Sidebar() {
               {
                 name: "Integrations",
                 href: `/dashboard/${restaurantId}/integrations`,
-                icon: "🔌",
+                icon: Plug,
               },
             ],
           },
@@ -179,7 +266,7 @@ export default function Sidebar() {
               {
                 name: "Pricing Plans",
                 href: `/dashboard/${restaurantId}/pricing`,
-                icon: "💳",
+                icon: CreditCard,
               },
             ],
           },
@@ -189,12 +276,12 @@ export default function Sidebar() {
               {
                 name: "Hot Actions",
                 href: `/dashboard/${restaurantId}/hotactions`,
-                icon: "🔥",
+                icon: Flame,
               },
               {
                 name: "Settings",
                 href: `/dashboard/${restaurantId}/setting`,
-                icon: "⚙️",
+                icon: Settings,
                 badge: "New",
               },
             ],
@@ -232,9 +319,9 @@ export default function Sidebar() {
   }
 
   return (
-    <aside className="hidden md:flex md:flex-col w-64 bg-white dark:bg-[#0f172a] border-r border-gray-200 dark:border-gray-800 transition-colors h-screen">
+    <aside className="hidden md:flex md:flex-col w-64 bg-white dark:bg-[#0f172a] border-r border-gray-200 dark:border-gray-800 transition-colors max-h-screen overflow-hidden">
       {/* Header */}
-      <div className="h-20 flex flex-col justify-center px-6 border-b border-gray-200 dark:border-gray-800/50">
+      <div className="h-20 flex flex-col justify-center px-6 border-b border-gray-200 dark:border-gray-800/50 flex-shrink-0">
         {isOwner ? (
           <>
             <div className="flex items-center gap-2.5 mb-1">
@@ -325,7 +412,7 @@ export default function Sidebar() {
                       }`}
                     >
                       <span className="flex items-center gap-3 text-sm font-medium">
-                        <span className="text-base">{item.icon}</span>
+                        {renderIcon(item.icon)}
                         {item.name}
                       </span>
                       <ChevronDown
@@ -377,7 +464,7 @@ export default function Sidebar() {
                     }`}
                   >
                     <span className="flex items-center gap-3">
-                      <span className="text-base">{item.icon}</span>
+                      {renderIcon(item.icon)}
                       <span className="text-sm">{item.name}</span>
                     </span>
                     {item.badge && (
@@ -398,18 +485,6 @@ export default function Sidebar() {
           </div>
         ))}
       </nav>
-
-      {/* Footer */}
-      <div className="border-t border-gray-200 dark:border-gray-800/50 px-4 py-4 space-y-2">
-        <button className="w-full flex items-center gap-3 px-3 py-2.5 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/30 rounded-lg transition-all duration-200 text-sm">
-          <HelpCircle size={16} />
-          Help & Support
-        </button>
-        <button className="w-full flex items-center gap-3 px-3 py-2.5 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/30 rounded-lg transition-all duration-200 text-sm">
-          <Settings size={16} />
-          Account Settings
-        </button>
-      </div>
     </aside>
   );
 }

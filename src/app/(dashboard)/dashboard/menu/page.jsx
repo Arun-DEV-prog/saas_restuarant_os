@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useSession } from "next-auth/react";
 import {
   Plus,
   Trash2,
@@ -20,6 +21,7 @@ import FoodFormModal from "@/components/Dashboard/FoodFormModal";
 import CategoryFormModal from "@/components/Dashboard/CategoryFormModal";
 
 export default function MenuPage() {
+  const { data: session } = useSession();
   const [restaurant, setRestaurant] = useState(null);
   const [categories, setCategories] = useState([]);
   const [foods, setFoods] = useState({});
@@ -710,7 +712,7 @@ export default function MenuPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
-      <DashboardHeader />
+      <DashboardHeader restaurant={restaurant} user={session?.user} />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Page Header */}
         <div className="mb-6">

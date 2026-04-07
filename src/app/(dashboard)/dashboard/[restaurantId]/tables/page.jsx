@@ -16,8 +16,10 @@ import {
   Save,
 } from "lucide-react";
 import DashboardHeader from "@/components/Dashboard/DashboardHeader";
+import { useSession } from "next-auth/react";
 
 export default function TableManagementPage() {
+  const { data: session } = useSession();
   const [restaurant, setRestaurant] = useState(null);
   const [tables, setTables] = useState([]);
   const [configs, setConfigs] = useState([]);
@@ -217,7 +219,7 @@ export default function TableManagementPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
-        <DashboardHeader />
+        <DashboardHeader restaurant={restaurant} user={session?.user} />
         <div className="flex items-center justify-center py-20">
           <div className="text-center">
             <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-orange-600 mx-auto mb-4"></div>
@@ -232,7 +234,7 @@ export default function TableManagementPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
-      <DashboardHeader />
+      <DashboardHeader restaurant={restaurant} user={session?.user} />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Header */}

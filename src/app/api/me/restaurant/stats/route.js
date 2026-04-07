@@ -1,7 +1,6 @@
 import { getDb } from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { ObjectId } from "mongodb";
 
 export async function GET(request) {
   try {
@@ -29,7 +28,7 @@ export async function GET(request) {
     const startDate = searchParams.get("startDate");
     const endDate = searchParams.get("endDate");
 
-    const matchStage = { restaurantId: restaurantId };
+    const matchStage = { restaurantId }; // Query by restaurantId as string
 
     if (startDate || endDate) {
       matchStage.createdAt = {};
@@ -45,8 +44,23 @@ export async function GET(request) {
 
     const ordersCollection = db.collection("orders");
 
+    console.group("📊 [Stats API] Query Debug");
+    console.log("Restaurant ID:", restaurantId);
+    console.log("Match stage:", matchStage);
+    console.groupEnd();
+
     // Get total orders
     const totalOrders = await ordersCollection.countDocuments(matchStage);
+    console.log("✅ Total orders found:", totalOrders);
+    
+    // Debug: Show all orders for this restaurant
+    const allOrders = await ordersCollection.find(matchStage).limit(3).toArray();
+    console.log("📋 Sample orders:", allOrders.map(o => ({
+      _id: o._id,
+      restaurantId: o.restaurantId,
+      total: o.total,
+      createdAt: o.createdAt
+    })));
 
     // Get revenue (sum of all order totals)
     const revenueData = await ordersCollection
@@ -64,6 +78,7 @@ export async function GET(request) {
       .toArray();
 
     const totalRevenue = revenueData[0]?.totalRevenue || 0;
+    console.log("💰 Total revenue:", totalRevenue);
 
     // Get unique customers count
     const uniqueCustomers = await ordersCollection

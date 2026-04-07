@@ -25,6 +25,7 @@ function PaymentContent() {
   const success = searchParams.get("success") === "true";
   const canceled = searchParams.get("canceled") === "true";
   const orderId = searchParams.get("orderId");
+  const slug = searchParams.get("slug") || ""; // Get restaurant slug from URL
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -101,7 +102,7 @@ function PaymentContent() {
           )}
 
           <Link
-            href="/"
+            href={slug ? `/${slug}` : "/"}
             className="inline-flex items-center justify-center w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-lg transition"
           >
             <ArrowLeft size={18} className="mr-2" />
@@ -127,7 +128,7 @@ function PaymentContent() {
           </p>
 
           <Link
-            href="/"
+            href={slug ? `/${slug}` : "/"}
             className="inline-flex items-center justify-center w-full bg-orange-600 hover:bg-orange-700 text-white font-semibold py-3 rounded-lg transition"
           >
             <ArrowLeft size={18} className="mr-2" />
