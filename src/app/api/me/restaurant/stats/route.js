@@ -52,15 +52,21 @@ export async function GET(request) {
     // Get total orders
     const totalOrders = await ordersCollection.countDocuments(matchStage);
     console.log("✅ Total orders found:", totalOrders);
-    
+
     // Debug: Show all orders for this restaurant
-    const allOrders = await ordersCollection.find(matchStage).limit(3).toArray();
-    console.log("📋 Sample orders:", allOrders.map(o => ({
-      _id: o._id,
-      restaurantId: o.restaurantId,
-      total: o.total,
-      createdAt: o.createdAt
-    })));
+    const allOrders = await ordersCollection
+      .find(matchStage)
+      .limit(3)
+      .toArray();
+    console.log(
+      "📋 Sample orders:",
+      allOrders.map((o) => ({
+        _id: o._id,
+        restaurantId: o.restaurantId,
+        total: o.total,
+        createdAt: o.createdAt,
+      })),
+    );
 
     // Get revenue (sum of all order totals)
     const revenueData = await ordersCollection

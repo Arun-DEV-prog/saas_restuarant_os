@@ -20,513 +20,566 @@ import {
   Send,
   Play,
   Pause,
+  Sparkles,
+  Globe,
+  Award,
 } from "lucide-react";
 
 /* ─── Global CSS ─────────────────────────────────────────── */
 const globalCSS = `
-  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400&family=Cabinet+Grotesk:wght@400;500;700;800;900&family=Instrument+Serif:ital@0;1&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,400;12..96,500;12..96,700;12..96,800&display=swap');
 
-  *, *::before, *::after { box-sizing: border-box; }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   :root {
-    --green: #00e87a;
-    --green-mid: #00b85f;
-    --green-dark: #007a40;
-    --blue: #0080ff;
-    --blue-mid: #0055cc;
-    --gold: #ffd166;
-    --surface: #0a0f0d;
-    --surface2: #111a14;
-    --surface3: #182118;
-    --text: #e8f5ec;
-    --text-dim: #7a9a82;
-    --border: rgba(0,232,122,0.12);
+    --cream:   #F5F0E8;
+    --cream2:  #EDE6D6;
+    --warm:    #D4C5A9;
+    --sand:    #C4A882;
+    --brown:   #8B6914;
+    --ember:   #C4622D;
+    --ember2:  #E07B45;
+    --forest:  #1C3A2A;
+    --forest2: #2A5040;
+    --forest3: #3D6B52;
+    --ink:     #0E1A12;
+    --gold:    #D4A843;
+    --gold2:   #F0C96A;
+    --text:    #1A1208;
+    --text2:   #4A3E2C;
+    --text3:   #7A6B52;
+    --border:  rgba(139,105,20,0.15);
+    --border2: rgba(139,105,20,0.3);
+    --surface: #FDFAF4;
+    --surface2:#F7F2E8;
+    --surface3:#EEE7D4;
+    --nav-h:   72px;
   }
 
-  html { scroll-behavior: smooth; }
+  html { scroll-behavior: smooth; font-size: 16px; }
 
   body {
-    margin: 0;
     background: var(--surface);
     color: var(--text);
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'Bricolage Grotesque', sans-serif;
     overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.6;
   }
 
-  .syne { font-family: 'Syne', sans-serif; }
+  /* ── Typography classes ── */
+  .display   { font-family: 'Cormorant Garamond', serif; font-weight: 700; letter-spacing: -0.02em; line-height: 1.05; }
+  .serif     { font-family: 'Instrument Serif', serif; font-style: italic; }
+  .grotesk   { font-family: 'Bricolage Grotesque', sans-serif; }
 
-  /* Noise texture overlay */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
-    pointer-events: none;
-    z-index: 1000;
-    opacity: 0.35;
-  }
-
-  /* Custom scrollbar */
+  /* ── Scrollbar ── */
   ::-webkit-scrollbar { width: 4px; }
-  ::-webkit-scrollbar-track { background: var(--surface); }
-  ::-webkit-scrollbar-thumb { background: var(--green-dark); border-radius: 2px; }
+  ::-webkit-scrollbar-track { background: var(--cream2); }
+  ::-webkit-scrollbar-thumb { background: var(--sand); border-radius: 2px; }
 
-  /* Magnetic button base */
-  .mag-btn {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: transform 0.15s ease;
+  /* ── Keyframes ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(32px); }
+    to   { opacity: 1; transform: translateY(0); }
   }
-
-  /* Glow pulse */
-  @keyframes glowPulse {
-    0%, 100% { box-shadow: 0 0 20px rgba(0,232,122,0.3), 0 0 60px rgba(0,232,122,0.1); }
-    50% { box-shadow: 0 0 40px rgba(0,232,122,0.6), 0 0 100px rgba(0,232,122,0.2); }
+  @keyframes fadeIn {
+    from { opacity: 0; } to { opacity: 1; }
   }
-
-  @keyframes floatY {
-    0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-18px); }
+  @keyframes slideLeft {
+    from { opacity: 0; transform: translateX(-40px); }
+    to   { opacity: 1; transform: translateX(0); }
   }
-
-  @keyframes rotateOrbit {
-    from { transform: rotate(0deg) translateX(120px) rotate(0deg); }
-    to   { transform: rotate(360deg) translateX(120px) rotate(-360deg); }
+  @keyframes slideRight {
+    from { opacity: 0; transform: translateX(40px); }
+    to   { opacity: 1; transform: translateX(0); }
   }
-
-  @keyframes textReveal {
-    from { clip-path: inset(0 100% 0 0); opacity: 0; }
-    to   { clip-path: inset(0 0% 0 0); opacity: 1; }
+  @keyframes floatSlow {
+    0%,100% { transform: translateY(0) rotate(0deg); }
+    33%     { transform: translateY(-14px) rotate(1deg); }
+    66%     { transform: translateY(-7px) rotate(-0.5deg); }
   }
-
-  @keyframes scanline {
-    from { transform: translateY(-100%); }
-    to   { transform: translateY(100vh); }
+  @keyframes pulseSoft {
+    0%,100% { opacity: 0.6; transform: scale(1); }
+    50%     { opacity: 1; transform: scale(1.04); }
   }
-
-  @keyframes counterUp {
+  @keyframes rotateSlow {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+  @keyframes shimmerGold {
+    0%   { background-position: -200% center; }
+    100% { background-position: 200% center; }
+  }
+  @keyframes drawLine {
+    from { stroke-dashoffset: 1000; }
+    to   { stroke-dashoffset: 0; }
+  }
+  @keyframes scaleIn {
+    from { transform: scale(0.88); opacity: 0; }
+    to   { transform: scale(1); opacity: 1; }
+  }
+  @keyframes borderDance {
+    0%,100% { border-color: rgba(212,168,67,0.2); }
+    50%     { border-color: rgba(212,168,67,0.6); }
+  }
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+  }
+  @keyframes grain {
+    0%,100% { transform: translate(0,0); }
+    10%     { transform: translate(-2%,-3%); }
+    20%     { transform: translate(2%,2%); }
+    30%     { transform: translate(-1%,3%); }
+    40%     { transform: translate(3%,-1%); }
+    50%     { transform: translate(-2%,2%); }
+    60%     { transform: translate(1%,-2%); }
+    70%     { transform: translate(-3%,1%); }
+    80%     { transform: translate(2%,3%); }
+    90%     { transform: translate(-1%,-1%); }
+  }
+  @keyframes numberTick {
     from { transform: translateY(100%); opacity: 0; }
     to   { transform: translateY(0); opacity: 1; }
   }
-
-  @keyframes shimmer {
-    0% { background-position: -200% center; }
-    100% { background-position: 200% center; }
-  }
-
-  @keyframes borderFlow {
-    0%, 100% { border-color: rgba(0,232,122,0.2); }
-    50% { border-color: rgba(0,232,122,0.7); }
-  }
-
-  @keyframes particleFade {
-    0%   { opacity: 1; transform: translate(0,0) scale(1); }
-    100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0.2); }
-  }
-
   @keyframes ripple {
-    0%   { transform: scale(0); opacity: 0.6; }
+    0%   { transform: scale(0); opacity: 0.5; }
     100% { transform: scale(4); opacity: 0; }
   }
-
-  @keyframes spin3d {
-    0%   { transform: rotateY(0deg) rotateX(0deg); }
-    25%  { transform: rotateY(90deg) rotateX(15deg); }
-    50%  { transform: rotateY(180deg) rotateX(0deg); }
-    75%  { transform: rotateY(270deg) rotateX(-15deg); }
-    100% { transform: rotateY(360deg) rotateX(0deg); }
+  @keyframes blink {
+    0%,100% { opacity: 1; } 50% { opacity: 0; }
   }
 
-  @keyframes slideInLeft {
-    from { transform: translateX(-60px); opacity: 0; }
-    to   { transform: translateX(0); opacity: 1; }
-  }
-
-  @keyframes slideInRight {
-    from { transform: translateX(60px); opacity: 0; }
-    to   { transform: translateX(0); opacity: 1; }
-  }
-
-  @keyframes slideInUp {
-    from { transform: translateY(40px); opacity: 0; }
-    to   { transform: translateY(0); opacity: 1; }
-  }
-
-  @keyframes scaleIn {
-    from { transform: scale(0.7); opacity: 0; }
-    to   { transform: scale(1); opacity: 1; }
-  }
-
-  .animate-float { animation: floatY 4s ease-in-out infinite; }
-  .animate-glow { animation: glowPulse 3s ease-in-out infinite; }
-  .animate-shimmer {
-    background: linear-gradient(90deg, transparent 0%, rgba(0,232,122,0.15) 50%, transparent 100%);
-    background-size: 200% 100%;
-    animation: shimmer 2.5s linear infinite;
-  }
-
-  .tilt-card {
-    transform-style: preserve-3d;
-    transition: transform 0.1s ease;
-  }
-  .tilt-card:hover { box-shadow: 0 30px 60px rgba(0,0,0,0.5); }
-
-  .hover-lift {
-    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
-                box-shadow 0.3s ease;
-  }
-  .hover-lift:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 20px 40px rgba(0,0,0,0.4), 0 0 30px rgba(0,232,122,0.15);
-  }
-
-  .card-reveal {
+  /* ── Reveal on scroll ── */
+  .reveal {
     opacity: 0;
-    transform: translateY(50px);
-    transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.34,1.3,0.64,1);
+    transform: translateY(28px);
+    transition: opacity 0.75s cubic-bezier(0.22,1,0.36,1),
+                transform 0.75s cubic-bezier(0.22,1,0.36,1);
   }
-  .card-reveal.visible {
-    opacity: 1;
-    transform: translateY(0);
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+
+  /* ── Hover card lift ── */
+  .lift {
+    transition: transform 0.35s cubic-bezier(0.34,1.4,0.64,1),
+                box-shadow 0.35s ease;
+  }
+  .lift:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 24px 48px rgba(14,26,18,0.12), 0 4px 12px rgba(14,26,18,0.06);
   }
 
-  .number-ticker {
-    overflow: hidden;
-    display: inline-block;
-  }
-  .number-ticker span {
-    display: inline-block;
-    transition: transform 1.5s cubic-bezier(0.22, 1, 0.36, 1);
+  /* ── Tilt card ── */
+  .tilt { transform-style: preserve-3d; transition: transform 0.12s ease; }
+
+  /* ── Gold shimmer text ── */
+  .gold-shimmer {
+    background: linear-gradient(90deg, var(--gold) 0%, var(--gold2) 40%, var(--brown) 60%, var(--gold) 100%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: shimmerGold 4s linear infinite;
   }
 
-  /* Particle canvas */
-  #hero-particles {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    z-index: 0;
-  }
-
-  /* Cursor glow */
-  #cursor-glow {
-    position: fixed;
-    width: 300px;
-    height: 300px;
-    border-radius: 50%;
-    pointer-events: none;
-    z-index: 9999;
-    transform: translate(-50%, -50%);
-    background: radial-gradient(circle, rgba(0,232,122,0.07) 0%, transparent 70%);
-    transition: opacity 0.3s ease;
-  }
-
-  /* Scanline effect */
-  .scanline::after {
+  /* ── Noise grain overlay ── */
+  .grain::after {
     content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(transparent 50%, rgba(0,0,0,0.03) 50%);
-    background-size: 100% 4px;
+    position: fixed;
+    inset: -50%;
+    width: 200%;
+    height: 200%;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+    opacity: 0.028;
     pointer-events: none;
-    z-index: 10;
+    z-index: 9998;
+    animation: grain 8s steps(10) infinite;
   }
 
-  /* Nav pill active */
+  /* ── Nav link ── */
   .nav-link {
     position: relative;
-    padding: 6px 0;
+    color: var(--text2);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 4px 0;
+    transition: color 0.2s;
   }
   .nav-link::after {
     content: '';
     position: absolute;
-    bottom: 0; left: 0;
-    height: 1.5px;
-    width: 0;
-    background: var(--green);
-    transition: width 0.3s ease;
+    bottom: -2px; left: 0;
+    height: 1px; width: 0;
+    background: var(--ember);
+    transition: width 0.3s cubic-bezier(0.22,1,0.36,1);
   }
+  .nav-link:hover { color: var(--text); }
   .nav-link:hover::after { width: 100%; }
 
-  /* Pricing highlight border animation */
-  .pricing-popular {
-    position: relative;
-    background: linear-gradient(135deg, #0a1a0f, #0f2018);
+  /* ── Btn base ── */
+  .btn-primary {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 13px 26px; border-radius: 4px;
+    background: var(--forest); color: var(--cream);
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 14px; font-weight: 600; letter-spacing: 0.02em;
+    border: none; cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.22,1,0.36,1);
+    position: relative; overflow: hidden;
   }
-  .pricing-popular::before {
+  .btn-primary::after {
     content: '';
-    position: absolute;
-    inset: -1px;
-    border-radius: 17px;
-    background: conic-gradient(from var(--angle), transparent 0deg, var(--green) 60deg, transparent 120deg);
-    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    padding: 1px;
-    animation: rotateBorder 4s linear infinite;
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(212,168,67,0.15), transparent);
+    opacity: 0; transition: opacity 0.3s;
   }
-  @property --angle {
-    syntax: '<angle>';
-    initial-value: 0deg;
-    inherits: false;
+  .btn-primary:hover { background: var(--forest2); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(28,58,42,0.25); }
+  .btn-primary:hover::after { opacity: 1; }
+  .btn-primary:active { transform: translateY(0); }
+
+  .btn-ghost {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 12px 22px; border-radius: 4px;
+    background: transparent; color: var(--text);
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 14px; font-weight: 500;
+    border: 1.5px solid var(--border2); cursor: pointer;
+    transition: all 0.25s ease;
   }
-  @keyframes rotateBorder {
-    to { --angle: 360deg; }
+  .btn-ghost:hover { background: var(--surface3); border-color: var(--sand); }
+
+  .btn-gold {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 13px 26px; border-radius: 4px;
+    background: linear-gradient(135deg, var(--brown), var(--gold));
+    color: #fff;
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 14px; font-weight: 700;
+    border: none; cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.22,1,0.36,1);
+    box-shadow: 0 4px 16px rgba(212,168,67,0.3);
+  }
+  .btn-gold:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(212,168,67,0.45); }
+
+  /* ── Tag pill ── */
+  .tag {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 12px; border-radius: 2px;
+    background: var(--surface3);
+    border: 1px solid var(--border2);
+    font-size: 11px; font-weight: 600;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--text2);
   }
 
-  /* Feature icon spin on hover */
-  .feat-icon-wrap {
-    transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  /* ── Card ── */
+  .card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 32px;
+    transition: border-color 0.3s, box-shadow 0.3s;
   }
-  .feat-card:hover .feat-icon-wrap {
-    transform: rotate(15deg) scale(1.15);
+  .card:hover {
+    border-color: var(--border2);
+    box-shadow: 0 16px 40px rgba(14,26,18,0.07);
   }
 
-  /* Progress bar in stats */
-  .progress-bar {
-    height: 2px;
-    background: var(--border);
-    border-radius: 1px;
-    overflow: hidden;
-    margin-top: 8px;
+  /* ── Marquee ticker ── */
+  .marquee-track {
+    display: flex;
+    width: max-content;
+    animation: marquee 28s linear infinite;
   }
-  .progress-fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--green-dark), var(--green));
-    border-radius: 1px;
-    transform: scaleX(0);
-    transform-origin: left;
-    transition: transform 1.5s cubic-bezier(0.22, 1, 0.36, 1);
-  }
-  .progress-fill.animated { transform: scaleX(1); }
+  .marquee-track:hover { animation-play-state: paused; }
 
-  /* Ripple on click */
-  .ripple-container {
+  /* ── Feature tab ── */
+  .feat-tab {
+    padding: 18px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.3s cubic-bezier(0.22,1,0.36,1);
+  }
+  .feat-tab:hover { background: var(--surface2); border-color: var(--border); }
+  .feat-tab.active {
+    background: var(--forest);
+    border-color: var(--forest2);
+  }
+  .feat-tab.active .tab-icon { color: var(--gold2); }
+  .feat-tab.active .tab-title { color: var(--cream); }
+  .feat-tab.active .tab-stat  { color: rgba(212,201,106,0.85); }
+
+  /* ── Pricing card ── */
+  .price-card {
+    border-radius: 8px;
+    padding: 40px 32px;
+    border: 1px solid var(--border);
+    background: #fff;
+    transition: all 0.4s cubic-bezier(0.34,1.3,0.64,1);
     position: relative;
     overflow: hidden;
   }
-  .ripple-circle {
-    position: absolute;
-    border-radius: 50%;
-    background: rgba(0,232,122,0.25);
-    transform: scale(0);
-    animation: ripple 0.6s linear;
-    pointer-events: none;
+  .price-card:hover { transform: translateY(-8px); box-shadow: 0 32px 64px rgba(14,26,18,0.1); }
+  .price-card.popular {
+    background: var(--forest);
+    border-color: var(--forest2);
+    color: var(--cream);
   }
+  .price-card.popular .price-desc,
+  .price-card.popular .feat-item { color: rgba(245,240,232,0.65); }
 
-  canvas { display: block; }
-
-  /* Tooltip */
-  .tooltip {
-    position: absolute;
-    bottom: calc(100% + 8px);
-    left: 50%;
-    transform: translateX(-50%) translateY(6px);
-    background: var(--surface3);
+  /* ── Testimonial card ── */
+  .testi-card {
+    background: #fff;
     border: 1px solid var(--border);
-    color: var(--text);
-    font-size: 12px;
-    padding: 5px 10px;
-    border-radius: 6px;
-    white-space: nowrap;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.2s, transform 0.2s;
-    z-index: 100;
+    border-radius: 8px;
+    padding: 36px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.35s ease;
   }
-  .has-tooltip:hover .tooltip {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
+  .testi-card::before {
+    content: '"';
+    position: absolute;
+    top: -10px; left: 20px;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 120px;
+    color: rgba(212,168,67,0.08);
+    line-height: 1;
+    pointer-events: none;
+  }
+  .testi-card:hover {
+    border-color: var(--border2);
+    box-shadow: 0 20px 48px rgba(14,26,18,0.09);
+    transform: translateY(-4px);
   }
 
-  /* Mobile */
-  @media (max-width: 640px) {
-    canvas { min-height: 220px; }
+  /* ── Input style ── */
+  .email-input {
+    flex: 1;
+    padding: 13px 18px;
+    border-radius: 4px;
+    border: 1.5px solid var(--border2);
+    background: #fff;
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .email-input:focus {
+    border-color: var(--forest2);
+    box-shadow: 0 0 0 3px rgba(42,80,64,0.1);
+  }
+  .email-input::placeholder { color: var(--text3); }
+
+  /* ── Ripple ── */
+  .ripple-origin { position: relative; overflow: hidden; }
+  .ripple-dot {
+    position: absolute; border-radius: 50%;
+    background: rgba(212,168,67,0.3);
+    transform: scale(0);
+    animation: ripple 0.65s linear;
+    pointer-events: none;
+  }
+
+  /* ── Section divider ── */
+  .divider {
+    width: 48px; height: 2px;
+    background: linear-gradient(90deg, var(--ember), var(--gold));
+    border-radius: 1px;
+    margin-bottom: 24px;
+  }
+
+  /* ── Stat number ── */
+  .stat-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 700;
+    font-size: clamp(44px,5vw,72px);
+    color: var(--forest);
+    line-height: 1;
+    letter-spacing: -0.03em;
+  }
+
+  /* ── Responsive grids ── */
+  .hero-grid   { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 64px; align-items: center; }
+  .stats-grid  { display: grid; grid-template-columns: repeat(4,1fr); gap: 32px; }
+  .feat-tabs   { display: grid; grid-template-columns: 340px 1fr; gap: 32px; align-items: start; }
+  .feat-grid   { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; }
+  .price-grid  { display: grid; grid-template-columns: repeat(3,1fr); gap: 24px; align-items: start; }
+  .testi-grid  { display: grid; grid-template-columns: repeat(3,1fr); gap: 24px; }
+  .footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 48px; }
+
+  @media (max-width: 1100px) {
+    .feat-tabs  { grid-template-columns: 280px 1fr; }
+    .feat-grid  { grid-template-columns: repeat(2,1fr); }
+  }
+  @media (max-width: 900px) {
+    .hero-grid  { grid-template-columns: 1fr; }
+    .stats-grid { grid-template-columns: repeat(2,1fr); }
+    .feat-tabs  { grid-template-columns: 1fr; }
+    .price-grid { grid-template-columns: 1fr; max-width: 420px; margin: 0 auto; }
+    .testi-grid { grid-template-columns: 1fr; }
+    .footer-grid{ grid-template-columns: 1fr 1fr; gap: 32px; }
+    .hide-mob   { display: none !important; }
+    .show-mob   { display: flex !important; }
+  }
+  @media (max-width: 600px) {
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+    .feat-grid  { grid-template-columns: 1fr; }
+    .footer-grid{ grid-template-columns: 1fr; }
+  }
+  @media (min-width: 901px) {
+    .show-mob { display: none !important; }
   }
 `;
 
-/* ─── Three.js loader (handles ESM named + default export) ── */
-async function loadThree() {
-  const mod = await import("three");
-  // Next.js bundler gives named exports; CJS interop gives .default
-  return mod.Scene ? mod : (mod.default ?? mod);
-}
-
 /* ─── Ripple helper ──────────────────────────────────────── */
-function addRipple(e, container) {
-  const rect = container.getBoundingClientRect();
+function addRipple(e, el) {
+  const rect = el.getBoundingClientRect();
   const size = Math.max(rect.width, rect.height) * 2;
-  const x = e.clientX - rect.left - size / 2;
-  const y = e.clientY - rect.top - size / 2;
-  const ripple = document.createElement("div");
-  ripple.className = "ripple-circle";
-  ripple.style.cssText = `width:${size}px;height:${size}px;left:${x}px;top:${y}px`;
-  container.appendChild(ripple);
-  ripple.addEventListener("animationend", () => ripple.remove());
+  const dot = document.createElement("div");
+  dot.className = "ripple-dot";
+  dot.style.cssText = `width:${size}px;height:${size}px;left:${e.clientX - rect.left - size / 2}px;top:${e.clientY - rect.top - size / 2}px`;
+  el.appendChild(dot);
+  dot.addEventListener("animationend", () => dot.remove());
 }
 
-/* ─── Magnetic Button ────────────────────────────────────── */
-function MagBtn({
-  children,
-  className = "",
-  onClick,
-  href,
-  as: Tag = "button",
-}) {
-  const ref = useRef(null);
-  const handleMove = useCallback((e) => {
-    const el = ref.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const cx = rect.left + rect.width / 2;
-    const cy = rect.top + rect.height / 2;
-    const dx = (e.clientX - cx) * 0.35;
-    const dy = (e.clientY - cy) * 0.35;
-    el.style.transform = `translate(${dx}px, ${dy}px)`;
+/* ─── Scroll reveal hook ──────────────────────────────────── */
+function useReveal() {
+  useEffect(() => {
+    const io = new IntersectionObserver(
+      (entries) =>
+        entries.forEach((e) => {
+          if (e.isIntersecting) e.target.classList.add("visible");
+        }),
+      { threshold: 0.08, rootMargin: "0px 0px -40px 0px" },
+    );
+    document.querySelectorAll(".reveal").forEach((el) => io.observe(el));
+    return () => io.disconnect();
   }, []);
-  const handleLeave = useCallback(() => {
-    if (ref.current) ref.current.style.transform = "";
-  }, []);
-  const handleClick = useCallback(
-    (e) => {
-      if (ref.current) addRipple(e, ref.current);
-      if (onClick) onClick(e);
-    },
-    [onClick],
-  );
-  return (
-    <Tag
-      ref={ref}
-      className={`mag-btn ripple-container ${className}`}
-      onMouseMove={handleMove}
-      onMouseLeave={handleLeave}
-      onClick={handleClick}
-      href={href}
-    >
-      {children}
-    </Tag>
-  );
 }
 
-/* ─── Tilt Card ──────────────────────────────────────────── */
-function TiltCard({ children, className = "", style = {}, cardRef }) {
-  const fallbackRef = useRef(null);
-  const ref = cardRef || fallbackRef;
-  // eslint-disable-next-line react-hooks/preserve-manual-memoization
-  const handleMove = useCallback((e) => {
-    const el = ref.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / rect.width - 0.5;
-    const y = (e.clientY - rect.top) / rect.height - 0.5;
-    el.style.transform = `perspective(800px) rotateX(${-y * 12}deg) rotateY(${x * 12}deg) translateZ(10px)`;
-  }, []);
-  // eslint-disable-next-line react-hooks/preserve-manual-memoization
-  const handleLeave = useCallback(() => {
-    if (ref.current)
-      ref.current.style.transform =
-        "perspective(800px) rotateX(0) rotateY(0) translateZ(0)";
-  }, []);
-  return (
-    <div
-      ref={ref}
-      className={`tilt-card ${className}`}
-      style={style}
-      onMouseMove={handleMove}
-      onMouseLeave={handleLeave}
-    >
-      {children}
-    </div>
-  );
-}
-
-/* ─── Animated Counter ───────────────────────────────────── */
-function AnimatedCounter({ target, suffix = "", duration = 2000 }) {
-  const [count, setCount] = useState(0);
+/* ─── Animated counter ───────────────────────────────────── */
+function Counter({ target, suffix = "", decimals = 0 }) {
+  const [val, setVal] = useState(0);
   const ref = useRef(null);
   const started = useRef(false);
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting && !started.current) {
+    const io = new IntersectionObserver(
+      ([e]) => {
+        if (e.isIntersecting && !started.current) {
           started.current = true;
-          const numTarget = parseFloat(target.replace(/[^0-9.]/g, ""));
-          const start = Date.now();
+          const num = parseFloat(String(target).replace(/[^0-9.]/g, ""));
+          const t0 = Date.now();
           const tick = () => {
-            const elapsed = Date.now() - start;
-            const progress = Math.min(elapsed / duration, 1);
-            const ease = 1 - Math.pow(1 - progress, 4);
-            setCount(Math.round(numTarget * ease * 10) / 10);
-            if (progress < 1) requestAnimationFrame(tick);
+            const p = Math.min((Date.now() - t0) / 2200, 1);
+            const ease = 1 - Math.pow(1 - p, 4);
+            setVal(+(num * ease).toFixed(decimals));
+            if (p < 1) requestAnimationFrame(tick);
           };
           tick();
         }
       },
       { threshold: 0.5 },
     );
-    if (ref.current) observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, [target, duration]);
-  const isDecimal = target.includes(".");
-  const display = isDecimal ? count.toFixed(1) : Math.round(count);
+    if (ref.current) io.observe(ref.current);
+    return () => io.disconnect();
+  }, [target, decimals]);
   return (
     <span ref={ref}>
-      {display}
+      {val.toFixed(decimals)}
       {suffix}
     </span>
   );
 }
 
-/* ─── Particle Canvas ────────────────────────────────────── */
-function ParticleField() {
-  const canvasRef = useRef(null);
+/* ─── Typewriter ─────────────────────────────────────────── */
+function Typewriter({ words, speed = 75, pauseMs = 2200 }) {
+  const [text, setText] = useState("");
+  const [wi, setWi] = useState(0);
+  const [del, setDel] = useState(false);
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    let w = canvas.offsetWidth,
-      h = canvas.offsetHeight;
-    canvas.width = w;
-    canvas.height = h;
-    const particles = Array.from({ length: 80 }, () => ({
-      x: Math.random() * w,
-      y: Math.random() * h,
-      r: Math.random() * 1.5 + 0.3,
-      dx: (Math.random() - 0.5) * 0.4,
-      dy: (Math.random() - 0.5) * 0.4,
-      opacity: Math.random() * 0.6 + 0.2,
+    const word = words[wi % words.length];
+    const id = setTimeout(
+      () => {
+        if (!del) {
+          setText(word.slice(0, text.length + 1));
+          if (text.length + 1 === word.length)
+            setTimeout(() => setDel(true), pauseMs);
+        } else {
+          setText(word.slice(0, text.length - 1));
+          if (text.length - 1 === 0) {
+            setDel(false);
+            setWi((w) => w + 1);
+          }
+        }
+      },
+      del ? speed / 2.2 : speed,
+    );
+    return () => clearTimeout(id);
+  }, [text, del, wi, words, speed, pauseMs]);
+  return (
+    <span>
+      {text}
+      <span
+        style={{
+          display: "inline-block",
+          width: 2,
+          height: "0.85em",
+          background: "var(--ember)",
+          marginLeft: 3,
+          verticalAlign: "middle",
+          animation: "blink 1s step-end infinite",
+        }}
+      />
+    </span>
+  );
+}
+
+/* ─── Particle Canvas ────────────────────────────────────── */
+function Particles() {
+  const ref = useRef(null);
+  useEffect(() => {
+    const c = ref.current;
+    if (!c) return;
+    const ctx = c.getContext("2d");
+    let W = c.offsetWidth,
+      H = c.offsetHeight;
+    c.width = W;
+    c.height = H;
+    const pts = Array.from({ length: 55 }, () => ({
+      x: Math.random() * W,
+      y: Math.random() * H,
+      r: Math.random() * 1.2 + 0.3,
+      dx: (Math.random() - 0.5) * 0.3,
+      dy: (Math.random() - 0.5) * 0.3,
+      o: Math.random() * 0.4 + 0.15,
     }));
-    let mouse = { x: -999, y: -999 };
-    const onMove = (e) => {
-      const r = canvas.getBoundingClientRect();
-      mouse = { x: e.clientX - r.left, y: e.clientY - r.top };
-    };
-    canvas.addEventListener("mousemove", onMove);
     let raf;
     const draw = () => {
-      ctx.clearRect(0, 0, w, h);
-      particles.forEach((p) => {
+      ctx.clearRect(0, 0, W, H);
+      pts.forEach((p) => {
         p.x += p.dx;
         p.y += p.dy;
-        if (p.x < 0) p.x = w;
-        if (p.x > w) p.x = 0;
-        if (p.y < 0) p.y = h;
-        if (p.y > h) p.y = 0;
-        const dist = Math.hypot(p.x - mouse.x, p.y - mouse.y);
-        const scale = dist < 100 ? 1 + (100 - dist) / 60 : 1;
+        if (p.x < 0) p.x = W;
+        if (p.x > W) p.x = 0;
+        if (p.y < 0) p.y = H;
+        if (p.y > H) p.y = 0;
         ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r * scale, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(0,232,122,${p.opacity * (dist < 100 ? 1.5 : 1)})`;
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(139,105,20,${p.o})`;
         ctx.fill();
-        particles.forEach((p2) => {
+        pts.forEach((p2) => {
           const d = Math.hypot(p.x - p2.x, p.y - p2.y);
-          if (d < 100) {
+          if (d < 90) {
             ctx.beginPath();
             ctx.moveTo(p.x, p.y);
             ctx.lineTo(p2.x, p2.y);
-            ctx.strokeStyle = `rgba(0,232,122,${(1 - d / 100) * 0.12})`;
+            ctx.strokeStyle = `rgba(139,105,20,${(1 - d / 90) * 0.08})`;
             ctx.lineWidth = 0.5;
             ctx.stroke();
           }
@@ -536,954 +589,394 @@ function ParticleField() {
     };
     draw();
     const onResize = () => {
-      w = canvas.offsetWidth;
-      h = canvas.offsetHeight;
-      canvas.width = w;
-      canvas.height = h;
+      W = c.offsetWidth;
+      H = c.offsetHeight;
+      c.width = W;
+      c.height = H;
     };
     window.addEventListener("resize", onResize);
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener("resize", onResize);
-      canvas.removeEventListener("mousemove", onMove);
     };
   }, []);
   return (
     <canvas
-      ref={canvasRef}
-      id="hero-particles"
-      style={{ width: "100%", height: "100%" }}
-    />
-  );
-}
-
-/* ─── 3D Restaurant Scene ────────────────────────────────── */
-function RestaurantScene() {
-  const canvasRef = useRef(null);
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    let cleanup;
-    const timer = setTimeout(() => {
-      const init = async () => {
-        const THREE = await loadThree();
-        if (!THREE || !THREE.Scene) return;
-        const w = Math.max(canvas.clientWidth, 100),
-          h = Math.max(canvas.clientHeight, 100);
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(60, w / h, 0.1, 1000);
-        camera.position.set(3, 2.5, 4);
-        camera.lookAt(0, 1, 0);
-        const renderer = new THREE.WebGLRenderer({
-          canvas,
-          alpha: true,
-          antialias: true,
-        });
-        renderer.setSize(w, h);
-        renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-
-        scene.add(new THREE.AmbientLight(0xffffff, 0.6));
-        const pl1 = new THREE.PointLight(0x00e87a, 2, 50);
-        pl1.position.set(2, 4, 2);
-        scene.add(pl1);
-        const pl2 = new THREE.PointLight(0x0080ff, 1, 50);
-        pl2.position.set(-3, 3, 1);
-        scene.add(pl2);
-        const pl3 = new THREE.PointLight(0xffd166, 0.8, 30);
-        pl3.position.set(0, 2, -2);
-        scene.add(pl3);
-
-        const mat = (c, s = 80) =>
-          new THREE.MeshPhongMaterial({ color: c, shininess: s });
-        const box = (w, h, d, c, x, y, z) => {
-          const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat(c));
-          m.position.set(x, y, z);
-          scene.add(m);
-          return m;
-        };
-        const cyl = (r, h, c, x, y, z) => {
-          const m = new THREE.Mesh(
-            new THREE.CylinderGeometry(r, r, h, 16),
-            mat(c),
-          );
-          m.position.set(x, y, z);
-          scene.add(m);
-          return m;
-        };
-        const sph = (r, c, x, y, z) => {
-          const m = new THREE.Mesh(new THREE.SphereGeometry(r, 24, 24), mat(c));
-          m.position.set(x, y, z);
-          scene.add(m);
-          return m;
-        };
-
-        // Floor
-        box(8, 0.05, 6, 0x0d1f10, 0, -0.02, 0);
-
-        // Table
-        box(3, 0.15, 1.8, 0x3d1a00, 0, 1.2, 0);
-        [
-          [-1.2, -0.7],
-          [1.2, -0.7],
-          [-1.2, 0.7],
-          [1.2, 0.7],
-        ].forEach(([x, z]) => cyl(0.07, 1.2, 0x1a0800, x, 0.6, z));
-
-        // Chair
-        box(0.6, 0.08, 0.55, 0x00603a, -1.7, 0.5, 0);
-        box(0.6, 0.75, 0.08, 0x00603a, -1.7, 1.1, -0.27);
-        [
-          [-1.42, -0.18],
-          [-1.42, 0.18],
-          [-1.98, -0.18],
-          [-1.98, 0.18],
-        ].forEach(([x, z]) => cyl(0.04, 0.5, 0x004d2e, x, 0.25, z));
-
-        // Person
-        const head = sph(0.18, 0xf4b880, -1.7, 2.0, 0);
-        const torso = box(0.28, 0.55, 0.18, 0x1a4fff, -1.7, 1.45, 0);
-        const lArm = cyl(0.045, 0.45, 0xf4b880, -1.9, 1.4, 0);
-        lArm.rotation.z = 0.4;
-        const rArm = cyl(0.045, 0.45, 0xf4b880, -1.5, 1.4, 0);
-        rArm.rotation.z = -0.4;
-        cyl(0.045, 0.45, 0x111, -1.82, 0.6, 0);
-        cyl(0.045, 0.45, 0x111, -1.58, 0.6, 0);
-
-        // Plate + food
-        cyl(0.32, 0.04, 0xfff8e7, 0.4, 1.28, 0);
-        sph(0.13, 0xb5500a, 0.4, 1.45, 0); // burger
-        sph(0.1, 0xff3c00, -0.35, 1.42, 0.3); // tomato
-        cyl(0.07, 0.22, 0xff9900, 0.85, 1.38, 0); // drink
-        box(0.18, 0.09, 0.13, 0xd4a855, -0.5, 1.37, 0.2); // bread
-        sph(0.12, 0x1aaa60, 0.2, 1.45, -0.38); // salad
-
-        // Floating digital screen
-        const screenGeo = new THREE.BoxGeometry(1.2, 0.8, 0.05);
-        const screenMat = new THREE.MeshPhongMaterial({
-          color: 0x0a1a0f,
-          emissive: 0x003320,
-          emissiveIntensity: 0.5,
-        });
-        const screen = new THREE.Mesh(screenGeo, screenMat);
-        screen.position.set(1.8, 2.2, -0.5);
-        screen.rotation.y = -0.5;
-        scene.add(screen);
-        const screenLight = new THREE.PointLight(0x00e87a, 1.5, 3);
-        screenLight.position.set(1.8, 2.2, 0);
-        scene.add(screenLight);
-
-        const onResize = () => {
-          const w2 = canvas.clientWidth,
-            h2 = canvas.clientHeight;
-          camera.aspect = w2 / h2;
-          camera.updateProjectionMatrix();
-          renderer.setSize(w2, h2);
-        };
-        window.addEventListener("resize", onResize);
-
-        let raf;
-        const animate = () => {
-          raf = requestAnimationFrame(animate);
-          const t = Date.now() * 0.001;
-          scene.rotation.y = t * 0.15;
-          scene.rotation.x = Math.sin(t * 0.3) * 0.05;
-          lArm.rotation.z = 0.4 + Math.sin(t * 2) * 0.25;
-          rArm.rotation.z = -0.4 - Math.sin(t * 2) * 0.18;
-          head.position.y = 2.0 + Math.sin(t * 1.5) * 0.04;
-          torso.position.x = -1.7 + Math.sin(t) * 0.03;
-          screen.position.y = 2.2 + Math.sin(t * 0.8) * 0.15;
-          screen.rotation.y = -0.5 + Math.sin(t * 0.5) * 0.1;
-          screenLight.intensity = 1.2 + Math.sin(t * 2) * 0.3;
-          pl1.position.x = Math.sin(t * 0.7) * 3 + 2;
-          pl2.position.x = Math.cos(t * 0.5) * 3 - 2;
-          renderer.render(scene, camera);
-        };
-        animate();
-        cleanup = () => {
-          cancelAnimationFrame(raf);
-          window.removeEventListener("resize", onResize);
-          renderer.dispose();
-        };
-      };
-      init();
-    }, 50);
-    return () => {
-      clearTimeout(timer);
-      if (cleanup) cleanup();
-    };
-  }, []);
-  return (
-    <canvas
-      ref={canvasRef}
+      ref={ref}
       style={{
+        position: "absolute",
+        inset: 0,
         width: "100%",
         height: "100%",
-        minHeight: 320,
-        display: "block",
+        pointerEvents: "none",
+        opacity: 0.7,
       }}
     />
   );
 }
 
-/* ─── Floating Orb ───────────────────────────────────────── */
-function FloatingOrb({
-  size = 300,
-  x = "10%",
-  y = "20%",
-  color = "rgba(0,232,122,0.08)",
-  blur = 80,
-  delay = 0,
-}) {
+/* ─── Dashboard Preview Card ─────────────────────────────── */
+function DashboardPreview() {
+  const bars = [52, 71, 45, 88, 65, 93, 78, 61, 84, 70, 95, 82];
   return (
     <div
       style={{
-        position: "absolute",
-        width: size,
-        height: size,
-        left: x,
-        top: y,
-        background: `radial-gradient(circle, ${color}, transparent 70%)`,
-        filter: `blur(${blur}px)`,
-        borderRadius: "50%",
-        pointerEvents: "none",
-        animation: `floatY ${4 + delay}s ${delay}s ease-in-out infinite`,
+        background: "var(--forest)",
+        borderRadius: 12,
+        border: "1px solid rgba(255,255,255,0.08)",
+        overflow: "hidden",
+        boxShadow:
+          "0 48px 80px rgba(14,26,18,0.35), 0 0 0 1px rgba(212,168,67,0.1)",
+        animation: "slideRight 0.9s 0.2s cubic-bezier(0.22,1,0.36,1) both",
       }}
-    />
-  );
-}
-
-/* ─── Type Writer ────────────────────────────────────────── */
-function TypeWriter({ words, speed = 80, pause = 2000 }) {
-  const [text, setText] = useState("");
-  const [wi, setWi] = useState(0);
-  const [deleting, setDeleting] = useState(false);
-  useEffect(() => {
-    const word = words[wi % words.length];
-    const timeout = setTimeout(
-      () => {
-        if (!deleting) {
-          setText(word.slice(0, text.length + 1));
-          if (text.length + 1 === word.length)
-            setTimeout(() => setDeleting(true), pause);
-        } else {
-          setText(word.slice(0, text.length - 1));
-          if (text.length - 1 === 0) {
-            setDeleting(false);
-            setWi((w) => w + 1);
-          }
-        }
-      },
-      deleting ? speed / 2 : speed,
-    );
-    return () => clearTimeout(timeout);
-  }, [text, deleting, wi, words, speed, pause]);
-  return (
-    <span>
-      {text}
-      <span
+    >
+      {/* Window bar */}
+      <div
         style={{
-          borderRight: "2px solid var(--green)",
-          marginLeft: 2,
-          animation: "glowPulse 1s ease-in-out infinite",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "14px 20px",
+          borderBottom: "1px solid rgba(255,255,255,0.06)",
         }}
       >
-        &nbsp;
-      </span>
-    </span>
+        <div style={{ display: "flex", gap: 7 }}>
+          {["#FF5F57", "#FFBD2E", "#28C840"].map((c) => (
+            <div
+              key={c}
+              style={{
+                width: 10,
+                height: 10,
+                borderRadius: "50%",
+                background: c,
+              }}
+            />
+          ))}
+        </div>
+        <div
+          style={{
+            fontSize: 11,
+            color: "rgba(212,200,170,0.5)",
+            fontFamily: "monospace",
+          }}
+        >
+          RestaurantOS · Dashboard
+        </div>
+        <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+          <div
+            style={{
+              width: 6,
+              height: 6,
+              background: "#28C840",
+              borderRadius: "50%",
+              animation: "pulseSoft 2s infinite",
+            }}
+          />
+          <span style={{ fontSize: 10, color: "rgba(212,200,170,0.5)" }}>
+            LIVE
+          </span>
+        </div>
+      </div>
+
+      <div style={{ padding: "20px 22px" }}>
+        {/* Stat row */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(3,1fr)",
+            gap: 12,
+            marginBottom: 20,
+          }}
+        >
+          {[
+            {
+              label: "Revenue Today",
+              val: "$14,820",
+              diff: "+18.2%",
+              up: true,
+            },
+            { label: "Active Tables", val: "26/32", diff: "81%", up: true },
+            { label: "Avg Order", val: "$47.30", diff: "+$4.20", up: true },
+          ].map((s) => (
+            <div
+              key={s.label}
+              style={{
+                background: "rgba(255,255,255,0.05)",
+                borderRadius: 8,
+                padding: "12px 14px",
+                border: "1px solid rgba(255,255,255,0.06)",
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 10,
+                  color: "rgba(212,200,170,0.5)",
+                  marginBottom: 4,
+                }}
+              >
+                {s.label}
+              </div>
+              <div
+                style={{
+                  fontSize: 16,
+                  fontWeight: 700,
+                  color: "#F5F0E8",
+                  fontFamily: "'Bricolage Grotesque',sans-serif",
+                  marginBottom: 3,
+                }}
+              >
+                {s.val}
+              </div>
+              <div style={{ fontSize: 10, color: "#4ADE80" }}>{s.diff}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Bar chart */}
+        <div style={{ marginBottom: 16 }}>
+          <div
+            style={{
+              fontSize: 10,
+              color: "rgba(212,200,170,0.4)",
+              marginBottom: 10,
+            }}
+          >
+            Monthly Revenue
+          </div>
+          <div
+            style={{
+              display: "flex",
+              gap: 4,
+              alignItems: "flex-end",
+              height: 60,
+            }}
+          >
+            {bars.map((h, i) => (
+              <div
+                key={i}
+                style={{
+                  flex: 1,
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "flex-end",
+                }}
+              >
+                <div
+                  style={{
+                    height: `${h}%`,
+                    borderRadius: "2px 2px 0 0",
+                    background:
+                      i === bars.length - 1
+                        ? "linear-gradient(to top, var(--brown), var(--gold2))"
+                        : "rgba(212,168,67,0.25)",
+                    transition: "height 0.5s ease",
+                  }}
+                />
+              </div>
+            ))}
+          </div>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              marginTop: 4,
+            }}
+          >
+            {["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"].map(
+              (m, i) => (
+                <div
+                  key={i}
+                  style={{
+                    fontSize: 8,
+                    color: "rgba(212,200,170,0.3)",
+                    flex: 1,
+                    textAlign: "center",
+                  }}
+                >
+                  {m}
+                </div>
+              ),
+            )}
+          </div>
+        </div>
+
+        {/* Order list */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          {[
+            {
+              t: "12",
+              item: "Grilled Salmon",
+              status: "Ready",
+              col: "#4ADE80",
+            },
+            {
+              t: "8",
+              item: "Truffle Risotto",
+              status: "Cooking",
+              col: "#F0C96A",
+            },
+            { t: "3", item: "Beef Tartare", status: "New", col: "#60A5FA" },
+          ].map((o) => (
+            <div
+              key={o.item}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "8px 10px",
+                background: "rgba(255,255,255,0.03)",
+                borderRadius: 6,
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div
+                  style={{
+                    fontSize: 9,
+                    color: "rgba(212,200,170,0.4)",
+                    width: 20,
+                  }}
+                >
+                  {o.t}m
+                </div>
+                <div style={{ fontSize: 12, color: "rgba(245,240,232,0.8)" }}>
+                  {o.item}
+                </div>
+              </div>
+              <div
+                style={{
+                  fontSize: 9,
+                  fontWeight: 600,
+                  color: o.col,
+                  background: `${o.col}15`,
+                  padding: "2px 8px",
+                  borderRadius: 3,
+                }}
+              >
+                {o.status}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
   );
 }
 
-/* ─── Food 3D Scene ──────────────────────────────────────── */
-function FoodScene3D() {
-  const canvasRef = useRef(null);
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    let cleanupFn;
-
-    // Wait a tick so canvas has layout dimensions
-    const timer = setTimeout(() => {
-      const init = async () => {
-        const THREE = await loadThree();
-        if (!THREE || !THREE.Scene) {
-          console.error("Three.js failed to load");
-          return;
-        }
-        const w = Math.max(canvas.clientWidth, 100),
-          h = Math.max(canvas.clientHeight, 100);
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(55, w / h, 0.1, 200);
-        camera.position.set(0, 0, 14);
-        const renderer = new THREE.WebGLRenderer({
-          canvas,
-          alpha: true,
-          antialias: true,
-        });
-        renderer.setSize(w, h);
-        renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-        renderer.shadowMap.enabled = true;
-
-        // Lighting
-        scene.add(new THREE.AmbientLight(0xffffff, 0.7));
-        const sun = new THREE.DirectionalLight(0xfff4e0, 1.8);
-        sun.position.set(6, 10, 8);
-        sun.castShadow = true;
-        scene.add(sun);
-        const fill = new THREE.PointLight(0x00e87a, 1.2, 40);
-        fill.position.set(-8, 4, 4);
-        scene.add(fill);
-        const rim = new THREE.PointLight(0x0080ff, 0.8, 30);
-        rim.position.set(8, -4, -4);
-        scene.add(rim);
-        const warm = new THREE.PointLight(0xff6b35, 0.6, 25);
-        warm.position.set(0, -6, 6);
-        scene.add(warm);
-
-        const mat = (color, opts = {}) =>
-          new THREE.MeshPhongMaterial({
-            color,
-            shininess: opts.shiny ?? 80,
-            ...opts,
-          });
-        const box = (w, h, d, c, opts) =>
-          new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat(c, opts));
-        const cyl = (r1, r2, h, segs, c, opts) =>
-          new THREE.Mesh(
-            new THREE.CylinderGeometry(r1, r2, h, segs),
-            mat(c, opts),
-          );
-        const sph = (r, ws, hs, c, opts) =>
-          new THREE.Mesh(new THREE.SphereGeometry(r, ws, hs), mat(c, opts));
-        const tor = (r, t, rs, ts, c, opts) =>
-          new THREE.Mesh(new THREE.TorusGeometry(r, t, rs, ts), mat(c, opts));
-
-        const foodItems = [];
-
-        // ── BURGER GROUP ──────────────────────────────
-        const burger = new THREE.Group();
-        // Bottom bun
-        const bbun = cyl(0.7, 0.75, 0.28, 32, 0xd4822a);
-        bbun.position.y = -0.55;
-        burger.add(bbun);
-        // Sesame seeds on bottom bun
-        for (let i = 0; i < 5; i++) {
-          const seed = sph(0.045, 8, 8, 0xf5e6c8);
-          const angle = (i / 5) * Math.PI * 2;
-          seed.position.set(
-            Math.cos(angle) * 0.38,
-            -0.41,
-            Math.sin(angle) * 0.38,
-          );
-          burger.add(seed);
-        }
-        // Patty
-        const patty = cyl(0.65, 0.68, 0.2, 32, 0x5c2800);
-        patty.position.y = -0.22;
-        burger.add(patty);
-        // Patty rim darker edge
-        const pattyRim = tor(0.66, 0.06, 8, 32, 0x3a1500);
-        pattyRim.position.y = -0.22;
-        pattyRim.rotation.x = Math.PI / 2;
-        burger.add(pattyRim);
-        // Cheese slice (square-ish, hanging over)
-        const cheese = box(1.5, 0.06, 1.5, 0xffcc00);
-        cheese.position.y = -0.02;
-        cheese.rotation.y = 0.4;
-        burger.add(cheese);
-        // Lettuce (green wavy disk using torus)
-        const lettuce = cyl(0.78, 0.85, 0.1, 32, 0x1a8c3a);
-        lettuce.position.y = 0.06;
-        burger.add(lettuce);
-        const letEdge = tor(0.8, 0.08, 6, 32, 0x25b050);
-        letEdge.position.y = 0.06;
-        letEdge.rotation.x = Math.PI / 2;
-        burger.add(letEdge);
-        // Tomato slice
-        const tomato = cyl(0.6, 0.62, 0.1, 32, 0xdd2200);
-        tomato.position.y = 0.2;
-        burger.add(tomato);
-        // Top bun
-        const tbun = sph(0.72, 32, 16, 0xe8922a);
-        tbun.scale.y = 0.58;
-        tbun.position.y = 0.58;
-        burger.add(tbun);
-        // Sesame on top
-        for (let i = 0; i < 6; i++) {
-          const seed = sph(0.048, 8, 8, 0xf5e6c8);
-          const angle = (i / 6) * Math.PI * 2 + 0.3;
-          const r = 0.28 + (i % 2) * 0.18;
-          seed.position.set(Math.cos(angle) * r, 0.88, Math.sin(angle) * r);
-          burger.add(seed);
-        }
-        burger.position.set(-3.5, 2.2, 0);
-        burger.scale.setScalar(1.0);
-        scene.add(burger);
-        foodItems.push({
-          group: burger,
-          spin: 0.008,
-          float: { amp: 0.4, speed: 1.2, offset: 0 },
-          baseY: 2.2,
-          baseX: -3.5,
-        });
-
-        // ── PIZZA SLICE GROUP ──────────────────────────
-        const pizza = new THREE.Group();
-        // Crust (wedge shape via custom geometry)
-        const crustShape = new THREE.Shape();
-        crustShape.moveTo(0, 0);
-        crustShape.arc(0, 0, 1.1, -Math.PI / 6, Math.PI / 6, false);
-        crustShape.lineTo(0, 0);
-        const crustGeo = new THREE.ShapeGeometry(crustShape, 32);
-        const crustMesh = new THREE.Mesh(crustGeo, mat(0xf0c06a));
-        crustMesh.rotation.x = -Math.PI / 2;
-        pizza.add(crustMesh);
-        // Sauce layer
-        const sauceShape = new THREE.Shape();
-        sauceShape.moveTo(0, 0);
-        sauceShape.arc(0, 0, 0.92, -Math.PI / 6.5, Math.PI / 6.5, false);
-        sauceShape.lineTo(0, 0);
-        const sauceMesh = new THREE.Mesh(
-          new THREE.ShapeGeometry(sauceShape, 32),
-          mat(0xcc2200),
-        );
-        sauceMesh.rotation.x = -Math.PI / 2;
-        sauceMesh.position.y = 0.04;
-        pizza.add(sauceMesh);
-        // Cheese top
-        const cheeseShape = new THREE.Shape();
-        cheeseShape.moveTo(0, 0);
-        cheeseShape.arc(0, 0, 0.85, -Math.PI / 7, Math.PI / 7, false);
-        cheeseShape.lineTo(0, 0);
-        const cheeseMesh = new THREE.Mesh(
-          new THREE.ShapeGeometry(cheeseShape, 32),
-          mat(0xffe066),
-        );
-        cheeseMesh.rotation.x = -Math.PI / 2;
-        cheeseMesh.position.y = 0.07;
-        pizza.add(cheeseMesh);
-        // Pepperoni circles
-        [
-          [0.45, 0.1],
-          [0.3, -0.1],
-          [0.55, -0.08],
-          [0.22, 0.18],
-        ].forEach(([x, z]) => {
-          const pep = cyl(0.1, 0.1, 0.06, 16, 0xaa1100);
-          pep.position.set(x, 0.1, z);
-          pizza.add(pep);
-        });
-        // Crust edge
-        const crustEdge = new THREE.Mesh(
-          new THREE.CylinderGeometry(
-            0.12,
-            0.14,
-            0.18,
-            16,
-            1,
-            false,
-            -Math.PI / 6,
-            Math.PI / 3,
-          ),
-          mat(0xe8a840),
-        );
-        crustEdge.position.set(Math.cos(0) * 1.1, 0.08, 0);
-        crustEdge.rotation.y = Math.PI / 2;
-        pizza.add(crustEdge);
-        pizza.position.set(3.5, 2.0, 0);
-        pizza.rotation.x = 0.3;
-        scene.add(pizza);
-        foodItems.push({
-          group: pizza,
-          spin: -0.007,
-          float: { amp: 0.35, speed: 1.0, offset: 1.1 },
-          baseY: 2.0,
-          baseX: 3.5,
-        });
-
-        // ── SUSHI ROLL ────────────────────────────────
-        const sushi = new THREE.Group();
-        // Nori wrap (outer black cylinder)
-        const nori = cyl(0.52, 0.52, 0.55, 32, 0x1a1a1a);
-        nori.rotation.z = Math.PI / 2;
-        sushi.add(nori);
-        // Rice layer
-        const rice = cyl(0.44, 0.44, 0.58, 32, 0xf8f4ee);
-        rice.rotation.z = Math.PI / 2;
-        sushi.add(rice);
-        // Salmon filling
-        const salmon = cyl(0.2, 0.2, 0.6, 16, 0xff8c50);
-        salmon.rotation.z = Math.PI / 2;
-        sushi.add(salmon);
-        // Avocado
-        const avo = cyl(0.12, 0.12, 0.6, 12, 0x5a9e3a);
-        avo.rotation.z = Math.PI / 2;
-        avo.position.set(0, 0.22, 0);
-        sushi.add(avo);
-        // Sesame seeds on top
-        for (let i = 0; i < 8; i++) {
-          const s = sph(0.035, 6, 6, 0xf0e8d0);
-          const angle = (i / 8) * Math.PI * 2;
-          s.position.set(Math.cos(angle) * 0.3, 0.55, Math.sin(angle) * 0.18);
-          s.rotation.z = Math.PI / 2;
-          sushi.add(s);
-        }
-        // Wasabi blob
-        const wasabi = sph(0.15, 12, 10, 0x6abf4b);
-        wasabi.position.set(0.7, -0.1, 0.3);
-        wasabi.scale.set(1, 0.6, 0.9);
-        sushi.add(wasabi);
-        sushi.position.set(0, -2.2, 1);
-        scene.add(sushi);
-        foodItems.push({
-          group: sushi,
-          spin: 0.01,
-          float: { amp: 0.45, speed: 1.4, offset: 2.2 },
-          baseY: -2.2,
-          baseX: 0,
-        });
-
-        // ── STRAWBERRY ────────────────────────────────
-        const berry = new THREE.Group();
-        // Berry body (cone-ish sphere)
-        const bodyGeo = new THREE.SphereGeometry(0.55, 24, 20);
-        const bodyPos = bodyGeo.attributes.position;
-        for (let i = 0; i < bodyPos.count; i++) {
-          const y = bodyPos.getY(i);
-          if (y < 0) {
-            bodyPos.setY(i, y * 1.35);
-          }
-        }
-        bodyPos.needsUpdate = true;
-        bodyGeo.computeVertexNormals();
-        const body = new THREE.Mesh(bodyGeo, mat(0xee1133, { shininess: 120 }));
-        berry.add(body);
-        // Seeds (tiny yellow ovals on surface)
-        for (let i = 0; i < 20; i++) {
-          const seed = sph(0.04, 6, 6, 0xffee88);
-          const phi = Math.acos(-1 + (2 * i) / 20);
-          const theta = Math.sqrt(20 * Math.PI) * phi;
-          seed.position.setFromSphericalCoords(0.55, phi, theta);
-          if (seed.position.y > -0.3) berry.add(seed);
-        }
-        // Leaf cap
-        for (let i = 0; i < 5; i++) {
-          const leaf = box(0.08, 0.35, 0.06, 0x228822);
-          const angle = (i / 5) * Math.PI * 2;
-          leaf.position.set(
-            Math.cos(angle) * 0.18,
-            0.55,
-            Math.sin(angle) * 0.18,
-          );
-          leaf.rotation.z = angle + Math.PI / 2;
-          leaf.rotation.x = -0.5;
-          berry.add(leaf);
-        }
-        // Stem
-        const stem = cyl(0.04, 0.03, 0.35, 8, 0x2d5c1e);
-        stem.position.y = 0.78;
-        berry.add(stem);
-        berry.position.set(-3.2, -2.0, 0.5);
-        scene.add(berry);
-        foodItems.push({
-          group: berry,
-          spin: 0.012,
-          float: { amp: 0.5, speed: 1.6, offset: 3.4 },
-          baseY: -2.0,
-          baseX: -3.2,
-        });
-
-        // ── DONUT ─────────────────────────────────────
-        const donut = new THREE.Group();
-        // Base torus
-        const donutBody = tor(0.55, 0.3, 20, 48, 0xf0b050, { shininess: 100 });
-        donut.add(donutBody);
-        // Pink glaze on top half
-        const glazeGeo = new THREE.TorusGeometry(0.55, 0.31, 10, 48, Math.PI);
-        const glazeMesh = new THREE.Mesh(
-          glazeGeo,
-          mat(0xff80b0, { shininess: 150 }),
-        );
-        glazeMesh.rotation.x = -Math.PI / 2;
-        glazeMesh.position.y = 0.05;
-        donut.add(glazeMesh);
-        // Sprinkles
-        const sprinkleColors = [
-          0xff2244, 0x22aaff, 0xffee00, 0x44dd66, 0xff8800,
-        ];
-        for (let i = 0; i < 18; i++) {
-          const sp = box(
-            0.06,
-            0.18,
-            0.06,
-            sprinkleColors[i % sprinkleColors.length],
-          );
-          const angle = (i / 18) * Math.PI * 2;
-          const r = 0.48 + (i % 3) * 0.05;
-          sp.position.set(Math.cos(angle) * r, 0.28, Math.sin(angle) * r);
-          sp.rotation.y = angle;
-          sp.rotation.x = 0.4;
-          donut.add(sp);
-        }
-        donut.position.set(3.3, -2.0, 0.5);
-        scene.add(donut);
-        foodItems.push({
-          group: donut,
-          spin: -0.009,
-          float: { amp: 0.38, speed: 1.1, offset: 4.5 },
-          baseY: -2.0,
-          baseX: 3.3,
-        });
-
-        // ── COCKTAIL GLASS ────────────────────────────
-        const cocktail = new THREE.Group();
-        // Glass body (inverted cone shape)
-        const glassBody = cyl(0.7, 0.08, 0.9, 32, 0xaaddff, {
-          transparent: true,
-          opacity: 0.35,
-          shininess: 200,
-        });
-        glassBody.position.y = 0.1;
-        cocktail.add(glassBody);
-        // Liquid (slightly smaller, colored)
-        const liquid = cyl(0.65, 0.06, 0.75, 32, 0xff6688, {
-          transparent: true,
-          opacity: 0.8,
-          shininess: 100,
-        });
-        liquid.position.y = 0.05;
-        cocktail.add(liquid);
-        // Stem
-        const glStem = cyl(0.04, 0.04, 0.7, 12, 0xaaddff, {
-          transparent: true,
-          opacity: 0.5,
-        });
-        glStem.position.y = -0.5;
-        cocktail.add(glStem);
-        // Base
-        const glBase = cyl(0.35, 0.38, 0.07, 32, 0xaaddff, {
-          transparent: true,
-          opacity: 0.5,
-        });
-        glBase.position.y = -0.88;
-        cocktail.add(glBase);
-        // Garnish (orange slice)
-        const garnish = cyl(0.22, 0.22, 0.05, 16, 0xff9900);
-        garnish.position.set(0.55, 0.55, 0);
-        garnish.rotation.z = 0.6;
-        cocktail.add(garnish);
-        // Straw
-        const straw = cyl(0.04, 0.04, 1.1, 8, 0xff4488);
-        straw.position.set(0.2, 0.5, 0);
-        straw.rotation.z = -0.3;
-        cocktail.add(straw);
-        // Bubbles
-        for (let i = 0; i < 5; i++) {
-          const bub = sph(0.04 + Math.random() * 0.04, 8, 8, 0xffffff, {
-            transparent: true,
-            opacity: 0.5,
-          });
-          bub.position.set(
-            (Math.random() - 0.5) * 0.8,
-            -0.1 + i * 0.15,
-            (Math.random() - 0.5) * 0.5,
-          );
-          cocktail.add(bub);
-        }
-        cocktail.position.set(0, 2.3, -1.5);
-        scene.add(cocktail);
-        foodItems.push({
-          group: cocktail,
-          spin: 0.006,
-          float: { amp: 0.42, speed: 0.9, offset: 5.5 },
-          baseY: 2.3,
-          baseX: 0,
-        });
-
-        // ── SPARKLE PARTICLES around food ─────────────
-        const sparkles = [];
-        for (let i = 0; i < 60; i++) {
-          const spark = sph(0.035, 6, 6, 0x00e87a, {
-            transparent: true,
-            opacity: 0.7,
-          });
-          const theta = Math.random() * Math.PI * 2;
-          const phi = Math.random() * Math.PI;
-          const r = 3.5 + Math.random() * 3;
-          spark.position.set(
-            Math.sin(phi) * Math.cos(theta) * r,
-            Math.sin(phi) * Math.sin(theta) * r * 0.8,
-            Math.cos(phi) * r * 0.4,
-          );
-          spark.userData = {
-            theta,
-            phi,
-            r,
-            speed: 0.002 + Math.random() * 0.004,
-            phase: Math.random() * Math.PI * 2,
-          };
-          scene.add(spark);
-          sparkles.push(spark);
-        }
-
-        // Mouse interaction
-        let mouseX = 0,
-          mouseY = 0;
-        const onMouseMove = (e) => {
-          const rect = canvas.getBoundingClientRect();
-          mouseX = ((e.clientX - rect.left) / rect.width - 0.5) * 2;
-          mouseY = -((e.clientY - rect.top) / rect.height - 0.5) * 2;
-        };
-        canvas.addEventListener("mousemove", onMouseMove);
-
-        // Touch support
-        const onTouch = (e) => {
-          const rect = canvas.getBoundingClientRect();
-          const t = e.touches[0];
-          mouseX = ((t.clientX - rect.left) / rect.width - 0.5) * 2;
-          mouseY = -((t.clientY - rect.top) / rect.height - 0.5) * 2;
-        };
-        canvas.addEventListener("touchmove", onTouch, { passive: true });
-
-        // Resize
-        const onResize = () => {
-          const nw = canvas.clientWidth,
-            nh = canvas.clientHeight;
-          camera.aspect = nw / nh;
-          camera.updateProjectionMatrix();
-          renderer.setSize(nw, nh);
-        };
-        window.addEventListener("resize", onResize);
-
-        let raf;
-        const animate = () => {
-          raf = requestAnimationFrame(animate);
-          const t = Date.now() * 0.001;
-
-          // Subtle camera drift following mouse
-          camera.position.x += (mouseX * 1.5 - camera.position.x) * 0.04;
-          camera.position.y += (mouseY * 1.0 - camera.position.y) * 0.04;
-          camera.lookAt(0, 0, 0);
-
-          // Animate each food item
-          foodItems.forEach(({ group, spin, float: f }) => {
-            group.rotation.y += spin;
-            group.position.y =
-              f.baseY ?? 0 + Math.sin(t * f.speed + f.offset) * f.amp;
-            // Gentle wobble
-            group.rotation.x = Math.sin(t * 0.7 + f.offset) * 0.08;
-            group.rotation.z = Math.cos(t * 0.5 + f.offset) * 0.05;
-          });
-
-          // Fix Y position (group.position.y assignment above has precedence issue)
-          foodItems.forEach(({ group, float: f, baseY }) => {
-            group.position.y = baseY + Math.sin(t * f.speed + f.offset) * f.amp;
-          });
-
-          // Animate sparkles
-          sparkles.forEach((sp, i) => {
-            const d = sp.userData;
-            d.theta += d.speed;
-            sp.position.x = Math.sin(d.phi + t * 0.2) * Math.cos(d.theta) * d.r;
-            sp.position.y =
-              Math.sin(d.phi + t * 0.2) * Math.sin(d.theta) * d.r * 0.8;
-            sp.position.z = Math.cos(d.phi + t * 0.2) * d.r * 0.4;
-            sp.material.opacity = 0.3 + Math.sin(t * 3 + d.phase) * 0.4;
-            const sc = 0.6 + Math.sin(t * 2.5 + d.phase) * 0.4;
-            sp.scale.setScalar(sc);
-          });
-
-          // Animate point lights
-          fill.position.x = Math.sin(t * 0.4) * 8;
-          fill.position.z = Math.cos(t * 0.3) * 5;
-          rim.position.x = Math.cos(t * 0.3) * 8;
-
-          renderer.render(scene, camera);
-        };
-        animate();
-
-        cleanupFn = () => {
-          cancelAnimationFrame(raf);
-          canvas.removeEventListener("mousemove", onMouseMove);
-          canvas.removeEventListener("touchmove", onTouch);
-          window.removeEventListener("resize", onResize);
-          renderer.dispose();
-        };
-      };
-
-      init();
-    }, 50); // end setTimeout — wait for canvas layout
-
-    return () => {
-      clearTimeout(timer);
-      if (cleanupFn) cleanupFn();
-    };
-  }, []);
-
-  return (
-    <canvas
-      ref={canvasRef}
-      style={{
-        width: "100%",
-        height: "100%",
-        display: "block",
-        cursor: "grab",
-      }}
-    />
-  );
-}
-
-/* ─── Scroll Observer Hook ───────────────────────────────── */
-function useScrollReveal() {
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((e) => {
-          if (e.isIntersecting) {
-            e.target.classList.add("visible");
-          }
-        });
-      },
-      { threshold: 0.1, rootMargin: "0px 0px -50px 0px" },
-    );
-    document
-      .querySelectorAll(".card-reveal")
-      .forEach((el) => observer.observe(el));
-    return () => observer.disconnect();
-  }, []);
-}
-
-/* ─── Main Component ─────────────────────────────────────── */
+/* ─── Main ───────────────────────────────────────────────── */
 export default function RestaurantLanding() {
   const { settings: platformSettings } = usePlatformSettings();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [activeFeature, setActiveFeature] = useState(0);
-  const [videoPlaying, setVideoPlaying] = useState(false);
   const [hoveredPlan, setHoveredPlan] = useState(null);
-  useScrollReveal();
+  useReveal();
 
-  // Cursor glow
+  // Auto-rotate features
   useEffect(() => {
-    const glow = document.getElementById("cursor-glow");
-    if (!glow) return;
-    const move = (e) => {
-      glow.style.left = e.clientX + "px";
-      glow.style.top = e.clientY + "px";
-    };
-    window.addEventListener("mousemove", move);
-    return () => window.removeEventListener("mousemove", move);
+    const id = setInterval(
+      () => setActiveFeature((f) => (f + 1) % features.length),
+      3500,
+    );
+    return () => clearInterval(id);
   }, []);
 
   // Progress bars
   useEffect(() => {
-    const observer = new IntersectionObserver(
+    const io = new IntersectionObserver(
       (entries) => {
         entries.forEach((e) => {
-          if (e.isIntersecting) {
+          if (e.isIntersecting)
             e.target
-              .querySelectorAll(".progress-fill")
-              .forEach((f) => f.classList.add("animated"));
-          }
+              .querySelectorAll(".pbar")
+              .forEach((b) => b.classList.add("go"));
         });
       },
       { threshold: 0.3 },
     );
-    document
-      .querySelectorAll(".stats-section")
-      .forEach((el) => observer.observe(el));
-    return () => observer.disconnect();
-  }, []);
-
-  // Feature auto-rotate
-  useEffect(() => {
-    const interval = setInterval(
-      () => setActiveFeature((f) => (f + 1) % features.length),
-      3000,
-    );
-    return () => clearInterval(interval);
+    document.querySelectorAll(".stats-section").forEach((el) => io.observe(el));
+    return () => io.disconnect();
   }, []);
 
   const handleSubmit = (e) => {
-    if (e.currentTarget) addRipple(e, e.currentTarget);
-    if (email) setSubmitted(true);
+    if (email.trim()) setSubmitted(true);
   };
 
   const features = [
     {
-      icon: <BarChart3 size={22} />,
+      icon: <BarChart3 size={20} />,
       title: "Real-Time Analytics",
       description:
-        "Track orders, revenue, and customer behavior with live dashboards and predictive insights.",
+        "Track every dollar, every table, every guest — with live dashboards that update in seconds. Make data-driven decisions before service even ends.",
       stat: "↑ 47% avg revenue",
-      color: "#00e87a",
+      color: "#2A5040",
     },
     {
-      icon: <Clock size={22} />,
+      icon: <Clock size={20} />,
       title: "Smart Table Management",
       description:
-        "Auto-release tables, manage reservations, and optimize seating with AI-powered suggestions.",
+        "AI-powered seating suggestions, auto-release timers, and reservation sync keep your floor running at peak efficiency — night after night.",
       stat: "↑ 32% table turnover",
-      color: "#0080ff",
+      color: "#C4622D",
     },
     {
-      icon: <ChefHat size={22} />,
-      title: "Kitchen Integration",
+      icon: <ChefHat size={20} />,
+      title: "Kitchen Display System",
       description:
-        "Sync orders directly to kitchen displays in real-time with priority queue management.",
+        "Orders flow directly from guest to kitchen screen, colour-coded by priority. No lost tickets, no shouted orders, no chaos.",
       stat: "↓ 40% ticket time",
-      color: "#ffd166",
+      color: "#8B6914",
     },
     {
-      icon: <Zap size={22} />,
-      title: "QR Code Menu",
+      icon: <Zap size={20} />,
+      title: "QR Ordering",
       description:
-        "Digital menus with no setup cost — customers scan, customize, and order instantly.",
-      stat: "↑ 28% avg check size",
-      color: "#ff6b6b",
+        "Guests scan, customise, and pay — all without waiting. Higher check averages, faster turns, and staff free to deliver real hospitality.",
+      stat: "↑ 28% check size",
+      color: "#1C3A2A",
     },
     {
-      icon: <Users size={22} />,
-      title: "Team Collaboration",
+      icon: <Users size={20} />,
+      title: "Team & Shifts",
       description:
-        "Manage staff roles, track performance, and coordinate shifts across all locations.",
+        "Role-based access, live performance tracking, and intelligent scheduling across every location. Manage a team of 5 or 500 with equal ease.",
       stat: "↓ 60% admin time",
-      color: "#c77dff",
+      color: "#4A3E2C",
     },
     {
-      icon: <ShieldCheck size={22} />,
+      icon: <ShieldCheck size={20} />,
       title: "Enterprise Security",
       description:
-        "Bank-level security with daily backups, SOC2 compliance, and 99.99% uptime SLA.",
+        "SOC 2 Type II compliant. Bank-grade encryption at rest and in transit. Daily off-site backups and a 99.99% uptime SLA.",
       stat: "0 breaches ever",
-      color: "#4cc9f0",
+      color: "#2A3F6A",
     },
   ];
 
   const testimonials = [
     {
       name: "Marco Rossi",
-      role: "Owner, Bella Italia",
-      text: "Revenue increased by 35% in the first month. The analytics dashboard is genuinely addictive.",
+      role: "Owner, Bella Italia — Rome",
+      text: "Revenue up 35% in the first month. The analytics dashboard alone paid for three years of the subscription. I genuinely couldn't operate without it now.",
       stars: 5,
-      flag: "🇮🇹",
-      highlight: "35% revenue boost",
+      avatar: "MR",
+      highlight: "+35% revenue",
     },
     {
       name: "Sarah Chen",
-      role: "Manager, Urban Bistro",
-      text: "The analytics dashboard alone has saved us thousands. Real data finally drives our decisions.",
+      role: "GM, Urban Bistro — Singapore",
+      text: "We switched from a patchwork of five tools to RestaurantOS in a weekend. The kitchen display system cut our ticket times almost in half.",
       stars: 5,
-      flag: "🇸🇬",
-      highlight: "$48K saved annually",
+      avatar: "SC",
+      highlight: "-44% ticket time",
     },
     {
       name: "James O'Brien",
-      role: "CEO, 12-location Group",
-      text: "Managing 12 locations is seamless. Centralized reporting saves our team hours every day.",
+      role: "CEO, 12-location Group — Dublin",
+      text: "Managing 12 sites from one screen is the single greatest change we've made in five years. Centralised reporting alone saves my team eight hours a week.",
       stars: 5,
-      flag: "🇮🇪",
-      highlight: "12 locations unified",
+      avatar: "JO",
+      highlight: "12 sites, 1 view",
     },
   ];
 
@@ -1492,29 +985,26 @@ export default function RestaurantLanding() {
       label: "Active Restaurants",
       value: "12000",
       suffix: "+",
-      progress: 0.85,
-      desc: "globally",
+      note: "across 42 countries",
     },
     {
-      label: "Orders Processed",
+      label: "Orders Monthly",
       value: "5",
       suffix: "M+",
-      progress: 0.92,
-      desc: "this month",
+      note: "processed in real-time",
     },
     {
       label: "Revenue Tracked",
       value: "1.2",
-      suffix: "B+",
-      progress: 0.78,
-      desc: "USD total",
+      suffix: "B",
+      note: "USD this year alone",
+      decimals: 1,
     },
     {
-      label: "Average ROI",
+      label: "Customer ROI",
       value: "340",
       suffix: "%",
-      progress: 0.97,
-      desc: "for customers",
+      note: "average 90-day return",
     },
   ];
 
@@ -1523,13 +1013,13 @@ export default function RestaurantLanding() {
       name: "Starter",
       price: "$99",
       period: "/mo",
-      description: "Perfect for independent restaurants",
+      desc: "For independent restaurants ready to grow",
       features: [
         "Up to 30 tables",
-        "Basic analytics",
-        "Mobile app access",
-        "Email support",
+        "Live sales dashboard",
         "QR code menu",
+        "Mobile app",
+        "Email support",
       ],
       cta: "Start Free Trial",
     },
@@ -1537,51 +1027,70 @@ export default function RestaurantLanding() {
       name: "Professional",
       price: "$299",
       period: "/mo",
-      description: "For restaurants serious about growth",
+      desc: "For restaurants serious about scaling",
       features: [
         "Up to 100 tables",
         "Advanced analytics",
         "Kitchen display system",
         "Staff management",
-        "Priority 24/7 support",
         "Multi-location",
         "Custom branding",
+        "Priority 24/7 support",
       ],
-      highlight: true,
       cta: "Start Free Trial",
+      popular: true,
     },
     {
       name: "Enterprise",
       price: "Custom",
-      period: "pricing",
-      description: "For large-scale operations",
+      period: "",
+      desc: "For large-scale operations with complex needs",
       features: [
         "Unlimited tables",
-        "Custom integrations",
         "Dedicated account manager",
+        "Custom integrations",
         "API access",
         "On-premise option",
-        "SLA guarantee",
-        "Training included",
+        "99.99% SLA",
+        "Full onboarding & training",
       ],
-      cta: "Contact Sales",
+      cta: "Talk to Sales",
     },
   ];
 
+  const marqueeItems = [
+    "⭐ Real-Time Analytics",
+    "🍽️ QR Ordering",
+    "📊 Kitchen Display",
+    "👨‍🍳 Staff Scheduling",
+    "💳 Integrated Payments",
+    "📱 Mobile App",
+    "🔒 SOC 2 Compliant",
+    "🌍 42 Countries",
+    "⭐ Real-Time Analytics",
+    "🍽️ QR Ordering",
+    "📊 Kitchen Display",
+    "👨‍🍳 Staff Scheduling",
+    "💳 Integrated Payments",
+    "📱 Mobile App",
+    "🔒 SOC 2 Compliant",
+    "🌍 42 Countries",
+  ];
+
+  const name = platformSettings?.platformName || "RestaurantOS";
+
   return (
     <div
+      className="grain"
       style={{
         background: "var(--surface)",
         color: "var(--text)",
-        fontFamily: "'DM Sans', sans-serif",
+        fontFamily: "'Bricolage Grotesque', sans-serif",
         minHeight: "100vh",
         overflowX: "hidden",
       }}
     >
       <style>{globalCSS}</style>
-
-      {/* Cursor glow */}
-      <div id="cursor-glow" />
 
       {/* ── NAV ──────────────────────────────────────────── */}
       <nav
@@ -1591,150 +1100,127 @@ export default function RestaurantLanding() {
           left: 0,
           right: 0,
           zIndex: 200,
-          background: "rgba(10,15,13,0.85)",
-          backdropFilter: "blur(20px)",
+          background: "rgba(253,250,244,0.88)",
+          backdropFilter: "blur(18px)",
           borderBottom: "1px solid var(--border)",
-          transition: "all 0.3s ease",
+          height: "var(--nav-h)",
+          display: "flex",
+          alignItems: "center",
         }}
       >
         <div
           style={{
-            maxWidth: 1200,
+            maxWidth: 1280,
             margin: "0 auto",
-            padding: "16px 24px",
+            padding: "0 32px",
+            width: "100%",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
           }}
         >
+          {/* Logo */}
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            {platformSettings.platformLogo ? (
-              <div
-                style={{
-                  width: 38,
-                  height: 38,
-                  borderRadius: 10,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  boxShadow: "0 0 20px rgba(0,232,122,0.3)",
-                  overflow: "hidden",
-                }}
-              >
+            <div
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: 8,
+                background: "var(--forest)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              {platformSettings?.platformLogo ? (
                 <img
                   src={platformSettings.platformLogo}
-                  alt="Platform logo"
-                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                  alt="logo"
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    borderRadius: 7,
+                  }}
                 />
-              </div>
-            ) : (
-              <div
-                style={{
-                  width: 38,
-                  height: 38,
-                  borderRadius: 10,
-                  background:
-                    "linear-gradient(135deg, var(--green-dark), var(--blue-mid))",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  boxShadow: "0 0 20px rgba(0,232,122,0.3)",
-                  animation: "glowPulse 3s ease-in-out infinite",
-                }}
-              >
-                <ChefHat size={20} color="#fff" />
-              </div>
-            )}
+              ) : (
+                <ChefHat size={18} color={`#F0C96A`} />
+              )}
+            </div>
             <span
-              className="syne"
-              style={{ fontSize: 18, fontWeight: 700, letterSpacing: -0.5 }}
+              className="display"
+              style={{ fontSize: 20, color: "var(--forest)" }}
             >
-              {platformSettings.platformName}
+              {name}
             </span>
           </div>
 
+          {/* Links */}
           <div
-            style={{ display: "flex", gap: 32, alignItems: "center" }}
-            className="hidden-mobile"
+            className="hide-mob"
+            style={{ display: "flex", gap: 36, alignItems: "center" }}
           >
             {["features", "pricing", "testimonials"].map((s) => (
               <a
                 key={s}
                 href={`#${s}`}
                 className="nav-link"
-                style={{
-                  color: "var(--text-dim)",
-                  fontSize: 14,
-                  fontWeight: 500,
-                  textDecoration: "none",
-                  textTransform: "capitalize",
-                  transition: "color 0.2s",
-                }}
-                onMouseEnter={(e) => (e.target.style.color = "var(--text)")}
-                onMouseLeave={(e) => (e.target.style.color = "var(--text-dim)")}
+                style={{ textTransform: "capitalize" }}
               >
                 {s}
               </a>
             ))}
           </div>
 
-          <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-            <Link href="/login">
-              <MagBtn
-                className="hidden-mobile"
-                style={{
-                  background: "transparent",
-                  border: "1px solid var(--border)",
-                  color: "var(--text)",
-                  padding: "8px 18px",
-                  borderRadius: 8,
-                  fontSize: 14,
-                  fontWeight: 500,
-                  cursor: "pointer",
-                }}
+          {/* Actions */}
+          <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+            <Link href="/login" className="hide-mob">
+              <button
+                className="btn-ghost"
+                style={{ padding: "9px 18px", fontSize: 13 }}
               >
                 Sign In
-              </MagBtn>
+              </button>
             </Link>
             <Link href="/register">
-              <MagBtn
-                style={{
-                  background:
-                    "linear-gradient(135deg, var(--green-dark), var(--green-mid))",
-                  color: "#000",
-                  padding: "9px 20px",
-                  borderRadius: 8,
-                  fontSize: 14,
-                  fontWeight: 600,
-                  border: "none",
-                  cursor: "pointer",
-                  boxShadow: "0 0 20px rgba(0,232,122,0.25)",
-                }}
+              <button
+                className="btn-primary ripple-origin"
+                onClick={(e) => addRipple(e, e.currentTarget)}
+                style={{ padding: "10px 20px", fontSize: 13 }}
               >
-                Get Started
-              </MagBtn>
+                Get Started <ArrowRight size={13} />
+              </button>
             </Link>
             <button
+              className="show-mob"
               onClick={() => setMobileOpen(!mobileOpen)}
               style={{
                 background: "none",
                 border: "none",
-                color: "var(--text)",
                 cursor: "pointer",
+                color: "var(--text)",
                 padding: 4,
               }}
-              className="mobile-only"
             >
               {mobileOpen ? <X size={22} /> : <Menu size={22} />}
             </button>
           </div>
         </div>
+
+        {/* Mobile menu */}
         {mobileOpen && (
           <div
             style={{
-              background: "var(--surface2)",
+              position: "absolute",
+              top: "100%",
+              left: 0,
+              right: 0,
+              background: "#fff",
+              borderBottom: "1px solid var(--border)",
               padding: "16px 24px",
-              borderTop: "1px solid var(--border)",
+              display: "flex",
+              flexDirection: "column",
+              gap: 0,
             }}
           >
             {["features", "pricing", "testimonials"].map((s) => (
@@ -1743,13 +1229,13 @@ export default function RestaurantLanding() {
                 href={`#${s}`}
                 onClick={() => setMobileOpen(false)}
                 style={{
-                  display: "block",
-                  padding: "12px 0",
+                  padding: "13px 0",
                   color: "var(--text)",
                   textDecoration: "none",
                   textTransform: "capitalize",
                   fontSize: 15,
                   borderBottom: "1px solid var(--border)",
+                  fontWeight: 500,
                 }}
               >
                 {s}
@@ -1766,440 +1252,371 @@ export default function RestaurantLanding() {
           minHeight: "100vh",
           display: "flex",
           alignItems: "center",
-          paddingTop: 80,
+          paddingTop: "var(--nav-h)",
           overflow: "hidden",
         }}
       >
-        <ParticleField />
-        <FloatingOrb
-          size={500}
-          x="-10%"
-          y="-5%"
-          color="rgba(0,232,122,0.07)"
-          blur={100}
-          delay={0}
+        <Particles />
+
+        {/* Background decorative shapes */}
+        <div
+          style={{
+            position: "absolute",
+            top: "8%",
+            right: "-8%",
+            width: 480,
+            height: 480,
+            borderRadius: "50%",
+            background:
+              "radial-gradient(circle, rgba(196,168,130,0.12), transparent 65%)",
+            pointerEvents: "none",
+            animation: "floatSlow 8s ease-in-out infinite",
+          }}
         />
-        <FloatingOrb
-          size={350}
-          x="60%"
-          y="30%"
-          color="rgba(0,128,255,0.06)"
-          blur={80}
-          delay={1}
+        <div
+          style={{
+            position: "absolute",
+            bottom: "10%",
+            left: "-6%",
+            width: 360,
+            height: 360,
+            borderRadius: "50%",
+            background:
+              "radial-gradient(circle, rgba(196,98,45,0.07), transparent 65%)",
+            pointerEvents: "none",
+            animation: "floatSlow 10s 2s ease-in-out infinite",
+          }}
         />
-        <FloatingOrb
-          size={250}
-          x="80%"
-          y="70%"
-          color="rgba(255,209,102,0.05)"
-          blur={60}
-          delay={2}
-        />
+
+        {/* Large background text */}
+        <div
+          className="display"
+          style={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%,-50%)",
+            fontSize: "clamp(120px,18vw,260px)",
+            fontWeight: 700,
+            color: "rgba(28,58,42,0.04)",
+            whiteSpace: "nowrap",
+            pointerEvents: "none",
+            userSelect: "none",
+            letterSpacing: "-0.04em",
+          }}
+        >
+          DINE
+        </div>
 
         <div
           style={{
-            maxWidth: 1400,
+            maxWidth: 1280,
             margin: "0 auto",
-            padding: "60px 24px",
+            padding: "80px 32px",
             width: "100%",
             position: "relative",
             zIndex: 2,
           }}
         >
           <div className="hero-grid">
-            {/* ── Left: Hero Text ── */}
+            {/* Left: copy */}
             <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
-              <div
-                style={{
-                  animation: "slideInLeft 0.6s 0.05s ease both",
-                  marginBottom: 20,
-                }}
-              >
+              {/* Trust pill */}
+              <div style={{ animation: "slideLeft 0.7s 0.1s both" }}>
                 <div
                   style={{
                     display: "inline-flex",
                     alignItems: "center",
-                    gap: 10,
-                    background: "rgba(255,209,102,0.07)",
-                    border: "1px solid rgba(255,209,102,0.2)",
-                    borderRadius: 100,
-                    padding: "7px 16px 7px 10px",
+                    gap: 8,
+                    background: "rgba(28,58,42,0.06)",
+                    border: "1px solid rgba(28,58,42,0.12)",
+                    borderRadius: 3,
+                    padding: "6px 14px 6px 10px",
+                    marginBottom: 24,
                   }}
                 >
-                  <div style={{ display: "flex", alignItems: "center" }}>
-                    {["🧑‍🍳", "👨‍🍳", "👩‍🍳"].map((e, i) => (
+                  <div style={{ display: "flex" }}>
+                    {["#C4622D", "#8B6914", "#2A5040"].map((c, i) => (
                       <div
-                        key={i}
+                        key={c}
                         style={{
                           width: 22,
                           height: 22,
                           borderRadius: "50%",
-                          background: `hsl(${i * 40 + 20},60%,50%)`,
+                          background: c,
                           border: "2px solid var(--surface)",
+                          marginLeft: i === 0 ? 0 : -6,
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
-                          fontSize: 11,
-                          marginLeft: i === 0 ? 0 : -6,
                         }}
                       >
-                        {e}
+                        <span style={{ fontSize: 10 }}>{"🧑👨👩"[i]}</span>
                       </div>
                     ))}
                   </div>
                   <span
                     style={{
                       fontSize: 12,
-                      color: "var(--gold)",
                       fontWeight: 600,
+                      color: "var(--forest)",
                     }}
                   >
-                    Trusted by <strong>12,000+</strong> restaurant owners
+                    Trusted by <strong>12,000+</strong> restaurants
                   </span>
+                  <div style={{ display: "flex", gap: 2 }}>
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} size={9} fill="#D4A843" color="#D4A843" />
+                    ))}
+                  </div>
                 </div>
               </div>
 
-              {/* Main headline — clear, human benefit-first */}
+              {/* Headline */}
               <h1
-                className="syne"
+                className="display"
                 style={{
-                  fontSize: "clamp(32px, 3.8vw, 62px)",
-                  fontWeight: 800,
-                  lineHeight: 1.1,
-                  letterSpacing: -2,
-                  marginBottom: 16,
-                  animation: "slideInLeft 0.8s 0.15s ease both",
+                  fontSize: "clamp(42px,5.5vw,80px)",
+                  lineHeight: 1.0,
+                  letterSpacing: "-0.035em",
+                  marginBottom: 20,
+                  animation: "slideLeft 0.8s 0.18s both",
                 }}
               >
-                Run your restaurant{" "}
-                <span
-                  style={{
-                    position: "relative",
-                    display: "inline-block",
-                    background:
-                      "linear-gradient(135deg, var(--green), #a8ffcd)",
-                    WebkitBackgroundClip: "text",
-                    WebkitTextFillColor: "transparent",
-                  }}
-                >
-                  smarter,
-                </span>
+                The operating
                 <br />
-                not harder.
+                system for{" "}
+                <span
+                  className="serif gold-shimmer"
+                  style={{ WebkitTextFillColor: "transparent" }}
+                >
+                  great&nbsp;restaurants.
+                </span>
               </h1>
 
-              {/* Typewriter sub-role line */}
+              {/* Role typewriter */}
               <div
                 style={{
-                  fontSize: 15,
-                  color: "var(--text-dim)",
-                  marginBottom: 18,
-                  animation: "slideInLeft 0.8s 0.22s ease both",
+                  fontSize: 16,
+                  color: "var(--text2)",
+                  marginBottom: 20,
+                  animation: "slideLeft 0.8s 0.26s both",
                   display: "flex",
                   alignItems: "center",
                   gap: 8,
                 }}
               >
-                <span>Perfect for</span>
-                <span style={{ color: "var(--green)", fontWeight: 600 }}>
-                  <TypeWriter
+                <span>Built for</span>
+                <span style={{ color: "var(--forest)", fontWeight: 600 }}>
+                  <Typewriter
                     words={[
-                      "cafés & bistros",
-                      "fast food chains",
                       "fine dining",
+                      "fast casual",
                       "cloud kitchens",
+                      "café groups",
                       "food trucks",
                     ]}
-                    speed={65}
+                    speed={70}
                   />
                 </span>
               </div>
 
-              {/* Human-readable description */}
+              {/* Description */}
               <p
                 style={{
                   fontSize: 15,
-                  color: "var(--text-dim)",
+                  color: "var(--text2)",
                   lineHeight: 1.8,
-                  marginBottom: 28,
-                  animation: "slideInLeft 0.8s 0.3s ease both",
-                  borderLeft: "2px solid rgba(0,232,122,0.25)",
-                  paddingLeft: 14,
+                  marginBottom: 30,
+                  animation: "slideLeft 0.8s 0.34s both",
+                  maxWidth: 520,
+                  borderLeft: "2px solid var(--ember)",
+                  paddingLeft: 16,
                 }}
               >
-                From taking orders to tracking revenue — RestaurantOS handles
-                the heavy lifting so you can focus on what you love:{" "}
-                <em
-                  style={{
-                    color: "var(--text)",
-                    fontStyle: "normal",
-                    fontWeight: 500,
-                  }}
-                >
-                  great food and happy guests.
-                </em>
+                From the moment a guest sits down to the moment the deposit
+                clears — RestaurantOS handles every moving part so you can focus
+                on the food and the people.
               </p>
 
-              {/* Key benefit pills */}
+              {/* Benefit chips */}
               <div
                 style={{
                   display: "flex",
                   flexWrap: "wrap",
                   gap: 8,
-                  marginBottom: 28,
-                  animation: "slideInLeft 0.8s 0.38s ease both",
+                  marginBottom: 30,
+                  animation: "slideLeft 0.8s 0.40s both",
                 }}
               >
                 {[
-                  { icon: "⚡", label: "Setup in 5 mins" },
-                  { icon: "📊", label: "Live sales data" },
-                  { icon: "🍽️", label: "QR ordering" },
-                  { icon: "💬", label: "24/7 support" },
-                ].map(({ icon, label }) => (
+                  { icon: "⚡", t: "Live in under 5 min" },
+                  { icon: "📊", t: "Real-time sales data" },
+                  { icon: "📱", t: "QR menus included" },
+                  { icon: "🌍", t: "42 countries" },
+                ].map(({ icon, t }) => (
                   <div
-                    key={label}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 6,
-                      background: "var(--surface2)",
-                      border: "1px solid var(--border)",
-                      borderRadius: 8,
-                      padding: "6px 12px",
-                      fontSize: 12,
-                      fontWeight: 500,
-                      color: "var(--text)",
-                      transition: "all 0.2s",
-                      cursor: "default",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.borderColor = "var(--green)";
-                      e.currentTarget.style.background = "rgba(0,232,122,0.06)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.borderColor = "var(--border)";
-                      e.currentTarget.style.background = "var(--surface2)";
-                    }}
+                    key={t}
+                    className="tag lift"
+                    style={{ cursor: "default" }}
                   >
-                    <span>{icon}</span> {label}
+                    <span>{icon}</span> {t}
                   </div>
                 ))}
               </div>
 
-              {/* CTA buttons */}
+              {/* CTA row */}
               <div
                 style={{
                   display: "flex",
                   gap: 12,
                   flexWrap: "wrap",
-                  marginBottom: 22,
-                  animation: "slideInLeft 0.8s 0.46s ease both",
+                  marginBottom: 24,
+                  animation: "slideLeft 0.8s 0.46s both",
                 }}
               >
-                <MagBtn
+                <button
+                  className="btn-primary ripple-origin"
+                  onClick={(e) => addRipple(e, e.currentTarget)}
+                  style={{ padding: "15px 28px", fontSize: 15 }}
+                >
+                  Start for Free <ArrowRight size={14} />
+                </button>
+                <button
+                  className="btn-ghost"
                   style={{
-                    background:
-                      "linear-gradient(135deg, var(--green-dark), var(--green))",
-                    color: "#000",
-                    padding: "14px 26px",
-                    borderRadius: 12,
-                    fontSize: 15,
-                    fontWeight: 700,
-                    border: "none",
-                    cursor: "pointer",
+                    fontSize: 14,
                     display: "flex",
                     alignItems: "center",
                     gap: 8,
-                    boxShadow:
-                      "0 0 30px rgba(0,232,122,0.35), 0 8px 24px rgba(0,0,0,0.3)",
                   }}
                 >
-                  🚀 Start for Free <ArrowRight size={15} />
-                </MagBtn>
-                <MagBtn
-                  style={{
-                    background: "rgba(255,255,255,0.04)",
-                    border: "1px solid rgba(255,255,255,0.12)",
-                    color: "var(--text)",
-                    padding: "14px 20px",
-                    borderRadius: 12,
-                    fontSize: 15,
-                    fontWeight: 500,
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 8,
-                    backdropFilter: "blur(10px)",
-                  }}
-                >
-                  <Play size={13} /> Watch 2-min demo
-                </MagBtn>
+                  <div
+                    style={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: "50%",
+                      background: "var(--surface3)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Play
+                      size={11}
+                      fill="var(--ember)"
+                      color="var(--ember)"
+                      style={{ marginLeft: 2 }}
+                    />
+                  </div>
+                  Watch 2-min demo
+                </button>
               </div>
 
-              {/* Trust micro-copy */}
+              {/* Micro-trust */}
               <div
                 style={{
+                  animation: "slideLeft 0.8s 0.52s both",
+                  fontSize: 12,
+                  color: "var(--text3)",
                   display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                  animation: "slideInLeft 0.8s 0.54s ease both",
+                  gap: 16,
+                  flexWrap: "wrap",
                 }}
               >
-                <div style={{ display: "flex", gap: 1 }}>
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} size={12} fill="#ffd166" color="#ffd166" />
-                  ))}
-                </div>
-                <span style={{ fontSize: 12, color: "var(--text-dim)" }}>
-                  <strong style={{ color: "var(--text)" }}>4.9/5</strong> from
-                  2,400+ reviews · No credit card · Cancel anytime
-                </span>
+                {[
+                  "No credit card required",
+                  "14-day free trial",
+                  "Cancel any time",
+                ].map((t) => (
+                  <span
+                    key={t}
+                    style={{ display: "flex", alignItems: "center", gap: 5 }}
+                  >
+                    <Check size={10} color="var(--forest2)" /> {t}
+                  </span>
+                ))}
               </div>
             </div>
 
-            {/* Right — 3D Scene */}
-            <div
-              style={{
-                animation: "slideInRight 1s 0.2s ease both",
-                position: "relative",
-              }}
-            >
-              <div
-                style={{
-                  borderRadius: 20,
-                  overflow: "hidden",
-                  border: "1px solid var(--border)",
-                  boxShadow:
-                    "0 40px 80px rgba(0,0,0,0.6), 0 0 60px rgba(0,232,122,0.1)",
-                  background: "linear-gradient(135deg, #091510, #0d2018)",
-                  position: "relative",
-                }}
-              >
-                {/* Status bar */}
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    padding: "12px 16px",
-                    borderBottom: "1px solid var(--border)",
-                  }}
-                >
-                  <div style={{ display: "flex", gap: 6 }}>
-                    {["#ff5f57", "#ffbd2e", "#28c840"].map((c) => (
-                      <div
-                        key={c}
-                        style={{
-                          width: 10,
-                          height: 10,
-                          borderRadius: "50%",
-                          background: c,
-                        }}
-                      />
-                    ))}
-                  </div>
-                  <div
-                    style={{
-                      fontSize: 11,
-                      color: "var(--text-dim)",
-                      fontFamily: "monospace",
-                    }}
-                  >
-                    restaurant_scene.3d
-                  </div>
-                  <div
-                    style={{
-                      fontSize: 11,
-                      color: "var(--green)",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 4,
-                    }}
-                  >
-                    <span
-                      style={{
-                        width: 6,
-                        height: 6,
-                        background: "var(--green)",
-                        borderRadius: "50%",
-                        animation: "glowPulse 1s infinite",
-                      }}
-                    />{" "}
-                    LIVE
-                  </div>
-                </div>
-                <div style={{ height: 380 }}>
-                  <RestaurantScene />
-                </div>
-              </div>
+            {/* Right: dashboard preview */}
+            <div style={{ position: "relative" }}>
+              <DashboardPreview />
 
               {/* Floating chips */}
               <div
                 style={{
                   position: "absolute",
-                  top: -16,
-                  right: -20,
-                  background: "var(--surface2)",
-                  border: "1px solid var(--border)",
-                  borderRadius: 12,
-                  padding: "10px 14px",
-                  animation: "floatY 3s 0s ease-in-out infinite",
-                  boxShadow: "0 10px 30px rgba(0,0,0,0.5)",
+                  top: -20,
+                  left: -28,
+                  background: "#fff",
+                  border: "1px solid var(--border2)",
+                  borderRadius: 8,
+                  padding: "12px 16px",
+                  boxShadow: "0 12px 32px rgba(14,26,18,0.1)",
+                  animation: "floatSlow 4s ease-in-out infinite",
+                  zIndex: 10,
                 }}
               >
                 <div
                   style={{
                     fontSize: 10,
-                    color: "var(--text-dim)",
+                    color: "var(--text3)",
+                    marginBottom: 3,
+                  }}
+                >
+                  New order · Table 7
+                </div>
+                <div
+                  style={{
+                    fontWeight: 700,
+                    fontSize: 13,
+                    color: "var(--text)",
                     marginBottom: 2,
                   }}
                 >
-                  Today&apos;s Revenue
+                  Wagyu Ribeye ×2
                 </div>
-                <div
-                  className="syne"
-                  style={{
-                    fontSize: 20,
-                    fontWeight: 700,
-                    color: "var(--green)",
-                  }}
-                >
-                  $12,847
-                </div>
-                <div style={{ fontSize: 10, color: "#4ade80" }}>
-                  ↑ 23.4% vs yesterday
+                <div style={{ fontSize: 10, color: "#4ADE80" }}>
+                  ✓ Sent to kitchen
                 </div>
               </div>
+
               <div
                 style={{
                   position: "absolute",
-                  bottom: 30,
-                  left: -24,
-                  background: "var(--surface2)",
-                  border: "1px solid var(--border)",
-                  borderRadius: 12,
-                  padding: "10px 14px",
-                  animation: "floatY 3.5s 0.5s ease-in-out infinite",
-                  boxShadow: "0 10px 30px rgba(0,0,0,0.5)",
+                  bottom: 28,
+                  right: -24,
+                  background: "#fff",
+                  border: "1px solid var(--border2)",
+                  borderRadius: 8,
+                  padding: "12px 16px",
+                  boxShadow: "0 12px 32px rgba(14,26,18,0.1)",
+                  animation: "floatSlow 5s 1.2s ease-in-out infinite",
+                  zIndex: 10,
                 }}
               >
                 <div
                   style={{
                     fontSize: 10,
-                    color: "var(--text-dim)",
-                    marginBottom: 2,
+                    color: "var(--text3)",
+                    marginBottom: 3,
                   }}
                 >
-                  Tables Active
+                  Tonight's occupancy
                 </div>
                 <div
-                  className="syne"
-                  style={{ fontSize: 20, fontWeight: 700, color: "#0080ff" }}
+                  className="display"
+                  style={{
+                    fontSize: 26,
+                    color: "var(--forest)",
+                    lineHeight: 1,
+                  }}
                 >
-                  24/30
+                  94%
                 </div>
-                <div style={{ fontSize: 10, color: "var(--text-dim)" }}>
-                  80% occupancy
+                <div style={{ fontSize: 10, color: "var(--ember2)" }}>
+                  ↑ 12% vs last Sat
                 </div>
               </div>
             </div>
@@ -2207,54 +1624,111 @@ export default function RestaurantLanding() {
         </div>
       </section>
 
+      {/* ── MARQUEE ──────────────────────────────────────── */}
+      <div
+        style={{
+          background: "var(--forest)",
+          borderTop: "1px solid rgba(255,255,255,0.06)",
+          borderBottom: "1px solid rgba(255,255,255,0.06)",
+          padding: "14px 0",
+          overflow: "hidden",
+        }}
+      >
+        <div className="marquee-track">
+          {marqueeItems.map((item, i) => (
+            <span
+              key={i}
+              style={{
+                fontSize: 12,
+                fontWeight: 600,
+                color: "rgba(212,200,170,0.65)",
+                letterSpacing: "0.08em",
+                padding: "0 40px",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {item}
+            </span>
+          ))}
+        </div>
+      </div>
+
       {/* ── STATS ────────────────────────────────────────── */}
       <section
         className="stats-section"
         style={{
-          padding: "80px 24px",
+          padding: "100px 32px",
           background: "var(--surface2)",
-          borderTop: "1px solid var(--border)",
           borderBottom: "1px solid var(--border)",
         }}
       >
-        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+        <div style={{ maxWidth: 1280, margin: "0 auto" }}>
+          <div style={{ textAlign: "center", marginBottom: 60 }}>
+            <div className="divider" style={{ margin: "0 auto 20px" }} />
+            <h2
+              className="display reveal"
+              style={{ fontSize: "clamp(32px,4vw,56px)", marginBottom: 12 }}
+            >
+              Numbers that matter
+            </h2>
+            <p
+              className="reveal"
+              style={{
+                fontSize: 16,
+                color: "var(--text2)",
+                maxWidth: 440,
+                margin: "0 auto",
+              }}
+            >
+              Real results from real restaurants across 42 countries.
+            </p>
+          </div>
           <div className="stats-grid">
             {stats.map((s, i) => (
               <div
                 key={i}
-                className="card-reveal"
-                style={{ transitionDelay: `${i * 0.1}s`, textAlign: "center" }}
+                className="reveal"
+                style={{
+                  transitionDelay: `${i * 0.1}s`,
+                  textAlign: "center",
+                  padding: "32px 24px",
+                  background: "#fff",
+                  border: "1px solid var(--border)",
+                  borderRadius: 8,
+                  position: "relative",
+                  overflow: "hidden",
+                }}
               >
                 <div
-                  className="syne"
                   style={{
-                    fontSize: "clamp(32px,4vw,52px)",
-                    fontWeight: 800,
-                    color: "var(--green)",
-                    lineHeight: 1,
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: 2,
+                    background: `hsl(${[120, 30, 45, 200][i]},45%,35%)`,
                   }}
-                >
-                  <AnimatedCounter target={s.value} suffix={s.suffix} />
+                />
+                <div className="stat-num">
+                  <Counter
+                    target={s.value}
+                    suffix={s.suffix}
+                    decimals={s.decimals ?? 0}
+                  />
                 </div>
                 <div
                   style={{
-                    fontSize: 13,
-                    fontWeight: 600,
+                    fontWeight: 700,
+                    fontSize: 14,
+                    marginTop: 10,
+                    marginBottom: 4,
                     color: "var(--text)",
-                    marginTop: 6,
-                    marginBottom: 2,
                   }}
                 >
                   {s.label}
                 </div>
-                <div style={{ fontSize: 11, color: "var(--text-dim)" }}>
-                  {s.desc}
-                </div>
-                <div className="progress-bar" style={{ marginTop: 10 }}>
-                  <div
-                    className="progress-fill"
-                    style={{ width: `${s.progress * 100}%` }}
-                  />
+                <div style={{ fontSize: 12, color: "var(--text3)" }}>
+                  {s.note}
                 </div>
               </div>
             ))}
@@ -2266,185 +1740,151 @@ export default function RestaurantLanding() {
       <section
         id="features"
         style={{
-          padding: "100px 24px",
+          padding: "120px 32px",
           position: "relative",
           overflow: "hidden",
         }}
       >
-        <FloatingOrb
-          size={400}
-          x="50%"
-          y="0%"
-          color="rgba(0,128,255,0.05)"
-          blur={100}
-        />
-        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-          <div style={{ textAlign: "center", marginBottom: 64 }}>
-            <div
-              style={{
-                display: "inline-block",
-                fontSize: 11,
-                fontWeight: 700,
-                letterSpacing: 3,
-                color: "var(--green)",
-                textTransform: "uppercase",
-                marginBottom: 16,
-                background: "rgba(0,232,122,0.08)",
-                padding: "5px 14px",
-                borderRadius: 100,
-              }}
-            >
-              Platform Features
+        <div style={{ maxWidth: 1280, margin: "0 auto" }}>
+          <div style={{ textAlign: "center", marginBottom: 72 }}>
+            <div className="divider" style={{ margin: "0 auto 20px" }} />
+            <div className="tag reveal" style={{ marginBottom: 16 }}>
+              <Sparkles size={10} /> Platform Features
             </div>
             <h2
-              className="syne card-reveal"
-              style={{
-                fontSize: "clamp(28px,4vw,52px)",
-                fontWeight: 800,
-                letterSpacing: -1.5,
-                marginBottom: 16,
-              }}
+              className="display reveal"
+              style={{ fontSize: "clamp(32px,4vw,58px)", marginBottom: 16 }}
             >
-              Everything you need to grow
+              Everything your team needs,
+              <br />
+              <span className="serif" style={{ color: "var(--ember)" }}>
+                nothing they don't.
+              </span>
             </h2>
             <p
-              className="card-reveal"
+              className="reveal"
               style={{
                 fontSize: 16,
-                color: "var(--text-dim)",
+                color: "var(--text2)",
                 maxWidth: 480,
                 margin: "0 auto",
               }}
             >
-              Powerful tools designed specifically for modern restaurants
+              One platform. Every role. Built to survive even the most brutal
+              Friday night service.
             </p>
           </div>
 
-          {/* Interactive Feature Tabs */}
-          <div className="feat-tabs" style={{ marginBottom: 60 }}>
-            {/* Tab list */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {/* Tabs */}
+          <div className="feat-tabs reveal" style={{ marginBottom: 72 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               {features.map((f, i) => (
                 <div
                   key={i}
+                  className={`feat-tab ${activeFeature === i ? "active" : ""}`}
                   onClick={() => setActiveFeature(i)}
-                  style={{
-                    padding: "16px 20px",
-                    borderRadius: 12,
-                    cursor: "pointer",
-                    border: `1px solid ${activeFeature === i ? f.color + "40" : "var(--border)"}`,
-                    background:
-                      activeFeature === i ? `${f.color}08` : "transparent",
-                    transition: "all 0.3s cubic-bezier(0.34,1.2,0.64,1)",
-                    transform:
-                      activeFeature === i ? "translateX(6px)" : "translateX(0)",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 14,
-                  }}
                 >
                   <div
-                    style={{
-                      width: 38,
-                      height: 38,
-                      borderRadius: 9,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      background:
-                        activeFeature === i
-                          ? `${f.color}20`
-                          : "var(--surface3)",
-                      color: activeFeature === i ? f.color : "var(--text-dim)",
-                      transition: "all 0.3s ease",
-                      flexShrink: 0,
-                    }}
+                    style={{ display: "flex", alignItems: "center", gap: 12 }}
                   >
-                    {f.icon}
-                  </div>
-                  <div>
                     <div
+                      className="tab-icon"
                       style={{
-                        fontSize: 14,
-                        fontWeight: 600,
                         color:
-                          activeFeature === i
-                            ? "var(--text)"
-                            : "var(--text-dim)",
-                        transition: "color 0.2s",
+                          activeFeature === i ? "var(--gold2)" : "var(--text3)",
+                        transition: "color 0.3s",
                       }}
                     >
-                      {f.title}
+                      {f.icon}
                     </div>
-                    {activeFeature === i && (
+                    <div>
                       <div
+                        className="tab-title"
                         style={{
-                          fontSize: 12,
-                          color: f.color,
-                          marginTop: 2,
+                          fontSize: 14,
                           fontWeight: 600,
+                          color:
+                            activeFeature === i
+                              ? "var(--cream)"
+                              : "var(--text)",
+                          transition: "color 0.3s",
                         }}
                       >
-                        {f.stat}
+                        {f.title}
                       </div>
+                      {activeFeature === i && (
+                        <div
+                          className="tab-stat"
+                          style={{ fontSize: 11, marginTop: 2 }}
+                        >
+                          {f.stat}
+                        </div>
+                      )}
+                    </div>
+                    {activeFeature === i && (
+                      <ArrowRight
+                        size={14}
+                        style={{ marginLeft: "auto", color: "var(--gold2)" }}
+                      />
                     )}
                   </div>
-                  {activeFeature === i && (
-                    <div
-                      style={{
-                        marginLeft: "auto",
-                        width: 6,
-                        height: 6,
-                        borderRadius: "50%",
-                        background: f.color,
-                        boxShadow: `0 0 10px ${f.color}`,
-                      }}
-                    />
-                  )}
                 </div>
               ))}
             </div>
 
-            {/* Feature detail */}
-            <TiltCard
+            {/* Detail panel */}
+            <div
               style={{
-                background: `linear-gradient(135deg, ${features[activeFeature].color}08, var(--surface2))`,
-                border: `1px solid ${features[activeFeature].color}25`,
-                borderRadius: 20,
-                padding: 40,
-                minHeight: 340,
-                transition: "background 0.5s ease, border-color 0.5s ease",
+                background: "var(--surface2)",
+                border: "1px solid var(--border)",
+                borderRadius: 10,
+                padding: "48px 44px",
+                transition: "all 0.4s ease",
+                position: "relative",
+                overflow: "hidden",
               }}
             >
               <div
                 style={{
-                  width: 56,
-                  height: 56,
-                  borderRadius: 14,
+                  position: "absolute",
+                  top: -40,
+                  right: -40,
+                  width: 200,
+                  height: 200,
+                  borderRadius: "50%",
+                  background: `radial-gradient(circle, rgba(196,98,45,0.06), transparent 60%)`,
+                  pointerEvents: "none",
+                }}
+              />
+              <div
+                style={{
+                  width: 52,
+                  height: 52,
+                  borderRadius: 12,
+                  background: `${features[activeFeature].color}12`,
+                  border: `1px solid ${features[activeFeature].color}25`,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  background: `${features[activeFeature].color}20`,
                   color: features[activeFeature].color,
-                  marginBottom: 20,
-                  fontSize: 28,
-                  boxShadow: `0 0 30px ${features[activeFeature].color}30`,
+                  marginBottom: 22,
+                  boxShadow: `0 0 24px ${features[activeFeature].color}15`,
                 }}
               >
                 {features[activeFeature].icon}
               </div>
               <h3
-                className="syne"
-                style={{ fontSize: 26, fontWeight: 700, marginBottom: 12 }}
+                className="display"
+                style={{ fontSize: 34, marginBottom: 14 }}
               >
                 {features[activeFeature].title}
               </h3>
               <p
                 style={{
                   fontSize: 15,
-                  color: "var(--text-dim)",
-                  lineHeight: 1.7,
-                  marginBottom: 24,
+                  color: "var(--text2)",
+                  lineHeight: 1.85,
+                  marginBottom: 28,
                 }}
               >
                 {features[activeFeature].description}
@@ -2454,13 +1894,13 @@ export default function RestaurantLanding() {
                   display: "inline-flex",
                   alignItems: "center",
                   gap: 8,
-                  background: `${features[activeFeature].color}15`,
-                  border: `1px solid ${features[activeFeature].color}30`,
-                  borderRadius: 8,
-                  padding: "8px 14px",
+                  background: `${features[activeFeature].color}10`,
+                  border: `1px solid ${features[activeFeature].color}25`,
+                  padding: "9px 16px",
+                  borderRadius: 4,
                 }}
               >
-                <TrendingUp size={14} color={features[activeFeature].color} />
+                <TrendingUp size={13} color={features[activeFeature].color} />
                 <span
                   style={{
                     fontSize: 13,
@@ -2471,36 +1911,30 @@ export default function RestaurantLanding() {
                   {features[activeFeature].stat}
                 </span>
               </div>
-            </TiltCard>
+            </div>
           </div>
 
-          {/* Grid cards */}
+          {/* Grid */}
           <div className="feat-grid">
             {features.map((f, i) => (
-              <TiltCard
+              <div
                 key={i}
-                className="card-reveal feat-card hover-lift"
-                style={{
-                  background: "var(--surface2)",
-                  border: "1px solid var(--border)",
-                  borderRadius: 16,
-                  padding: "28px 24px",
-                  transitionDelay: `${i * 0.08}s`,
-                  cursor: "pointer",
-                }}
+                className="card reveal lift"
+                style={{ transitionDelay: `${i * 0.08}s`, cursor: "pointer" }}
               >
                 <div
-                  className="feat-icon-wrap"
                   style={{
-                    width: 44,
-                    height: 44,
-                    borderRadius: 11,
-                    background: `${f.color}15`,
+                    width: 42,
+                    height: 42,
+                    borderRadius: 10,
+                    background: `${f.color}10`,
+                    border: `1px solid ${f.color}20`,
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                     color: f.color,
-                    marginBottom: 16,
+                    marginBottom: 18,
+                    transition: "all 0.4s cubic-bezier(0.34,1.4,0.64,1)",
                   }}
                 >
                   {f.icon}
@@ -2511,131 +1945,136 @@ export default function RestaurantLanding() {
                 <p
                   style={{
                     fontSize: 13,
-                    color: "var(--text-dim)",
-                    lineHeight: 1.6,
+                    color: "var(--text2)",
+                    lineHeight: 1.65,
+                    marginBottom: 14,
                   }}
                 >
                   {f.description}
                 </p>
-                <div
-                  style={{
-                    marginTop: 14,
-                    fontSize: 12,
-                    fontWeight: 600,
-                    color: f.color,
-                  }}
-                >
+                <div style={{ fontSize: 12, fontWeight: 700, color: f.color }}>
                   {f.stat}
                 </div>
-              </TiltCard>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
+      {/* ── SOCIAL PROOF BAND ─────────────────────────────── */}
+      <div
+        style={{
+          background: "var(--surface3)",
+          borderTop: "1px solid var(--border)",
+          borderBottom: "1px solid var(--border)",
+          padding: "32px",
+        }}
+      >
+        <div
+          style={{
+            maxWidth: 1280,
+            margin: "0 auto",
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 32,
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          {[
+            { icon: <Award size={18} />, text: "G2 Leader Spring 2025" },
+            {
+              icon: <Star size={18} fill="var(--gold)" color="var(--gold)" />,
+              text: "4.9/5 from 2,400+ reviews",
+            },
+            { icon: <Globe size={18} />, text: "Available in 42 countries" },
+            {
+              icon: <ShieldCheck size={18} />,
+              text: "SOC 2 Type II Certified",
+            },
+            { icon: <Users size={18} />, text: "12,000+ restaurants" },
+          ].map(({ icon, text }) => (
+            <div
+              key={text}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                color: "var(--text2)",
+                fontSize: 14,
+                fontWeight: 500,
+              }}
+            >
+              <span style={{ color: "var(--forest)" }}>{icon}</span>
+              {text}
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* ── PRICING ──────────────────────────────────────── */}
       <section
         id="pricing"
         style={{
-          padding: "100px 24px",
+          padding: "120px 32px",
           background: "var(--surface2)",
           position: "relative",
           overflow: "hidden",
         }}
       >
-        <FloatingOrb
-          size={450}
-          x="-10%"
-          y="20%"
-          color="rgba(0,232,122,0.06)"
-          blur={120}
-        />
-        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-          <div style={{ textAlign: "center", marginBottom: 64 }}>
-            <div
-              style={{
-                display: "inline-block",
-                fontSize: 11,
-                fontWeight: 700,
-                letterSpacing: 3,
-                color: "var(--blue)",
-                textTransform: "uppercase",
-                marginBottom: 16,
-                background: "rgba(0,128,255,0.08)",
-                padding: "5px 14px",
-                borderRadius: 100,
-              }}
-            >
+        <div style={{ maxWidth: 1280, margin: "0 auto" }}>
+          <div style={{ textAlign: "center", marginBottom: 72 }}>
+            <div className="divider" style={{ margin: "0 auto 20px" }} />
+            <div className="tag reveal" style={{ marginBottom: 16 }}>
               Pricing
             </div>
             <h2
-              className="syne card-reveal"
-              style={{
-                fontSize: "clamp(28px,4vw,52px)",
-                fontWeight: 800,
-                letterSpacing: -1.5,
-                marginBottom: 16,
-              }}
+              className="display reveal"
+              style={{ fontSize: "clamp(32px,4vw,58px)", marginBottom: 16 }}
             >
-              Simple, transparent pricing
+              Straightforward pricing.
+              <br />
+              <span className="serif" style={{ color: "var(--ember)" }}>
+                No surprises.
+              </span>
             </h2>
             <p
-              className="card-reveal"
+              className="reveal"
               style={{
-                color: "var(--text-dim)",
                 fontSize: 16,
-                maxWidth: 420,
+                color: "var(--text2)",
+                maxWidth: 440,
                 margin: "0 auto",
               }}
             >
-              Choose the perfect plan and scale as you grow
+              Start free for 14 days on any plan. No credit card needed. Scale
+              up when you're ready.
             </p>
           </div>
 
-          <div className="pricing-grid">
+          <div className="price-grid">
             {plans.map((plan, i) => (
               <div
                 key={i}
-                className={`card-reveal ripple-container ${plan.highlight ? "pricing-popular" : ""}`}
+                className={`price-card reveal ripple-origin ${plan.popular ? "popular" : ""}`}
+                onClick={(e) => addRipple(e, e.currentTarget)}
                 onMouseEnter={() => setHoveredPlan(i)}
                 onMouseLeave={() => setHoveredPlan(null)}
-                onClick={(e) => addRipple(e, e.currentTarget)}
-                style={{
-                  borderRadius: 16,
-                  padding: "36px 30px",
-                  border: plan.highlight ? "none" : "1px solid var(--border)",
-                  background: plan.highlight
-                    ? "linear-gradient(135deg, #0a1a0f, #0f2018)"
-                    : "var(--surface)",
-                  transform: `${plan.highlight ? "scale(1.04)" : "scale(1)"} ${hoveredPlan === i ? "translateY(-8px)" : "translateY(0)"}`,
-                  transition:
-                    "transform 0.4s cubic-bezier(0.34,1.3,0.64,1), box-shadow 0.4s ease",
-                  boxShadow:
-                    hoveredPlan === i
-                      ? `0 30px 60px rgba(0,0,0,0.5), 0 0 40px ${plan.highlight ? "rgba(0,232,122,0.2)" : "rgba(0,0,0,0.1)"}`
-                      : plan.highlight
-                        ? "0 20px 40px rgba(0,0,0,0.4)"
-                        : "none",
-                  transitionDelay: `${i * 0.1}s`,
-                  cursor: "pointer",
-                  position: "relative",
-                  overflow: "hidden",
-                }}
+                style={{ transitionDelay: `${i * 0.1}s` }}
               >
-                {plan.highlight && (
+                {plan.popular && (
                   <div
                     style={{
                       position: "absolute",
-                      top: 16,
-                      right: 16,
-                      background:
-                        "linear-gradient(135deg, var(--green-dark), var(--green))",
-                      color: "#000",
-                      fontSize: 10,
+                      top: 20,
+                      right: 20,
+                      background: "var(--gold)",
+                      color: "var(--forest)",
+                      fontSize: 9,
                       fontWeight: 800,
                       padding: "4px 10px",
-                      borderRadius: 100,
-                      letterSpacing: 1,
+                      borderRadius: 3,
+                      letterSpacing: "0.1em",
                     }}
                   >
                     MOST POPULAR
@@ -2643,12 +2082,29 @@ export default function RestaurantLanding() {
                 )}
                 <div
                   style={{
-                    marginBottom: 6,
-                    fontSize: 11,
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: 3,
+                    background: plan.popular
+                      ? "linear-gradient(90deg, var(--gold), var(--ember))"
+                      : "var(--border)",
+                    borderRadius: "8px 8px 0 0",
+                  }}
+                />
+
+                <div
+                  style={{
+                    fontSize: 10,
                     fontWeight: 700,
-                    letterSpacing: 2,
-                    color: plan.highlight ? "var(--green)" : "var(--text-dim)",
+                    letterSpacing: "0.12em",
                     textTransform: "uppercase",
+                    color: plan.popular
+                      ? "rgba(212,201,106,0.8)"
+                      : "var(--text3)",
+                    marginBottom: 12,
+                    marginTop: 8,
                   }}
                 >
                   {plan.name}
@@ -2662,64 +2118,81 @@ export default function RestaurantLanding() {
                   }}
                 >
                   <span
-                    className="syne"
-                    style={{ fontSize: 44, fontWeight: 800, letterSpacing: -2 }}
+                    className="display"
+                    style={{
+                      fontSize: 52,
+                      color: plan.popular ? "var(--cream)" : "var(--forest)",
+                    }}
                   >
                     {plan.price}
                   </span>
-                  <span style={{ fontSize: 14, color: "var(--text-dim)" }}>
-                    {plan.period}
-                  </span>
+                  {plan.period && (
+                    <span
+                      style={{
+                        fontSize: 14,
+                        color: plan.popular
+                          ? "rgba(245,240,232,0.5)"
+                          : "var(--text3)",
+                      }}
+                    >
+                      {plan.period}
+                    </span>
+                  )}
                 </div>
                 <p
+                  className="price-desc"
                   style={{
                     fontSize: 13,
-                    color: "var(--text-dim)",
+                    color: "var(--text2)",
                     marginBottom: 28,
                   }}
                 >
-                  {plan.description}
+                  {plan.desc}
                 </p>
-                <MagBtn
+
+                <button
+                  className={
+                    plan.popular
+                      ? "btn-gold ripple-origin"
+                      : "btn-primary ripple-origin"
+                  }
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    addRipple(e, e.currentTarget);
+                  }}
                   style={{
                     width: "100%",
-                    padding: "13px",
-                    borderRadius: 10,
-                    fontSize: 14,
-                    fontWeight: 700,
-                    background: plan.highlight
-                      ? "linear-gradient(135deg, var(--green-dark), var(--green))"
-                      : "var(--surface3)",
-                    color: plan.highlight ? "#000" : "var(--text)",
-                    border: plan.highlight ? "none" : "1px solid var(--border)",
-                    cursor: "pointer",
+                    justifyContent: "center",
                     marginBottom: 28,
-                    boxShadow: plan.highlight
-                      ? "0 0 20px rgba(0,232,122,0.3)"
-                      : "none",
+                    fontSize: 14,
+                    padding: "13px",
                   }}
                 >
                   {plan.cta}
-                </MagBtn>
+                </button>
+
                 <div
-                  style={{ display: "flex", flexDirection: "column", gap: 12 }}
+                  style={{ display: "flex", flexDirection: "column", gap: 11 }}
                 >
                   {plan.features.map((f, j) => (
                     <div
                       key={j}
+                      className="feat-item"
                       style={{
                         display: "flex",
                         alignItems: "center",
                         gap: 10,
                         fontSize: 13,
-                        color: "var(--text-dim)",
+                        color: plan.popular
+                          ? "rgba(245,240,232,0.75)"
+                          : "var(--text2)",
                       }}
                     >
                       <Check
-                        size={14}
-                        color={plan.highlight ? "var(--green)" : "#4ade80"}
+                        size={13}
+                        color={plan.popular ? "var(--gold2)" : "var(--forest2)"}
                         style={{ flexShrink: 0 }}
-                      />{" "}
+                      />
                       {f}
                     </div>
                   ))}
@@ -2733,90 +2206,69 @@ export default function RestaurantLanding() {
       {/* ── TESTIMONIALS ─────────────────────────────────── */}
       <section
         id="testimonials"
-        style={{
-          padding: "100px 24px",
-          position: "relative",
-          overflow: "hidden",
-        }}
+        style={{ padding: "120px 32px", overflow: "hidden" }}
       >
-        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-          <div style={{ textAlign: "center", marginBottom: 64 }}>
-            <div
-              style={{
-                display: "inline-block",
-                fontSize: 11,
-                fontWeight: 700,
-                letterSpacing: 3,
-                color: "var(--gold)",
-                textTransform: "uppercase",
-                marginBottom: 16,
-                background: "rgba(255,209,102,0.08)",
-                padding: "5px 14px",
-                borderRadius: 100,
-              }}
-            >
-              Testimonials
+        <div style={{ maxWidth: 1280, margin: "0 auto" }}>
+          <div style={{ textAlign: "center", marginBottom: 72 }}>
+            <div className="divider" style={{ margin: "0 auto 20px" }} />
+            <div className="tag reveal" style={{ marginBottom: 16 }}>
+              What chefs & owners say
             </div>
             <h2
-              className="syne card-reveal"
-              style={{
-                fontSize: "clamp(28px,4vw,52px)",
-                fontWeight: 800,
-                letterSpacing: -1.5,
-                marginBottom: 16,
-              }}
+              className="display reveal"
+              style={{ fontSize: "clamp(32px,4vw,58px)", marginBottom: 16 }}
             >
-              Loved by restaurant teams
+              Kitchens don't lie.
+              <br />
+              <span className="serif" style={{ color: "var(--ember)" }}>
+                Neither do these reviews.
+              </span>
             </h2>
           </div>
 
           <div className="testi-grid">
             {testimonials.map((t, i) => (
-              <TiltCard
+              <div
                 key={i}
-                className="card-reveal hover-lift"
-                style={{
-                  background: "var(--surface2)",
-                  border: "1px solid var(--border)",
-                  borderRadius: 20,
-                  padding: 32,
-                  transitionDelay: `${i * 0.1}s`,
-                }}
+                className="testi-card reveal"
+                style={{ transitionDelay: `${i * 0.12}s` }}
               >
-                {/* Stars */}
-                <div style={{ display: "flex", gap: 4, marginBottom: 20 }}>
+                <div style={{ display: "flex", gap: 3, marginBottom: 16 }}>
                   {[...Array(t.stars)].map((_, j) => (
-                    <Star key={j} size={14} fill="#ffd166" color="#ffd166" />
+                    <Star
+                      key={j}
+                      size={13}
+                      fill="var(--gold)"
+                      color="var(--gold)"
+                    />
                   ))}
                 </div>
-
-                {/* Highlight pill */}
                 <div
                   style={{
                     display: "inline-block",
-                    background: "rgba(0,232,122,0.08)",
-                    border: "1px solid rgba(0,232,122,0.15)",
-                    color: "var(--green)",
+                    background: "rgba(28,58,42,0.07)",
+                    border: "1px solid rgba(28,58,42,0.12)",
+                    color: "var(--forest)",
                     fontSize: 11,
                     fontWeight: 700,
                     padding: "3px 10px",
-                    borderRadius: 100,
+                    borderRadius: 3,
                     marginBottom: 14,
+                    letterSpacing: "0.05em",
                   }}
                 >
                   {t.highlight}
                 </div>
-
                 <p
                   style={{
                     fontSize: 14,
-                    color: "var(--text-dim)",
-                    lineHeight: 1.75,
+                    color: "var(--text2)",
+                    lineHeight: 1.8,
                     marginBottom: 24,
                     fontStyle: "italic",
                   }}
                 >
-                  &quot;{t.text}&quot;
+                  "{t.text}"
                 </p>
                 <div
                   style={{
@@ -2827,17 +2279,33 @@ export default function RestaurantLanding() {
                     paddingTop: 20,
                   }}
                 >
-                  <div style={{ fontSize: 28 }}>{t.flag}</div>
+                  <div
+                    style={{
+                      width: 38,
+                      height: 38,
+                      borderRadius: "50%",
+                      background: "var(--forest)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: 12,
+                      fontWeight: 700,
+                      color: "var(--gold2)",
+                      flexShrink: 0,
+                    }}
+                  >
+                    {t.avatar}
+                  </div>
                   <div>
                     <div style={{ fontWeight: 700, fontSize: 14 }}>
                       {t.name}
                     </div>
-                    <div style={{ fontSize: 12, color: "var(--text-dim)" }}>
+                    <div style={{ fontSize: 11, color: "var(--text3)" }}>
                       {t.role}
                     </div>
                   </div>
                 </div>
-              </TiltCard>
+              </div>
             ))}
           </div>
         </div>
@@ -2846,74 +2314,87 @@ export default function RestaurantLanding() {
       {/* ── CTA ──────────────────────────────────────────── */}
       <section
         style={{
-          padding: "100px 24px",
+          padding: "80px 32px 120px",
           position: "relative",
           overflow: "hidden",
         }}
       >
-        <FloatingOrb
-          size={600}
-          x="50%"
-          y="50%"
-          color="rgba(0,232,122,0.06)"
-          blur={150}
-        />
-        <div
-          style={{
-            maxWidth: 680,
-            margin: "0 auto",
-            textAlign: "center",
-            position: "relative",
-            zIndex: 2,
-          }}
-        >
+        <div style={{ maxWidth: 780, margin: "0 auto" }}>
           <div
+            className="reveal"
             style={{
-              background: "var(--surface2)",
-              border: "1px solid var(--border)",
-              borderRadius: 24,
-              padding: "60px 48px",
-              boxShadow: "0 40px 80px rgba(0,0,0,0.4)",
+              background: "var(--forest)",
+              borderRadius: 12,
+              padding: "72px 60px",
+              textAlign: "center",
+              position: "relative",
+              overflow: "hidden",
+              boxShadow: "0 40px 80px rgba(14,26,18,0.2)",
             }}
           >
+            {/* Decorative ring */}
             <div
-              className="animate-shimmer"
               style={{
-                display: "inline-block",
-                fontSize: 11,
-                fontWeight: 700,
-                letterSpacing: 3,
-                color: "var(--green)",
-                textTransform: "uppercase",
-                marginBottom: 20,
-                padding: "5px 16px",
-                borderRadius: 100,
-                border: "1px solid rgba(0,232,122,0.2)",
+                position: "absolute",
+                top: -80,
+                right: -80,
+                width: 300,
+                height: 300,
+                border: "1px solid rgba(212,168,67,0.15)",
+                borderRadius: "50%",
+                pointerEvents: "none",
+              }}
+            />
+            <div
+              style={{
+                position: "absolute",
+                bottom: -60,
+                left: -60,
+                width: 220,
+                height: 220,
+                border: "1px solid rgba(212,168,67,0.1)",
+                borderRadius: "50%",
+                pointerEvents: "none",
+              }}
+            />
+
+            <div
+              className="tag"
+              style={{
+                background: "rgba(212,168,67,0.12)",
+                border: "1px solid rgba(212,168,67,0.25)",
+                color: "var(--gold2)",
+                marginBottom: 24,
+                display: "inline-flex",
               }}
             >
-              Get Started Today
+              <Sparkles size={10} /> Get started today
             </div>
             <h2
-              className="syne"
+              className="display"
               style={{
-                fontSize: "clamp(28px,4vw,48px)",
-                fontWeight: 800,
-                letterSpacing: -1.5,
+                fontSize: "clamp(30px,4vw,52px)",
+                color: "var(--cream)",
                 marginBottom: 16,
+                lineHeight: 1.1,
               }}
             >
-              Ready to transform your restaurant?
+              Ready to transform
+              <br />
+              <span className="serif gold-shimmer">your restaurant?</span>
             </h2>
             <p
               style={{
-                color: "var(--text-dim)",
-                fontSize: 16,
-                marginBottom: 36,
-                lineHeight: 1.7,
+                fontSize: 15,
+                color: "rgba(245,240,232,0.65)",
+                marginBottom: 40,
+                lineHeight: 1.8,
+                maxWidth: 460,
+                margin: "0 auto 40px",
               }}
             >
-              Join 12,000+ restaurants already growing with RestaurantOS. Start
-              your free 14-day trial today.
+              Join 12,000+ restaurants already running smarter with {name}. Your
+              first 14 days are completely free.
             </p>
 
             {!submitted ? (
@@ -2921,53 +2402,30 @@ export default function RestaurantLanding() {
                 style={{
                   display: "flex",
                   gap: 10,
-                  maxWidth: 420,
+                  maxWidth: 460,
                   margin: "0 auto 20px",
+                  flexWrap: "wrap",
                 }}
               >
                 <input
                   type="email"
-                  placeholder="Enter your email"
+                  placeholder="your@email.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleSubmit(e)}
-                  style={{
-                    flex: 1,
-                    padding: "13px 16px",
-                    borderRadius: 10,
-                    fontSize: 14,
-                    background: "var(--surface)",
-                    border: "1px solid var(--border)",
-                    color: "var(--text)",
-                    outline: "none",
-                    transition: "border-color 0.2s",
-                  }}
-                  onFocus={(e) =>
-                    (e.target.style.borderColor = "rgba(0,232,122,0.5)")
-                  }
-                  onBlur={(e) => (e.target.style.borderColor = "var(--border)")}
+                  onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+                  className="email-input"
+                  style={{ flex: 1, minWidth: 180 }}
                 />
-                <MagBtn
-                  onClick={handleSubmit}
-                  style={{
-                    padding: "13px 20px",
-                    borderRadius: 10,
-                    fontSize: 14,
-                    fontWeight: 700,
-                    background:
-                      "linear-gradient(135deg, var(--green-dark), var(--green))",
-                    color: "#000",
-                    border: "none",
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 6,
-                    whiteSpace: "nowrap",
-                    boxShadow: "0 0 20px rgba(0,232,122,0.3)",
+                <button
+                  className="btn-gold ripple-origin"
+                  onClick={(e) => {
+                    addRipple(e, e.currentTarget);
+                    handleSubmit();
                   }}
+                  style={{ whiteSpace: "nowrap" }}
                 >
-                  <Send size={14} /> Get Started
-                </MagBtn>
+                  <Send size={13} /> Start Free Trial
+                </button>
               </div>
             ) : (
               <div
@@ -2977,16 +2435,18 @@ export default function RestaurantLanding() {
                   justifyContent: "center",
                   gap: 10,
                   padding: "16px 24px",
-                  background: "rgba(0,232,122,0.08)",
-                  border: "1px solid rgba(0,232,122,0.2)",
-                  borderRadius: 12,
+                  background: "rgba(74,222,128,0.1)",
+                  border: "1px solid rgba(74,222,128,0.25)",
+                  borderRadius: 6,
                   marginBottom: 20,
                   animation: "scaleIn 0.4s ease",
                 }}
               >
-                <Check size={18} color="var(--green)" />
-                <span style={{ color: "var(--green)", fontWeight: 600 }}>
-                  You&apos;re on the list! We&apos;ll be in touch shortly.
+                <Check size={16} color="#4ADE80" />
+                <span
+                  style={{ color: "#4ADE80", fontWeight: 600, fontSize: 14 }}
+                >
+                  You're on the list — we'll be in touch shortly.
                 </span>
               </div>
             )}
@@ -2999,20 +2459,20 @@ export default function RestaurantLanding() {
                 flexWrap: "wrap",
               }}
             >
-              {["No credit card", "Setup in minutes", "Cancel anytime"].map(
+              {["No credit card", "14-day free trial", "Cancel any time"].map(
                 (t) => (
-                  <div
+                  <span
                     key={t}
                     style={{
                       display: "flex",
                       alignItems: "center",
                       gap: 6,
                       fontSize: 12,
-                      color: "var(--text-dim)",
+                      color: "rgba(245,240,232,0.45)",
                     }}
                   >
-                    <Check size={11} color="var(--green)" /> {t}
-                  </div>
+                    <Check size={10} color="rgba(245,240,232,0.45)" /> {t}
+                  </span>
                 ),
               )}
             </div>
@@ -3023,13 +2483,13 @@ export default function RestaurantLanding() {
       {/* ── FOOTER ───────────────────────────────────────── */}
       <footer
         style={{
-          background: "var(--surface)",
-          borderTop: "1px solid var(--border)",
-          padding: "60px 24px 32px",
+          background: "var(--ink)",
+          borderTop: "1px solid rgba(255,255,255,0.06)",
+          padding: "72px 32px 32px",
         }}
       >
-        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-          <div className="footer-grid">
+        <div style={{ maxWidth: 1280, margin: "0 auto" }}>
+          <div className="footer-grid" style={{ marginBottom: 56 }}>
             <div>
               <div
                 style={{
@@ -3041,73 +2501,92 @@ export default function RestaurantLanding() {
               >
                 <div
                   style={{
-                    width: 34,
-                    height: 34,
-                    borderRadius: 8,
-                    background:
-                      "linear-gradient(135deg, var(--green-dark), var(--blue-mid))",
+                    width: 32,
+                    height: 32,
+                    borderRadius: 7,
+                    background: "var(--forest2)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                   }}
                 >
-                  {platformSettings.platformLogo ? (
-                    <img
-                      src={platformSettings.platformLogo}
-                      alt="Platform logo"
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover",
-                        borderRadius: 6,
-                      }}
-                    />
-                  ) : (
-                    <ChefHat size={18} color="#fff" />
-                  )}
+                  <ChefHat size={16} color="var(--gold2)" />
                 </div>
                 <span
-                  className="syne"
-                  style={{ fontSize: 16, fontWeight: 700 }}
+                  className="display"
+                  style={{ fontSize: 18, color: "var(--cream)" }}
                 >
-                  {platformSettings.platformName}
+                  {name}
                 </span>
               </div>
               <p
                 style={{
                   fontSize: 13,
-                  color: "var(--text-dim)",
-                  lineHeight: 1.7,
+                  color: "rgba(245,240,232,0.4)",
+                  lineHeight: 1.75,
                   maxWidth: 240,
                 }}
               >
-                The all-in-one platform for modern restaurants to thrive in a
-                competitive world.
+                The all-in-one operating system for modern restaurants to grow,
+                scale, and thrive.
               </p>
+              <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
+                {["𝕏", "in", "gh"].map((s) => (
+                  <a
+                    key={s}
+                    href="#"
+                    style={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: 6,
+                      background: "rgba(255,255,255,0.05)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: 12,
+                      color: "rgba(245,240,232,0.4)",
+                      textDecoration: "none",
+                      transition: "all 0.2s",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background =
+                        "rgba(255,255,255,0.1)";
+                      e.currentTarget.style.color = "var(--cream)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background =
+                        "rgba(255,255,255,0.05)";
+                      e.currentTarget.style.color = "rgba(245,240,232,0.4)";
+                    }}
+                  >
+                    {s}
+                  </a>
+                ))}
+              </div>
             </div>
             {[
               {
                 label: "Product",
-                links: ["Features", "Pricing", "Security", "Changelog"],
+                links: ["Features", "Pricing", "Security", "Changelog", "API"],
               },
               {
                 label: "Company",
-                links: ["About", "Blog", "Careers", "Press"],
+                links: ["About", "Blog", "Careers", "Press", "Partners"],
               },
               {
                 label: "Legal",
-                links: ["Privacy", "Terms", "Cookies", "Contact"],
+                links: ["Privacy", "Terms", "Cookies", "GDPR", "Contact"],
               },
             ].map((col) => (
               <div key={col.label}>
                 <div
                   style={{
-                    fontSize: 11,
+                    fontSize: 10,
                     fontWeight: 700,
-                    letterSpacing: 2,
+                    letterSpacing: "0.12em",
                     textTransform: "uppercase",
-                    color: "var(--text-dim)",
-                    marginBottom: 16,
+                    color: "rgba(245,240,232,0.3)",
+                    marginBottom: 18,
                   }}
                 >
                   {col.label}
@@ -3119,16 +2598,16 @@ export default function RestaurantLanding() {
                     style={{
                       display: "block",
                       fontSize: 13,
-                      color: "var(--text-dim)",
+                      color: "rgba(245,240,232,0.5)",
                       textDecoration: "none",
-                      marginBottom: 10,
+                      marginBottom: 11,
                       transition: "color 0.2s",
                     }}
                     onMouseEnter={(e) =>
-                      (e.target.style.color = "var(--green)")
+                      (e.target.style.color = "var(--cream)")
                     }
                     onMouseLeave={(e) =>
-                      (e.target.style.color = "var(--text-dim)")
+                      (e.target.style.color = "rgba(245,240,232,0.5)")
                     }
                   >
                     {l}
@@ -3137,89 +2616,27 @@ export default function RestaurantLanding() {
               </div>
             ))}
           </div>
+
           <div
             style={{
-              borderTop: "1px solid var(--border)",
+              borderTop: "1px solid rgba(255,255,255,0.06)",
               paddingTop: 24,
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
+              flexWrap: "wrap",
+              gap: 12,
             }}
           >
-            <p style={{ fontSize: 12, color: "var(--text-dim)" }}>
-              © 2026 {platformSettings.platformName}. All rights reserved.
+            <p style={{ fontSize: 12, color: "rgba(245,240,232,0.25)" }}>
+              © 2026 {name}. All rights reserved.
             </p>
-            <div style={{ display: "flex", gap: 20 }}>
-              {["Twitter", "LinkedIn", "GitHub"].map((s) => (
-                <a
-                  key={s}
-                  href="#"
-                  style={{
-                    fontSize: 12,
-                    color: "var(--text-dim)",
-                    textDecoration: "none",
-                    transition: "color 0.2s",
-                  }}
-                  onMouseEnter={(e) => (e.target.style.color = "var(--green)")}
-                  onMouseLeave={(e) =>
-                    (e.target.style.color = "var(--text-dim)")
-                  }
-                >
-                  {s}
-                </a>
-              ))}
-            </div>
+            <p style={{ fontSize: 12, color: "rgba(245,240,232,0.2)" }}>
+              Made with care · Serving restaurants in 42 countries
+            </p>
           </div>
         </div>
       </footer>
-
-      {/* ── RESPONSIVE ───────────────────────────────────── */}
-      <style>{`
-        /* ── Hero 2-column grid ── */
-        .hero-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 48px;
-          align-items: center;
-          width: 100%;
-        }
-
-        /* ── Other section grids ── */
-        .stats-grid   { display: grid; grid-template-columns: repeat(4,1fr); gap: 40px; }
-        .feat-tabs    { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
-        .feat-grid    { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; }
-        .pricing-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 24px; align-items: start; }
-        .testi-grid   { display: grid; grid-template-columns: repeat(3,1fr); gap: 24px; }
-        .footer-grid  { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 48px; margin-bottom: 48px; }
-
-        /* ── 1024px ── */
-        @media (max-width: 1024px) {
-          .feat-grid    { grid-template-columns: repeat(2,1fr); }
-          .footer-grid  { grid-template-columns: 1fr 1fr; gap: 32px; }
-        }
-
-        /* ── 768px: single column ── */
-        @media (max-width: 768px) {
-          .hero-grid    { grid-template-columns: 1fr; gap: 32px; }
-          .stats-grid   { grid-template-columns: repeat(2,1fr); gap: 24px; }
-          .feat-tabs    { grid-template-columns: 1fr; }
-          .feat-grid    { grid-template-columns: 1fr; }
-          .pricing-grid { grid-template-columns: 1fr; }
-          .testi-grid   { grid-template-columns: 1fr; }
-          .footer-grid  { grid-template-columns: 1fr 1fr; gap: 28px; }
-          .hidden-mobile { display: none !important; }
-          .mobile-only   { display: block !important; }
-        }
-
-        @media (max-width: 480px) {
-          .stats-grid  { grid-template-columns: 1fr 1fr; }
-          .footer-grid { grid-template-columns: 1fr; }
-        }
-
-        @media (min-width: 769px) {
-          .mobile-only { display: none !important; }
-        }
-      `}</style>
     </div>
   );
 }
