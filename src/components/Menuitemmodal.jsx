@@ -185,7 +185,11 @@ function TableCard({ slot, selected, onSelect, reserving }) {
       >
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <span style={{ fontSize: "1.4rem" }}>
-            {slot.areaType === "dine-in" ? "🪑" : "🏪"}
+            {slot.areaType === "dine-in"
+              ? "🪑"
+              : slot.areaType === "online-ordering"
+                ? "🛒"
+                : "💰"}
           </span>
           <div style={{ textAlign: "left" }}>
             <p
@@ -309,6 +313,16 @@ export default function MenuItemModal({
   const [ordering, setOrdering] = useState(false);
   const [error, setError] = useState("");
 
+  // Online order form state
+  const [onlineOrderForm, setOnlineOrderForm] = useState({
+    name: "",
+    phone: "",
+    email: "",
+    location: "",
+    paymentMethod: "cod", // "cod" or "online"
+  });
+  const [formErrors, setFormErrors] = useState({});
+
   function updateQty(cartId, qty) {
     if (qty < 1) return removeItem(cartId);
     setCart((p) =>
@@ -338,7 +352,9 @@ export default function MenuItemModal({
   }, [restaurantId, areaType, persons]);
 
   useEffect(() => {
-    if (step === "table") fetchAvailability();
+    if (step === "table" && areaType === "dine-in") {
+      fetchAvailability();
+    }
   }, [step, areaType, fetchAvailability]);
 
   async function reserveTable(slot) {
@@ -392,6 +408,104 @@ export default function MenuItemModal({
     } catch {
     } finally {
       setPL(false);
+    }
+  }
+
+  function validateOnlineOrderForm() {
+    const errors = {};
+    if (!onlineOrderForm.name.trim()) errors.name = "Name is required";
+    if (!onlineOrderForm.phone.trim())
+      errors.phone = "Phone number is required";
+    if (!/^\d{10,}$/.test(onlineOrderForm.phone.replace(/\D/g, "")))
+      errors.phone = "Invalid phone number";
+    if (!onlineOrderForm.email.trim()) errors.email = "Email is required";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(onlineOrderForm.email))
+      errors.email = "Invalid email";
+    if (!onlineOrderForm.location.trim())
+      errors.location = "Location is required";
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  }
+
+  async function handleOnlineOrderSubmit() {
+    if (!validateOnlineOrderForm()) return;
+
+    setOrdering(true);
+    setError("");
+    try {
+      // Fetch pricing for online order
+      const pricingRes = await fetch("/api/orders/checkout-preview", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          restaurantId,
+          cartItems: cart.map((i) => ({ foodId: i._id, quantity: i.quantity })),
+          areaType: "online-ordering",
+        }),
+      });
+      const pricingData = await pricingRes.json();
+      if (!pricingRes.ok)
+        throw new Error(pricingData.error || "Failed to calculate pricing");
+
+      setPricing({
+        ...pricingData.preview,
+        areaLabel: "Online",
+        customerInfo: onlineOrderForm,
+      });
+
+      // Create online order
+      const orderRes = await fetch("/api/orders/online-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          restaurantId,
+          cartItems: cart.map((i) => ({ foodId: i._id, quantity: i.quantity })),
+          customerInfo: onlineOrderForm,
+          paymentMethod: onlineOrderForm.paymentMethod,
+          customerNote: note || undefined,
+        }),
+      });
+      const orderData = await orderRes.json();
+      if (!orderRes.ok)
+        throw new Error(orderData.error || "Failed to create order");
+
+      const order = orderData.order;
+
+      // If cash on delivery, just show success
+      if (onlineOrderForm.paymentMethod === "cod") {
+        onOrderSuccess(order);
+        return;
+      }
+
+      // If online payment, process Stripe payment
+      const publicUrl = slug
+        ? `${window.location.origin}/${slug}`
+        : window.location.origin;
+
+      const stripeRes = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          restaurantId,
+          amount: Math.round(order.total * 100),
+          orderId: order._id,
+          publicUrl,
+        }),
+      });
+
+      const stripeData = await stripeRes.json();
+      if (!stripeRes.ok) {
+        throw new Error(stripeData.error || "Failed to initiate payment");
+      }
+
+      if (stripeData.url) {
+        window.location.href = stripeData.url;
+      } else {
+        throw new Error("Payment URL not received");
+      }
+    } catch (e) {
+      setError(e.message);
+      setOrdering(false);
     }
   }
 
@@ -910,112 +1024,373 @@ export default function MenuItemModal({
 
               {/* Area toggle */}
               <div style={S.areaToggle}>
-                {["dine-in", "food-court"].map((t) => (
+                {["dine-in", "online-ordering", "cash-on-delivery"].map((t) => (
                   <button
                     key={t}
                     className={`mi-area-tab${areaType === t ? " on" : ""}`}
-                    onClick={() => setAreaType(t)}
+                    onClick={() => {
+                      setAreaType(t);
+                      setFormErrors({});
+                    }}
                   >
-                    {t === "dine-in" ? "🪑 Dine-In" : "🏪 Food Court"}
+                    {t === "dine-in"
+                      ? "🪑 Dine-In"
+                      : t === "online-ordering"
+                        ? "🛒 Online Ordering"
+                        : "💰 Cash on Delivery"}
                   </button>
                 ))}
               </div>
 
               {error && <div style={S.errorBox}>{error}</div>}
 
-              {availLoading ? (
+              {/* Show form for online ordering or cash on delivery */}
+              {(areaType === "online-ordering" ||
+                areaType === "cash-on-delivery") && (
                 <div
                   style={{
+                    marginTop: 16,
                     display: "flex",
                     flexDirection: "column",
-                    gap: 10,
-                    marginTop: 12,
+                    gap: 12,
                   }}
                 >
-                  {[1, 2, 3].map((i) => (
-                    <div
-                      key={i}
+                  {/* Name */}
+                  <div>
+                    <p style={S.label}>Full Name</p>
+                    <input
+                      type="text"
+                      placeholder="Enter your full name"
+                      value={onlineOrderForm.name}
+                      onChange={(e) => {
+                        setOnlineOrderForm({
+                          ...onlineOrderForm,
+                          name: e.target.value,
+                        });
+                        if (formErrors.name)
+                          setFormErrors({ ...formErrors, name: "" });
+                      }}
                       style={{
-                        height: 80,
-                        borderRadius: 16,
-                        background: "var(--bg)",
-                        animation: "pulse 1.5s infinite",
+                        ...S.formInput,
+                        borderColor: formErrors.name
+                          ? "var(--pri)"
+                          : "var(--border)",
                       }}
                     />
-                  ))}
-                </div>
-              ) : availability.length === 0 ? (
-                <div style={S.emptyState}>
-                  <MapPin size={32} style={{ opacity: 0.25 }} />
-                  <p
-                    style={{
-                      fontWeight: 700,
-                      color: "var(--ink)",
-                      marginTop: 10,
-                    }}
-                  >
-                    No tables for {areaType}
-                  </p>
-                  <p
-                    style={{
-                      fontSize: "0.78rem",
-                      color: "var(--muted)",
-                      marginTop: 4,
-                    }}
-                  >
-                    Ask the restaurant to set up tables
-                  </p>
-                </div>
-              ) : (
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 10,
-                    marginTop: 12,
-                  }}
-                >
-                  {availability.map((slot) => (
-                    <TableCard
-                      key={slot.configId}
-                      slot={slot}
-                      selected={selectedSlot}
-                      onSelect={reserveTable}
-                      reserving={reserving}
+                    {formErrors.name && (
+                      <p
+                        style={{
+                          fontSize: "0.7rem",
+                          color: "var(--pri)",
+                          marginTop: 4,
+                        }}
+                      >
+                        {formErrors.name}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Phone */}
+                  <div>
+                    <p style={S.label}>Phone Number</p>
+                    <input
+                      type="tel"
+                      placeholder="Enter your phone number"
+                      value={onlineOrderForm.phone}
+                      onChange={(e) => {
+                        setOnlineOrderForm({
+                          ...onlineOrderForm,
+                          phone: e.target.value,
+                        });
+                        if (formErrors.phone)
+                          setFormErrors({ ...formErrors, phone: "" });
+                      }}
+                      style={{
+                        ...S.formInput,
+                        borderColor: formErrors.phone
+                          ? "var(--pri)"
+                          : "var(--border)",
+                      }}
                     />
-                  ))}
+                    {formErrors.phone && (
+                      <p
+                        style={{
+                          fontSize: "0.7rem",
+                          color: "var(--pri)",
+                          marginTop: 4,
+                        }}
+                      >
+                        {formErrors.phone}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Email */}
+                  <div>
+                    <p style={S.label}>Email</p>
+                    <input
+                      type="email"
+                      placeholder="Enter your email"
+                      value={onlineOrderForm.email}
+                      onChange={(e) => {
+                        setOnlineOrderForm({
+                          ...onlineOrderForm,
+                          email: e.target.value,
+                        });
+                        if (formErrors.email)
+                          setFormErrors({ ...formErrors, email: "" });
+                      }}
+                      style={{
+                        ...S.formInput,
+                        borderColor: formErrors.email
+                          ? "var(--pri)"
+                          : "var(--border)",
+                      }}
+                    />
+                    {formErrors.email && (
+                      <p
+                        style={{
+                          fontSize: "0.7rem",
+                          color: "var(--pri)",
+                          marginTop: 4,
+                        }}
+                      >
+                        {formErrors.email}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Location */}
+                  <div>
+                    <p style={S.label}>Delivery Location</p>
+                    <input
+                      type="text"
+                      placeholder="Enter delivery location / address"
+                      value={onlineOrderForm.location}
+                      onChange={(e) => {
+                        setOnlineOrderForm({
+                          ...onlineOrderForm,
+                          location: e.target.value,
+                        });
+                        if (formErrors.location)
+                          setFormErrors({ ...formErrors, location: "" });
+                      }}
+                      style={{
+                        ...S.formInput,
+                        borderColor: formErrors.location
+                          ? "var(--pri)"
+                          : "var(--border)",
+                      }}
+                    />
+                    {formErrors.location && (
+                      <p
+                        style={{
+                          fontSize: "0.7rem",
+                          color: "var(--pri)",
+                          marginTop: 4,
+                        }}
+                      >
+                        {formErrors.location}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Payment Method */}
+                  <div>
+                    <p style={S.label}>Payment Method</p>
+                    <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
+                      <button
+                        onClick={() =>
+                          setOnlineOrderForm({
+                            ...onlineOrderForm,
+                            paymentMethod: "cod",
+                          })
+                        }
+                        style={{
+                          flex: 1,
+                          padding: "10px",
+                          borderRadius: 12,
+                          border:
+                            onlineOrderForm.paymentMethod === "cod"
+                              ? "2px solid var(--pri)"
+                              : "1px solid var(--border)",
+                          background:
+                            onlineOrderForm.paymentMethod === "cod"
+                              ? "rgba(224,90,43,0.1)"
+                              : "#fff",
+                          color:
+                            onlineOrderForm.paymentMethod === "cod"
+                              ? "var(--pri)"
+                              : "var(--ink)",
+                          fontWeight:
+                            onlineOrderForm.paymentMethod === "cod" ? 700 : 600,
+                          fontSize: "0.82rem",
+                          cursor: "pointer",
+                          transition: "all 0.2s",
+                        }}
+                      >
+                        💰 Cash on Delivery
+                      </button>
+                      <button
+                        onClick={() =>
+                          setOnlineOrderForm({
+                            ...onlineOrderForm,
+                            paymentMethod: "online",
+                          })
+                        }
+                        style={{
+                          flex: 1,
+                          padding: "10px",
+                          borderRadius: 12,
+                          border:
+                            onlineOrderForm.paymentMethod === "online"
+                              ? "2px solid var(--pri)"
+                              : "1px solid var(--border)",
+                          background:
+                            onlineOrderForm.paymentMethod === "online"
+                              ? "rgba(224,90,43,0.1)"
+                              : "#fff",
+                          color:
+                            onlineOrderForm.paymentMethod === "online"
+                              ? "var(--pri)"
+                              : "var(--ink)",
+                          fontWeight:
+                            onlineOrderForm.paymentMethod === "online"
+                              ? 700
+                              : 600,
+                          fontSize: "0.82rem",
+                          cursor: "pointer",
+                          transition: "all 0.2s",
+                        }}
+                      >
+                        💳 Online Payment
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Submit button */}
+                  <button
+                    className="mi-btn-pri"
+                    onClick={handleOnlineOrderSubmit}
+                    disabled={ordering}
+                    style={{ marginTop: 12 }}
+                  >
+                    {ordering ? (
+                      <>
+                        <Loader2
+                          size={17}
+                          style={{ animation: "spin 1s linear infinite" }}
+                        />
+                        Processing...
+                      </>
+                    ) : (
+                      <>
+                        <ShoppingBag size={17} /> Proceed to Checkout{" "}
+                        <ChevronRight size={15} />
+                      </>
+                    )}
+                  </button>
                 </div>
               )}
 
-              {reserving && (
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: 10,
-                    padding: "16px 0",
-                    color: "var(--pri)",
-                  }}
-                >
-                  <Loader2
-                    size={18}
-                    style={{ animation: "spin 1s linear infinite" }}
-                  />
-                  <span style={{ fontWeight: 700, fontSize: "0.85rem" }}>
-                    Reserving your table for 15 minutes…
-                  </span>
-                </div>
-              )}
+              {/* Show table selection for dine-in */}
+              {areaType === "dine-in" && (
+                <>
+                  {availLoading ? (
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 10,
+                        marginTop: 12,
+                      }}
+                    >
+                      {[1, 2, 3].map((i) => (
+                        <div
+                          key={i}
+                          style={{
+                            height: 80,
+                            borderRadius: 16,
+                            background: "var(--bg)",
+                            animation: "pulse 1.5s infinite",
+                          }}
+                        />
+                      ))}
+                    </div>
+                  ) : availability.length === 0 ? (
+                    <div style={S.emptyState}>
+                      <MapPin size={32} style={{ opacity: 0.25 }} />
+                      <p
+                        style={{
+                          fontWeight: 700,
+                          color: "var(--ink)",
+                          marginTop: 10,
+                        }}
+                      >
+                        No tables for dine-in
+                      </p>
+                      <p
+                        style={{
+                          fontSize: "0.78rem",
+                          color: "var(--muted)",
+                          marginTop: 4,
+                        }}
+                      >
+                        Ask the restaurant to set up tables
+                      </p>
+                    </div>
+                  ) : (
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 10,
+                        marginTop: 12,
+                      }}
+                    >
+                      {availability.map((slot) => (
+                        <TableCard
+                          key={slot.configId}
+                          slot={slot}
+                          selected={selectedSlot}
+                          onSelect={reserveTable}
+                          reserving={reserving}
+                        />
+                      ))}
+                    </div>
+                  )}
 
-              <button
-                className="mi-refresh-link"
-                onClick={fetchAvailability}
-                disabled={availLoading}
-                style={{ marginTop: 12 }}
-              >
-                ↻ Refresh availability
-              </button>
+                  {reserving && (
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: 10,
+                        padding: "16px 0",
+                        color: "var(--pri)",
+                      }}
+                    >
+                      <Loader2
+                        size={18}
+                        style={{ animation: "spin 1s linear infinite" }}
+                      />
+                      <span style={{ fontWeight: 700, fontSize: "0.85rem" }}>
+                        Reserving your table for 15 minutes…
+                      </span>
+                    </div>
+                  )}
+
+                  <button
+                    className="mi-refresh-link"
+                    onClick={fetchAvailability}
+                    disabled={availLoading}
+                    style={{ marginTop: 12 }}
+                  >
+                    ↻ Refresh availability
+                  </button>
+                </>
+              )}
             </div>
           )}
 
@@ -1467,6 +1842,17 @@ const S = {
     color: "var(--ink,#1a1510)",
     background: "var(--bg,#faf7f4)",
     resize: "none",
+    transition: "border-color .2s, box-shadow .2s",
+    fontFamily: "'DM Sans',sans-serif",
+  },
+  formInput: {
+    width: "100%",
+    padding: "10px 14px",
+    border: "1.5px solid var(--border,rgba(0,0,0,0.1))",
+    borderRadius: 12,
+    fontSize: "0.85rem",
+    color: "var(--ink,#1a1510)",
+    background: "var(--bg,#faf7f4)",
     transition: "border-color .2s, box-shadow .2s",
     fontFamily: "'DM Sans',sans-serif",
   },

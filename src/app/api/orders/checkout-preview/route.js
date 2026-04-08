@@ -6,11 +6,12 @@ import { ObjectId } from "mongodb";
 
 export async function POST(request) {
   try {
-    const { restaurantId, cartItems, tableId, persons } = await request.json();
+    const { restaurantId, cartItems, tableId, persons, areaType } =
+      await request.json();
 
-    if (!restaurantId || !cartItems?.length || !tableId)
+    if (!restaurantId || !cartItems?.length)
       return NextResponse.json(
-        { error: "restaurantId, cartItems and tableId required" },
+        { error: "restaurantId and cartItems required" },
         { status: 400 },
       );
 
@@ -31,24 +32,28 @@ export async function POST(request) {
         { status: 404 },
       );
 
-    // 2. Verify table still reserved
-    const table = await tblColl.findOne({
-      _id: new ObjectId(tableId),
-      restaurantId,
-      status: "reserved",
-    });
-    if (!table)
-      return NextResponse.json(
-        {
-          error: "Table reservation expired. Please select a table again.",
-          tableExpired: true,
-        },
-        { status: 409 },
-      );
+    // 2. For dine-in: Verify table still reserved
+    let seatingPrice = 0;
+    if (tableId) {
+      const table = await tblColl.findOne({
+        _id: new ObjectId(tableId),
+        restaurantId,
+        status: "reserved",
+      });
+      if (!table)
+        return NextResponse.json(
+          {
+            error: "Table reservation expired. Please select a table again.",
+            tableExpired: true,
+          },
+          { status: 409 },
+        );
 
-    // 3. Seating price from DB
-    const cfg = await cfgColl.findOne({ _id: new ObjectId(table.configId) });
-    const seatingPrice = cfg ? parseFloat(cfg.price) : 0;
+      // 3. Seating price from DB
+      const cfg = await cfgColl.findOne({ _id: new ObjectId(table.configId) });
+      seatingPrice = cfg ? parseFloat(cfg.price) : 0;
+    }
+    // For online orders, seatingPrice remains 0
 
     // 4. Food prices from DB
     const enrichedItems = await Promise.all(
