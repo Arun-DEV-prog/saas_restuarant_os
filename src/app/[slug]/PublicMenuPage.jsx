@@ -774,9 +774,21 @@ export default function PublicMenuPage({ params }) {
     return (
       <div className="mi-loading">
         <div className="mi-loading-inner">
-          <div className="mi-loading-logo">🍽️</div>
-          <div className="mi-spinner" />
-          <p className="mi-loading-text">Loading menu…</p>
+          <div className="mi-loading-logo">
+            <div className="mi-logo-glow"></div>
+            🍽️
+          </div>
+          <div className="mi-spinner">
+            <div className="mi-spinner-track"></div>
+            <div className="mi-spinner-fill"></div>
+          </div>
+          <div className="mi-loading-dots">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+          <p className="mi-loading-text">Loading menu</p>
+          <p className="mi-loading-subtext">Preparing delicious dishes</p>
         </div>
       </div>
     );
@@ -1163,43 +1175,139 @@ export default function PublicMenuPage({ params }) {
         /* ══ LOADING ══════════════════════════════════════════════ */
         .mi-loading {
           min-height: 100svh;
-          background: var(--ink);
+          background: linear-gradient(135deg, #0f0e0d 0%, #1a1510 50%, #0f0e0d 100%);
           display: flex;
           align-items: center;
           justify-content: center;
+          position: relative;
+          overflow: hidden;
+        }
+        .mi-loading::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: radial-gradient(circle at 20% 50%, rgba(255,69,0,0.1) 0%, transparent 50%);
+          animation: miLoadingBg 3s ease-in-out infinite;
+        }
+        @keyframes miLoadingBg {
+          0%, 100% { opacity: 0.5; }
+          50% { opacity: 1; }
         }
         .mi-loading-inner {
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 20px;
+          gap: 30px;
+          position: relative;
+          z-index: 1;
         }
         .mi-loading-logo {
-          width: 64px;
-          height: 64px;
-          background: var(--pri);
-          border-radius: 20px;
+          position: relative;
+          width: 80px;
+          height: 80px;
+          background: linear-gradient(135deg, var(--pri) 0%, #ff6b35 100%);
+          border-radius: 24px;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 1.8rem;
-          box-shadow: 0 0 40px var(--pri-glow);
+          font-size: 2.2rem;
+          box-shadow: 0 0 60px var(--pri-glow), 0 8px 24px rgba(0,0,0,0.3);
+          animation: miLogoPulse 2s cubic-bezier(0.4,0,0.6,1) infinite;
+        }
+        .mi-logo-glow {
+          position: absolute;
+          inset: -8px;
+          border-radius: 24px;
+          background: radial-gradient(circle, rgba(255,69,0,0.4) 0%, transparent 70%);
+          animation: miGlowPulse 2s cubic-bezier(0.4,0,0.6,1) infinite;
+        }
+        @keyframes miLogoPulse {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.05); }
+        }
+        @keyframes miGlowPulse {
+          0%, 100% { transform: scale(1); opacity: 0.5; }
+          50% { transform: scale(1.2); opacity: 1; }
         }
         .mi-spinner {
-          width: 36px;
-          height: 36px;
+          position: relative;
+          width: 56px;
+          height: 56px;
+        }
+        .mi-spinner-track {
+          position: absolute;
+          inset: 0;
           border-radius: 50%;
-          border: 2.5px solid rgba(255,255,255,0.1);
+          border: 3px solid rgba(255, 255, 255, 0.1);
+        }
+        .mi-spinner-fill {
+          position: absolute;
+          inset: 0;
+          border-radius: 50%;
+          border: 3px solid transparent;
           border-top-color: var(--pri);
-          animation: miSpin 0.75s linear infinite;
+          border-right-color: #ff6b35;
+          animation: miSpinnerRotate 1.2s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+        }
+        @keyframes miSpinnerRotate {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+        .mi-loading-dots {
+          display: flex;
+          gap: 8px;
+          align-items: flex-end;
+          height: 32px;
+        }
+        .mi-loading-dots span {
+          width: 6px;
+          height: 6px;
+          border-radius: 50%;
+          background: var(--pri);
+          animation: miDotBounce 1.4s infinite;
+          box-shadow: 0 0 12px var(--pri-glow);
+        }
+        .mi-loading-dots span:nth-child(1) {
+          animation-delay: -0.32s;
+        }
+        .mi-loading-dots span:nth-child(2) {
+          animation-delay: -0.16s;
+        }
+        .mi-loading-dots span:nth-child(3) {
+          animation-delay: 0s;
+        }
+        @keyframes miDotBounce {
+          0%, 80%, 100% {
+            transform: translateY(0);
+            opacity: 0.5;
+          }
+          40% {
+            transform: translateY(-16px);
+            opacity: 1;
+          }
         }
         .mi-loading-text {
-          color: rgba(255,255,255,0.45);
+          color: rgba(255, 255, 255, 0.9);
+          font-size: 1.1rem;
+          font-weight: 700;
+          letter-spacing: 0.08em;
+          animation: miTextFade 1.6s ease-in-out infinite;
+        }
+        .mi-loading-subtext {
+          color: rgba(255, 255, 255, 0.5);
           font-size: 0.85rem;
           font-weight: 500;
-          letter-spacing: 0.05em;
+          letter-spacing: 0.04em;
+          animation: miSubtextPulse 2s ease-in-out infinite;
         }
-        @keyframes miSpin { to { transform: rotate(360deg); } }
+        @keyframes miTextFade {
+          0%, 100% { opacity: 0.7; }
+          50% { opacity: 1; }
+        }
+        @keyframes miSubtextPulse {
+          0%, 100% { opacity: 0.4; }
+          50% { opacity: 0.8; }
+        }
 
         /* ══ ERROR ════════════════════════════════════════════════ */
         .mi-error {
