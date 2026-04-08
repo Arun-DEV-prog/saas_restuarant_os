@@ -17,6 +17,9 @@ import {
   IconSearch,
   IconSettings,
   IconUsers,
+  IconShoppingCart,
+  IconReceipt,
+  IconMenu,
 } from "@tabler/icons-react";
 
 import { NavDocuments } from "@/components/nav-documents";
@@ -43,23 +46,33 @@ const data = {
   navMain: [
     {
       title: "Dashboard",
-      url: "#",
+      url: "/dashboard",
       icon: IconDashboard,
     },
     {
-      title: "Lifecycle",
-      url: "#",
+      title: "POS System",
+      url: "/dashboard/pos",
+      icon: IconShoppingCart,
+    },
+    {
+      title: "Menu Management",
+      url: "/dashboard/menu",
+      icon: IconMenu,
+    },
+    {
+      title: "Orders",
+      url: "/dashboard/order",
       icon: IconListDetails,
     },
     {
-      title: "Analytics",
-      url: "#",
-      icon: IconChartBar,
+      title: "Invoices",
+      url: "/dashboard/invoices",
+      icon: IconReceipt,
     },
     {
-      title: "Projects",
-      url: "#",
-      icon: IconFolder,
+      title: "Analytics",
+      url: "/dashboard/analytics",
+      icon: IconChartBar,
     },
     {
       title: "Team",

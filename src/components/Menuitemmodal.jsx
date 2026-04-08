@@ -282,6 +282,7 @@ export default function MenuItemModal({
   initialCart,
   categoryName,
   restaurantId,
+  slug,
   onClose,
   onOrderSuccess,
 }) {
@@ -427,6 +428,11 @@ export default function MenuItemModal({
       const order = data.order;
       const orderTotal = Math.round(order.total * 100); // Convert to cents for Stripe
 
+      // Build public URL to pass to payment page
+      const publicUrl = slug
+        ? `${window.location.origin}/${slug}`
+        : window.location.origin;
+
       const stripeRes = await fetch("/api/stripe/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -434,6 +440,7 @@ export default function MenuItemModal({
           restaurantId,
           amount: orderTotal,
           orderId: order._id,
+          publicUrl,
         }),
       });
 

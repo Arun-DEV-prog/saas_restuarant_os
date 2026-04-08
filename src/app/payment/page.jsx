@@ -1,8 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
-import Link from "next/link";
+import { useSearchParams, useRouter } from "next/navigation";
 import { CheckCircle, AlertCircle, ArrowLeft } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -22,12 +21,42 @@ function PaymentLoading() {
 
 function PaymentContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const success = searchParams.get("success") === "true";
   const canceled = searchParams.get("canceled") === "true";
   const orderId = searchParams.get("orderId");
-  const slug = searchParams.get("slug") || ""; // Get restaurant slug from URL
+  const slugParam = searchParams.get("slug") || "";
+  const publicUrlParam = searchParams.get("publicUrl") || "";
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [slug, setSlug] = useState(slugParam);
+  const [publicUrl, setPublicUrl] = useState("");
+
+  // Initialize and manage public URL from params and localStorage
+  useEffect(() => {
+    if (publicUrlParam) {
+      // If publicUrl in params, use it and store
+      setPublicUrl(decodeURIComponent(publicUrlParam));
+      localStorage.setItem(
+        "restaurantPublicUrl",
+        decodeURIComponent(publicUrlParam),
+      );
+    } else {
+      // Otherwise try to get from localStorage
+      const storedUrl = localStorage.getItem("restaurantPublicUrl");
+      if (storedUrl) {
+        setPublicUrl(storedUrl);
+      }
+    }
+  }, [publicUrlParam]);
+
+  // Handler to redirect to stored public URL
+  const handleBackToDashboard = () => {
+    const urlToRedirect =
+      publicUrl || localStorage.getItem("restaurantPublicUrl") || "/";
+    console.log("Redirecting to:", urlToRedirect);
+    window.location.href = urlToRedirect;
+  };
 
   useEffect(() => {
     if (orderId) {
@@ -42,7 +71,20 @@ function PaymentContent() {
       const res = await fetch(`/api/orders/${orderId}`);
       const data = await res.json();
       if (res.ok && data) {
-        setOrder(data.order || data);
+        const orderData = data.order || data;
+        setOrder(orderData);
+        // Extract slug from order data if not in params
+        if (!slugParam && orderData.restaurantSlug) {
+          setSlug(orderData.restaurantSlug);
+        }
+        // Extract public URL from order data
+        if (!publicUrl && orderData.restaurantPublicUrl) {
+          setPublicUrl(orderData.restaurantPublicUrl);
+          localStorage.setItem(
+            "restaurantPublicUrl",
+            orderData.restaurantPublicUrl,
+          );
+        }
       }
     } catch (error) {
       console.error("Error fetching order:", error);
@@ -101,13 +143,13 @@ function PaymentContent() {
             </div>
           )}
 
-          <Link
-            href={slug ? `/${slug}` : "/"}
-            className="inline-flex items-center justify-center w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-lg transition"
+          <button
+            onClick={handleBackToDashboard}
+            className="inline-flex items-center justify-center w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-lg transition cursor-pointer"
           >
             <ArrowLeft size={18} className="mr-2" />
             Back to Restaurant
-          </Link>
+          </button>
         </div>
       </div>
     );
@@ -127,13 +169,13 @@ function PaymentContent() {
             You canceled the payment. Your order was not confirmed.
           </p>
 
-          <Link
-            href={slug ? `/${slug}` : "/"}
-            className="inline-flex items-center justify-center w-full bg-orange-600 hover:bg-orange-700 text-white font-semibold py-3 rounded-lg transition"
+          <button
+            onClick={handleBackToDashboard}
+            className="inline-flex items-center justify-center w-full bg-orange-600 hover:bg-orange-700 text-white font-semibold py-3 rounded-lg transition cursor-pointer"
           >
             <ArrowLeft size={18} className="mr-2" />
             Start a New Order
-          </Link>
+          </button>
         </div>
       </div>
     );

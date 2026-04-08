@@ -809,6 +809,7 @@ export default function PublicMenuPage({ params }) {
           initialCart={checkoutCart}
           categoryName={null}
           restaurantId={restaurant._id}
+          slug={slug}
           onClose={() => setCheckoutOpen(false)}
           onOrderSuccess={handleOrderSuccess}
         />

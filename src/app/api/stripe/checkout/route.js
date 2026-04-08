@@ -7,7 +7,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 export async function POST(req) {
   try {
-    const { restaurantId, amount, orderId } = await req.json();
+    const { restaurantId, amount, orderId, publicUrl } = await req.json();
 
     if (!restaurantId || !amount) {
       return NextResponse.json(
@@ -30,6 +30,10 @@ export async function POST(req) {
     }
 
     // Create checkout session
+    const encodedPublicUrl = publicUrl
+      ? `&publicUrl=${encodeURIComponent(publicUrl)}`
+      : "";
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       line_items: [
@@ -43,8 +47,8 @@ export async function POST(req) {
         },
       ],
       mode: "payment",
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/payment?success=true&orderId=${orderId}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/payment?canceled=true&orderId=${orderId}`,
+      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/payment?success=true&orderId=${orderId}${encodedPublicUrl}`,
+      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/payment?canceled=true&orderId=${orderId}${encodedPublicUrl}`,
       // Note: Funds go directly to platform account
       // application_fee_amount is not used because transfer_data is not specified
       // Restaurant transfers can be handled separately after payment via webhook

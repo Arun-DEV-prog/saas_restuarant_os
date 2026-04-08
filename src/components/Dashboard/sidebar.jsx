@@ -194,6 +194,12 @@ export default function Sidebar() {
             items: [
               { name: "Menus", href: `/dashboard/menu`, icon: BookOpen },
               {
+                name: "POS System",
+                href: `/dashboard/${restaurantId}/pos`,
+                icon: ShoppingCart,
+                badge: "Point of Sale",
+              },
+              {
                 name: "Table Management",
                 href: `/dashboard/${restaurantId}/tables`,
                 icon: Layers,
